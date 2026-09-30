@@ -26,19 +26,28 @@ import gradio as gr
 from app import app as fastapi_app
 
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+# Mount static files directly on demo.app so /static/css and /static/js work directly
+demo.app.mount("/static", StaticFiles(directory="static"), name="static_root")
+
+# Mount all /api routes from fastapi_app directly onto demo.app
+for route in fastapi_app.routes:
+    if getattr(route, "path", "").startswith("/api"):
+        demo.app.routes.append(route)
+
 # Native Gradio application rendering the Workbench
 with gr.Blocks(title="AI BRD Generator & Workbench", fill_height=True) as demo:
     gr.HTML(
         """
-        <iframe src="/app/" width="100%" height="950px" style="border:none; width:100%; min-height:92vh; border-radius:8px;"></iframe>
+        <iframe src="/static/index.html" width="100%" height="950px" style="border:none; width:100%; min-height:92vh; border-radius:8px;"></iframe>
         """
     )
 
-# Mount FastAPI app cleanly as a sub-application under /app
-demo.app.mount("/app", fastapi_app)
-
 if __name__ == "__main__":
     demo.queue().launch(server_name="0.0.0.0", server_port=7860, show_api=False)
+
 
 
 

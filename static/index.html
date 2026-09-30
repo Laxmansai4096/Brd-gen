@@ -757,20 +757,20 @@
 
   <!-- Revisions & Snapshot Diff Modal -->
   <div class="modal-overlay" id="revisionsModal">
-    <div class="modal-box" style="max-width: 900px; max-height: 85vh; overflow-y: auto;">
+    <div class="modal-box" style="width: 1100px; max-width: 94vw; max-height: 88vh; overflow-y: auto; padding: 28px;">
       <div class="modal-header">
-        <h3 style="font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+        <h3 style="font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
           <span>🕒</span> Plan Revision History & Parameter Diffs
         </h3>
         <button onclick="closeRevisionsModal()"
-          style="background: none; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer;">✕</button>
+          style="background: none; border: none; color: var(--text-dim); font-size: 1.3rem; cursor: pointer;">✕</button>
       </div>
-      <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 14px;">
+      <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 16px;">
         Track every adjustment and re-plan snapshot across discovery changes, admin overrides, and currency conversions.
       </p>
 
-      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; max-height: 300px; overflow-y: auto;">
-        <table class="custom-table" id="revisionsTable">
+      <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 20px; max-height: 420px; overflow-y: auto;">
+        <table class="custom-table" id="revisionsTable" style="margin: 0;">
           <thead>
             <tr>
               <th>Rev #</th>
@@ -1122,130 +1122,134 @@
 
   <!-- Admin Console Modal -->
   <div class="modal-overlay" id="adminModal">
-    <div class="modal-box" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+    <div class="modal-box">
       <div class="modal-header">
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <h3 style="font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+          <h3 style="font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
             <span>🛡️</span> Enterprise Admin Console
           </h3>
           <!-- Role Toggle: Viewer vs Admin -->
-          <div style="display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.8); padding: 4px 8px; border-radius: 20px; border: 1px solid var(--border-color);">
+          <div style="display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 4px 8px; border-radius: 20px; border: 1px solid var(--border-color);">
             <button class="btn-role-toggle active" id="btnRoleViewer" onclick="setAdminRoleMode(false)">🔒 View-Only Mode</button>
             <button class="btn-role-toggle" id="btnRoleAdmin" onclick="setAdminRoleMode(true)">🛡️ Admin Edit Mode</button>
           </div>
         </div>
         <button onclick="closeAdminModal()"
-          style="background: none; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer;">✕</button>
+          style="background: none; border: none; color: var(--text-dim); font-size: 1.4rem; cursor: pointer; padding: 4px 8px;">✕</button>
       </div>
 
-      <div id="adminModeBanner" style="padding: 8px 12px; border-radius: 6px; font-size: 0.82rem; margin-bottom: 14px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--primary);">
-        🔒 <strong>View-Only Mode:</strong> Regular users can inspect system default settings, location working hours, and holiday schedules. Switch to Admin Edit Mode to modify.
-      </div>
-
-      <!-- Section 1: Global Defaults -->
-      <div class="section-block" style="margin-bottom: 16px;">
-        <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 10px;">⚙️ Global System Parameters & Rates</h4>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-          <div class="form-group">
-            <label class="form-label">Global Baseline Rate (USD/hr)</label>
-            <input type="number" class="form-control admin-field" id="adminHourlyRate" value="30.0" disabled>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Default Baseline Working Hours</label>
-            <input type="number" class="form-control admin-field" id="adminHoursPerDay" value="8.0" disabled>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Working Days Per Week</label>
-            <input type="number" class="form-control admin-field" id="adminDaysPerWeek" value="5" disabled>
-          </div>
-        </div>
-        <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">
-          💡 <em>Location-specific hourly rates and working hours configured below automatically govern engagements in their respective regions (e.g. India = 9.0h @ $25/hr, UK = 7.0h @ $65/hr, US = 8.0h @ $85/hr).</em>
-        </p>
-      </div>
-
-      <!-- Section 2: Location-Wise Working Hours & Hourly Rates -->
-      <div class="section-block" style="margin-bottom: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin: 0;">🌍 Location-Wise Working Hours, Rates & Calendars</h4>
-          <span style="font-size: 0.8rem; color: var(--text-muted);">Regional capacity & blended rate cards by delivery geography</span>
-        </div>
-        <table class="custom-table" id="adminCalendarsTable">
-          <thead>
-            <tr>
-              <th>Country Code</th>
-              <th>Country & Currency</th>
-              <th>Native Currency Rate</th>
-              <th>USD Rate ($/hr)</th>
-              <th>Daily Hours</th>
-              <th>Working Days</th>
-              <th>Holidays</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="adminCalendarsTableBody">
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Section 3: Statutory Holiday Manager & Upload -->
-      <div class="section-block" style="margin-bottom: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin: 0;">📅 Location Statutory Holidays Manager</h4>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <label class="form-label" style="margin: 0; font-size: 0.8rem;">Select Location:</label>
-            <select class="form-control" id="adminSelectedCountry" onchange="renderAdminHolidaysList()" style="padding: 4px 8px; width: 140px; font-size: 0.82rem;">
-              <option value="IN">India (IN)</option>
-              <option value="UK">United Kingdom (UK)</option>
-              <option value="US">United States (US)</option>
-              <option value="EU">European Union (EU)</option>
-              <option value="SG">Singapore (SG)</option>
-              <option value="AE">UAE (AE)</option>
-              <option value="AU">Australia (AU)</option>
-              <option value="CA">Canada (CA)</option>
-              <option value="JP">Japan (JP)</option>
-            </select>
-          </div>
+      <div class="modal-content-scroll">
+        <div id="adminModeBanner" style="padding: 10px 14px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; background: rgba(72, 98, 247, 0.08); border: 1px solid rgba(72, 98, 247, 0.25); color: var(--primary);">
+          🔒 <strong>View-Only Mode:</strong> Regular users can inspect system default settings, location working hours, and holiday schedules. Switch to Admin Edit Mode to modify.
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-          <!-- Left: Current Holidays List -->
-          <div style="background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); max-height: 220px; overflow-y: auto;">
-            <table class="custom-table" style="font-size: 0.8rem;" id="adminHolidaysTable">
+        <!-- Section 1: Global Defaults -->
+        <div class="section-block" style="margin-bottom: 20px;">
+          <h4 style="color: var(--primary); font-size: 0.96rem; margin-bottom: 12px; font-weight: 700;">⚙️ Global System Parameters & Rates</h4>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+            <div class="form-group">
+              <label class="form-label">Global Baseline Rate (USD/hr)</label>
+              <input type="number" class="form-control admin-field" id="adminHourlyRate" value="30.0" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Default Baseline Working Hours</label>
+              <input type="number" class="form-control admin-field" id="adminHoursPerDay" value="8.0" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Working Days Per Week</label>
+              <input type="number" class="form-control admin-field" id="adminDaysPerWeek" value="5" disabled>
+            </div>
+          </div>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+            💡 <em>Location-specific hourly rates and working hours configured below automatically govern engagements in their respective regions (e.g. India = 9.0h @ $25/hr, UK = 7.0h @ $65/hr, US = 8.0h @ $85/hr).</em>
+          </p>
+        </div>
+
+        <!-- Section 2: Location-Wise Working Hours & Hourly Rates -->
+        <div class="section-block" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="color: var(--primary); font-size: 0.96rem; margin: 0; font-weight: 700;">🌍 Location-Wise Working Hours, Rates & Calendars</h4>
+            <span style="font-size: 0.82rem; color: var(--text-muted);">Regional capacity & blended rate cards by delivery geography</span>
+          </div>
+          <div style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+            <table class="custom-table" id="adminCalendarsTable" style="margin: 0;">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Holiday Name</th>
-                  <th>Type</th>
+                  <th>Country Code</th>
+                  <th>Country & Currency</th>
+                  <th>Native Currency Rate</th>
+                  <th>USD Rate ($/hr)</th>
+                  <th>Daily Hours</th>
+                  <th>Working Days</th>
+                  <th>Holidays</th>
                   <th>Action</th>
                 </tr>
               </thead>
-              <tbody id="adminHolidaysTableBody">
+              <tbody id="adminCalendarsTableBody">
               </tbody>
             </table>
           </div>
+        </div>
 
-          <!-- Right: Add / Upload Holiday Form -->
-          <div style="background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-            <h5 style="color: #cbd5e1; font-size: 0.84rem; margin-bottom: 8px;">➕ Add Single Holiday (Admin Only)</h5>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-              <input type="date" class="form-control admin-field" id="newHolidayDate" disabled>
-              <input type="text" class="form-control admin-field" id="newHolidayName" placeholder="e.g. Independence Day" disabled>
+        <!-- Section 3: Statutory Holiday Manager & Upload -->
+        <div class="section-block" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="color: var(--primary); font-size: 0.96rem; margin: 0; font-weight: 700;">📅 Location Statutory Holidays Manager</h4>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <label class="form-label" style="margin: 0; font-size: 0.84rem;">Select Location:</label>
+              <select class="form-control" id="adminSelectedCountry" onchange="renderAdminHolidaysList()" style="padding: 6px 12px; width: 160px; font-size: 0.85rem; font-weight: 600;">
+                <option value="IN">India (IN)</option>
+                <option value="UK">United Kingdom (UK)</option>
+                <option value="US">United States (US)</option>
+                <option value="EU">European Union (EU)</option>
+                <option value="SG">Singapore (SG)</option>
+                <option value="AE">UAE (AE)</option>
+                <option value="AU">Australia (AU)</option>
+                <option value="CA">Canada (CA)</option>
+                <option value="JP">Japan (JP)</option>
+              </select>
             </div>
-            <button class="btn-select-confirm admin-field" onclick="addAdminHolidayFromModal()" style="width: 100%; padding: 6px; font-size: 0.82rem; margin-bottom: 12px;" disabled>
-              <span>➕</span> Add Holiday to Location
-            </button>
+          </div>
 
-            <h5 style="color: #cbd5e1; font-size: 0.84rem; margin-bottom: 6px;">📂 Upload Holiday Sheet (.csv / .json)</h5>
-            <div style="display: flex; gap: 8px;">
-              <input type="file" class="form-control admin-field" id="adminHolidayFileInput" accept=".csv,.json,.txt" style="font-size: 0.78rem; padding: 4px;" disabled>
-              <button class="btn-header admin-field" onclick="uploadAdminHolidaySheet()" style="padding: 4px 10px; font-size: 0.8rem;" disabled>Upload</button>
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px;">
+            <!-- Left: Current Holidays List -->
+            <div style="background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); max-height: 280px; overflow-y: auto;">
+              <table class="custom-table" style="font-size: 0.82rem; margin: 0;" id="adminHolidaysTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Holiday Name</th>
+                    <th>Type</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="adminHolidaysTableBody">
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Right: Add / Upload Holiday Form -->
+            <div style="background: #ffffff; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+              <h5 style="color: var(--text-heading); font-size: 0.88rem; margin-bottom: 10px; font-weight: 700;">➕ Add Single Holiday (Admin Only)</h5>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <input type="date" class="form-control admin-field" id="newHolidayDate" disabled>
+                <input type="text" class="form-control admin-field" id="newHolidayName" placeholder="e.g. Independence Day" disabled>
+              </div>
+              <button class="btn-select-confirm admin-field" onclick="addAdminHolidayFromModal()" style="width: 100%; padding: 8px; font-size: 0.85rem; margin-bottom: 16px;" disabled>
+                <span>➕</span> Add Holiday to Location
+              </button>
+
+              <h5 style="color: var(--text-heading); font-size: 0.88rem; margin-bottom: 8px; font-weight: 700;">📂 Upload Holiday Sheet (.csv / .json)</h5>
+              <div style="display: flex; gap: 10px;">
+                <input type="file" class="form-control admin-field" id="adminHolidayFileInput" accept=".csv,.json,.txt" style="font-size: 0.82rem; padding: 6px;" disabled>
+                <button class="btn-header admin-field" onclick="uploadAdminHolidaySheet()" style="padding: 6px 14px; font-size: 0.84rem;" disabled>Upload</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
         <button class="btn-header" onclick="closeAdminModal()">Close</button>
         <button class="btn-select-confirm admin-field" id="btnSaveAdminDefaults" onclick="saveAdminDefaultsFromModal()" disabled>
           <span>💾</span> Save Admin Settings

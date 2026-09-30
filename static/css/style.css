@@ -1410,14 +1410,55 @@ body {
 }
 
 #adminModal .modal-box {
+  width: 1300px;
+  max-width: 95vw;
+  max-height: 92vh;
+  padding: 28px 34px;
   background: #ffffff;
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25);
   color: var(--text-heading);
+  display: flex;
+  flex-direction: column;
+}
+
+#adminModal .modal-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-right: -6px;
 }
 
 #adminModal table tr:hover {
   background: #f8fafc;
+}
+
+#editResponsesModal .modal-box {
+  width: 1200px;
+  max-width: 95vw;
+  max-height: 90vh;
+  padding: 28px 34px;
+  background: #ffffff;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25);
+}
+
+#editResponsesModal div[style*="rgba(15, 23, 42"] {
+  background: #ffffff !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+#revisionsModal .modal-box {
+  width: 1150px;
+  max-width: 95vw;
+  max-height: 88vh;
+  padding: 28px 34px;
+  background: #ffffff;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25);
+}
+
+#revisionsModal div[style*="rgba(15, 23, 42"] {
+  background: #ffffff !important;
+  border: 1px solid var(--border-color) !important;
 }
 
 .btn-admin {

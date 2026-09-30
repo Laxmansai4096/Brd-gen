@@ -246,7 +246,18 @@ def generate_day_wise_schedule(
     buffer_pct: float = 15.0
 ) -> List[DayWiseTask]:
     cal = get_calendar_for_geography(geography)
-    holiday_dict = {h.get("date", ""): h.get("name", "Statutory Holiday") for h in cal.get("holidays", [])}
+    
+    # Build comprehensive holiday lookup supporting both exact YYYY-MM-DD and MM-DD
+    holiday_dict: Dict[str, str] = {}
+    for h in cal.get("holidays", []):
+        d_str = str(h.get("date", "")).strip()
+        h_name = h.get("name", "Statutory Holiday")
+        if d_str:
+            holiday_dict[d_str] = h_name
+            # Also index by MM-DD so recurring annual holidays match regardless of year
+            parts = d_str.split("-")
+            if len(parts) == 3:
+                holiday_dict[f"{parts[1]}-{parts[2]}"] = h_name
     
     try:
         if start_date_str:
@@ -298,9 +309,11 @@ def generate_day_wise_schedule(
     
     while working_day_counter < total_needed_days:
         iso_date = curr_dt.isoformat()
+        mm_dd = curr_dt.strftime("%m-%d")
         day_name = curr_dt.strftime("%A")
         is_weekend = (curr_dt.weekday() >= 5)
-        holiday_name = holiday_dict.get(iso_date, None)
+        
+        holiday_name = holiday_dict.get(iso_date) or holiday_dict.get(mm_dd)
         is_holiday = (holiday_name is not None)
         
         if is_weekend:
@@ -333,7 +346,7 @@ def generate_day_wise_schedule(
                 is_holiday=True,
                 holiday_name=holiday_name,
                 tasks_allocated=[{
-                    "task_name": f"Statutory Holiday observed ({cal.get('country_name', geography)})",
+                    "task_name": f"🎉 Statutory Holiday: {holiday_name} ({cal.get('country_name', geography)}) — Excluded from project working days",
                     "primary_role": "N/A",
                     "hours": 0.0,
                     "status": "Statutory Holiday"

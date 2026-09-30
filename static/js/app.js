@@ -1235,7 +1235,19 @@ function renderAdminCalendarsTable() {
     const rateLocal = cal.hourly_rate_local || rateUsd;
     const sym = cal.currency_symbol || "$";
     const curr = cal.currency_code || "USD";
-    const hCount = (cal.holidays || []).length;
+    const holidays = cal.holidays || [];
+    const hCount = holidays.length;
+    
+    // Exact dates preview
+    const topHolidays = holidays.slice(0, 2).map(h => `
+      <span class="badge-ai" style="padding: 1px 5px; font-size: 0.66rem; margin: 1px; white-space: nowrap;" title="${h.date}: ${h.name}">
+        📅 ${h.date.substring(5)}: ${h.name.substring(0, 10)}
+      </span>
+    `).join("");
+    const moreLink = hCount > 2 
+      ? `<button class="btn-header" style="padding: 1px 5px; font-size: 0.66rem; border: none; background: transparent; color: var(--primary); cursor: pointer;" onclick="selectAdminCountry('${code}')">+${hCount - 2} dates...</button>` 
+      : (hCount === 0 ? `<span style="font-size: 0.7rem; color: var(--text-dim);">No holidays</span>` : '');
+
     return `
       <tr>
         <td><strong>${code}</strong></td>
@@ -1264,13 +1276,26 @@ function renderAdminCalendarsTable() {
           </div>
         </td>
         <td style="font-size: 0.82rem;">${cal.working_days_per_week || 5} d/wk</td>
-        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${hCount} Hol</span></td>
+        <td>
+          <div style="display: flex; flex-direction: column; gap: 2px; max-width: 170px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 2px;">${topHolidays}</div>
+            ${moreLink}
+          </div>
+        </td>
         <td>
           <button class="btn-header admin-field" style="padding: 3px 8px; font-size: 0.75rem;" ${isAdminEditMode ? '' : 'disabled'} onclick="saveLocationCalendar('${code}')">Save</button>
         </td>
       </tr>
     `;
   }).join("");
+}
+
+function selectAdminCountry(countryCode) {
+  const sel = document.getElementById("adminSelectedCountry");
+  if (sel) {
+    sel.value = countryCode;
+    renderAdminHolidaysList();
+  }
 }
 
 async function saveLocationCalendar(countryCode) {

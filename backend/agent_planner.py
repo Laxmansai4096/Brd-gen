@@ -6,9 +6,15 @@ from typing import Dict, Any, List, Optional, Tuple
 from backend.models import (
     BRDDocument, RoleEffort, ProjectPhase, SizingBOM,
     AssumptionItem, AnswerItem, ProjectSession, TaskEstimate,
-    TechnicalComponent, SizingMetrics, ScheduleFeasibility, DayWiseTask
+    TechnicalComponent, SizingMetrics, ScheduleFeasibility, DayWiseTask,
+    RequirementItem, CapabilityItem, DataFlowItem, CalculationLedgerItem, HITLGates
 )
 from backend.config import get_settings
+from backend.llm_gateway import LLMGateway
+from backend.canonical_generator import (
+    build_canonical_requirements, build_capabilities_catalog,
+    build_canonical_data_flows, build_calculation_ledger
+)
 from backend.admin_store import (
     get_admin_defaults, get_calendar_for_geography, get_working_hours_for_geography, get_hourly_rate_for_geography, get_master_assumptions,
     DELIVERY_TIERS, PHASE_APPLICABILITY_ANCHORS, SCALE_DRIVERS,
@@ -1169,6 +1175,71 @@ def generate_brd(
         "finops_recommendation": "Pay-as-you-go serverless model delivers optimal cost-efficiency for current volume. Transition to Provisioned Throughput (PTU) when request volume exceeds 15,000/day."
     }
 
+    # Live Real-Time Multi-Cloud AI Narrative Synthesis
+    live_narratives = LLMGateway.synthesize_narratives(
+        client_name=client_name,
+        project_title=proj_title,
+        problem_statement=problem_raw,
+        delivery_tier=tier_name,
+        cloud_platform=cloud_ans,
+        scope_in=in_scope,
+        scope_out=out_of_scope
+    )
+    if live_narratives:
+        exec_summary_text = live_narratives.get("executive_summary") or (
+            f"This Business Requirements Document (BRD) and Engineering Plan establishes the deterministic scope, "
+            f"architecture, 12-discipline resource allocation, and cloud infrastructure Bill of Materials for **{proj_title}** "
+            f"({tier_name} Tier) for **{client_name}**. Operating on a blended rate of ${rate:.2f}/hour ({currency_symbol}{rate*currency_rate:.2f}/hr {currency_code}), this solution "
+            f"leverages {cloud_ans} in {geo_ans} across {int(scale_quantities['ENVS'])} environment(s) to deliver production-grade AI automation. "
+            f"Project kick-off is scheduled for **{start_date_ans}** with targeted completion on **{target_end_date_str}**, incorporating {buffer_pct}% standby buffer resource protection."
+        )
+        if live_narratives.get("solution_summary_six_sentences"):
+            solution_summary_six = live_narratives["solution_summary_six_sentences"]
+        target_arch_narrative = live_narratives.get("target_architecture_narrative") or (
+            f"The architecture is a scalable cloud pipeline hosted on {cloud_ans} in the {geo_ans} region. "
+            f"It deploys across {int(scale_quantities['ENVS'])} environments using {int(scale_quantities['COMPONENTS'])} "
+            f"core microservice components. Model execution is grounded via vector search and structured databases, "
+            f"and rendered to {int(scale_quantities['PERSONAS'])} user persona(s) behind Enterprise Single Sign-On."
+        )
+        if live_narratives.get("data_flow_narrative"):
+            data_flow = live_narratives["data_flow_narrative"]
+    else:
+        exec_summary_text = (
+            f"This Business Requirements Document (BRD) and Engineering Plan establishes the deterministic scope, "
+            f"architecture, 12-discipline resource allocation, and cloud infrastructure Bill of Materials for **{proj_title}** "
+            f"({tier_name} Tier) for **{client_name}**. Operating on a blended rate of ${rate:.2f}/hour ({currency_symbol}{rate*currency_rate:.2f}/hr {currency_code}), this solution "
+            f"leverages {cloud_ans} in {geo_ans} across {int(scale_quantities['ENVS'])} environment(s) to deliver production-grade AI automation. "
+            f"Project kick-off is scheduled for **{start_date_ans}** with targeted completion on **{target_end_date_str}**, incorporating {buffer_pct}% standby buffer resource protection."
+        )
+        target_arch_narrative = (
+            f"The architecture is a scalable cloud pipeline hosted on {cloud_ans} in the {geo_ans} region. "
+            f"It deploys across {int(scale_quantities['ENVS'])} environments using {int(scale_quantities['COMPONENTS'])} "
+            f"core microservice components. Model execution is grounded via vector search and structured databases, "
+            f"and rendered to {int(scale_quantities['PERSONAS'])} user persona(s) behind Enterprise Single Sign-On."
+        )
+
+    # Build Canonical Items per reference.txt
+    canonical_reqs = build_canonical_requirements(
+        client_name=client_name,
+        project_title=proj_title,
+        delivery_tier=tier_name,
+        domain=domain,
+        cloud_platform=cloud_ans,
+        geography=geo_ans,
+        compliance_posture=compliance_posture
+    )
+    capabilities_catalog = build_capabilities_catalog(domain=domain, cloud_platform=cloud_ans)
+    canonical_data_flows = build_canonical_data_flows(domain=domain, cloud_platform=cloud_ans)
+    calc_ledger = build_calculation_ledger(
+        tier_name=tier_name,
+        task_estimates=task_estimates,
+        role_efforts=role_efforts,
+        feasibility=feasibility,
+        sizing_bom=sizing_bom,
+        hourly_rate=rate
+    )
+    hitl_gates = getattr(session, "hitl_gates", None) or HITLGates()
+
     brd = BRDDocument(
         project_title=proj_title,
         client_name=client_name,
@@ -1198,13 +1269,7 @@ def generate_brd(
         ai_act_classification=ai_act_data,
         iso_42001_controls=iso_controls,
         
-        executive_summary=(
-            f"This Business Requirements Document (BRD) and Engineering Plan establishes the deterministic scope, "
-            f"architecture, 12-discipline resource allocation, and cloud infrastructure Bill of Materials for **{proj_title}** "
-            f"({tier_name} Tier) for **{client_name}**. Operating on a blended rate of ${rate:.2f}/hour ({currency_symbol}{rate*currency_rate:.2f}/hr {currency_code}), this solution "
-            f"leverages {cloud_ans} in {geo_ans} across {int(scale_quantities['ENVS'])} environment(s) to deliver production-grade AI automation. "
-            f"Project kick-off is scheduled for **{start_date_ans}** with targeted completion on **{target_end_date_str}**, incorporating {buffer_pct}% standby buffer resource protection."
-        ),
+        executive_summary=exec_summary_text,
         problem_statement=problem_raw,
         solution_summary_six_sentences=solution_summary_six,
         business_impacts=business_impacts,
@@ -1213,12 +1278,7 @@ def generate_brd(
         ai_interventions=ai_interventions,
         non_ai_interventions=non_ai_interventions,
         user_personas=personas,
-        target_architecture_narrative=(
-            f"The architecture is a scalable cloud pipeline hosted on {cloud_ans} in the {geo_ans} region. "
-            f"It deploys across {int(scale_quantities['ENVS'])} environments using {int(scale_quantities['COMPONENTS'])} "
-            f"core microservice components. Model execution is grounded via vector search and structured databases, "
-            f"and rendered to {int(scale_quantities['PERSONAS'])} user persona(s) behind Enterprise Single Sign-On."
-        ),
+        target_architecture_narrative=target_arch_narrative,
         azure_services_used=[{"service": b.sku_or_service, "sku": b.tier, "purpose": b.justification} for b in sizing_bom],
         data_flow_narrative=data_flow,
         responsible_ai_governance=[
@@ -1233,11 +1293,11 @@ def generate_brd(
             "Transparent Data Encryption (TDE / Azure Key Vault platform-managed keys) at rest and TLS 1.3 in transit.",
             "Role-Based Access Control (RBAC) integrated with Microsoft Entra ID SSO."
         ],
-        risks_mitigations=[
-            {"risk": "Data quality or knowledge base gaps degrade response accuracy", "mitigation": "Automated ingestion validation and fallback to human exception queue."},
-            {"risk": "User prompt injection or unauthorized access attempts", "mitigation": "Input sanitization, content safety guardrails, and strict RBAC authorization."},
-            {"risk": "Scope expansion beyond agreed use cases", "mitigation": "Scope frozen strictly to defined capabilities with formal change control procedures."}
-        ],
+        canonical_requirements=canonical_reqs,
+        capabilities=capabilities_catalog,
+        data_flows=canonical_data_flows,
+        calculation_ledger=calc_ledger,
+        hitl_gates=hitl_gates,
         legal_categories=legal_categories_list,
         foundation_llm_architecture=foundation_llm,
         grounding_surface_mode=grounding_mode,
@@ -1264,3 +1324,4 @@ def generate_brd(
     
     session.brd = brd
     return brd
+

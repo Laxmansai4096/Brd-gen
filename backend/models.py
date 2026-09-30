@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 
+# --- Section 10: Dynamic Question Model ---
 class QuestionOption(BaseModel):
     value: str
     label: str
@@ -13,9 +14,15 @@ class QuestionItem(BaseModel):
     type: str  # "dropdown", "text", "number", "multi_choice"
     options: Optional[List[QuestionOption]] = None
     default_value: str
-    category: str  # "Scope", "Scale", "Technical", "Sizing", "Governance"
+    category: str  # "Scope", "Scale", "Technical", "Sizing", "Governance", "KEY_DECISION"
     priority: str = "Medium"  # "Blocker", "High", "Medium"
     help_text: Optional[str] = None
+    ask_when: Optional[List[Dict[str, Any]]] = None  # Conditional display rules e.g. [{"question_id": "q_cloud", "equals": "multi-cloud"}]
+    dependencies: Optional[List[str]] = None
+    resolves: Optional[List[str]] = None
+    stakeholder: Optional[str] = None
+    why_it_matters: Optional[str] = None
+    downstream_impacts: Optional[List[str]] = None
 
 class AnswerItem(BaseModel):
     question_id: str
@@ -26,6 +33,96 @@ class AnswerItem(BaseModel):
     hitl_confirmed: bool = False
     notes: Optional[str] = None
 
+# --- Section 8 & 9: Canonical Requirements Model ---
+class RequirementItem(BaseModel):
+    requirement_id: str  # e.g. "FR-001", "NFR-001", "SEC-001", "AI-001"
+    type: str  # "FUNCTIONAL", "NON_FUNCTIONAL", "BUSINESS", "TECHNICAL", "DATA", "INTEGRATION", "SECURITY", "COMPLIANCE", "AI", "RESPONSIBLE_AI", "OPERATIONAL", "DEPLOYMENT", "REPORTING", "UX", "AVAILABILITY", "PERFORMANCE", "DR", "AUDIT"
+    statement: str
+    actor: str = "System"
+    capability: str = "General"
+    priority: str = "MUST"  # "MUST", "SHOULD", "COULD", "WONT"
+    source: str = "CLIENT"  # "CLIENT", "AI_INFERRED", "DEFAULT"
+    status: str = "CLIENT_CONFIRMED"  # "CLIENT_PROVIDED", "CLIENT_CONFIRMED", "DEFAULT", "PROJECT_OVERRIDE", "INFERRED", "PENDING_CONFIRMATION", "CONFLICT", "SCOPE_CONSTRAINT", "DEPENDENCY", "RESOLVED", "REJECTED"
+    acceptance_criteria: List[str] = []
+    dependencies: List[str] = []
+    impacts: List[str] = []
+
+# --- Section 12 & 13: Capability & Scope Catalog ---
+class CapabilityItem(BaseModel):
+    capability_id: str  # e.g. "CAP-001"
+    category: str  # "Business", "Application", "Data", "AI", "Platform"
+    name: str
+    description: str
+    scope_status: str = "IN_SCOPE"  # "IN_SCOPE", "OUT_OF_SCOPE", "FUTURE", "CONDITIONAL"
+    architecture_components: List[str] = []
+    applicable_wbs_tasks: List[str] = []
+
+# --- Section 14: Structured Technical Component ---
+class TechnicalComponent(BaseModel):
+    id: str  # C001 - C006
+    name: str
+    type: str = "Service"
+    technology: str = ""
+    technology_choice: str = ""
+    purpose: str = ""
+    responsibility: str = ""
+    key_design_decisions: str = ""
+    interfaces_in_out: str = ""
+    data_classification: str = "Confidential"
+    scalability_performance: str = "Auto-scaling"
+    security_rai_controls: str = "RBAC, TLS 1.3, Data Redaction"
+    failure_modes_mitigation: str = "Retry with exponential backoff, dead-letter queue"
+    dependencies: str = "None"
+    environment: List[str] = ["Dev", "Test", "UAT"]
+
+# --- Section 15: End-to-End Data Flow Model ---
+class DataFlowItem(BaseModel):
+    flow_id: str  # DF-001
+    name: str
+    source: str
+    target: str
+    data_objects: List[str] = []
+    protocol: str = "HTTPS/REST"
+    frequency: str = "Batch / On-Demand"
+    volume: Dict[str, Any] = {}
+    security: Dict[str, Any] = {"encryption": "TLS 1.3", "auth": "OAuth 2.0 / Managed Identity"}
+    transformation: List[str] = []
+    failure_handling: str = "DLQ, structured exception logging, alert routing"
+
+# --- Section 54: Calculation Ledger Audit Trail ---
+class CalculationLedgerItem(BaseModel):
+    calculation_id: str  # CALC-001
+    calculation_type: str  # "TASK_EFFORT", "SCALE_FACTOR", "RESOURCE_COST", "SCHEDULE_FEASIBILITY", "BOM_COST"
+    inputs: Dict[str, Any] = {}
+    formula: str = ""
+    result: Dict[str, Any] = {}
+    engine_version: str = "1.0.0"
+    timestamp: str = ""
+
+# --- Section 50: Deterministic Impact Analysis ---
+class ImpactAnalysisResult(BaseModel):
+    parameter_changed: str
+    old_value: Any
+    new_value: Any
+    affected_dimensions: Dict[str, Any] = {}  # Capacity, Architecture, Infrastructure, Testing, Schedule, Cost, FTE
+    unaffected_dimensions: List[str] = []
+    narrative_explanation: str = ""
+    delta_days: float = 0.0
+    delta_cost_usd: float = 0.0
+    delta_fte: float = 0.0
+
+# --- Section 51: 4 HITL Approval Gates ---
+class HITLGates(BaseModel):
+    gate1_requirements_approved: bool = False
+    gate1_notes: Optional[str] = None
+    gate2_solution_approved: bool = False
+    gate2_notes: Optional[str] = None
+    gate3_estimate_approved: bool = False
+    gate3_notes: Optional[str] = None
+    gate4_brd_approved: bool = False
+    gate4_notes: Optional[str] = None
+
+# --- Existing Core Estimation & Schedule Models ---
 class AssumptionItem(BaseModel):
     id: str
     type: str = "Assumption"  # "Assumption", "Prerequisite", "Constraint"
@@ -82,19 +179,6 @@ class SizingBOM(BaseModel):
     quantity: str
     monthly_cost_usd: float
     justification: str
-
-class TechnicalComponent(BaseModel):
-    id: str  # C001 - C006
-    name: str
-    purpose: str
-    technology_choice: str
-    key_design_decisions: str
-    interfaces_in_out: str
-    data_classification: str
-    scalability_performance: str
-    security_rai_controls: str
-    failure_modes_mitigation: str
-    dependencies: str
 
 class SizingMetrics(BaseModel):
     named_users: int = 200
@@ -154,7 +238,7 @@ class BRDDocument(BaseModel):
     security_multiplier: float = 1.00
     ha_dr_tier: str = "None (single instance)"
     
-    # Project Timing & Backup Staffing
+    # Timing & Delivery
     start_date: str = "2026-10-05"
     target_end_date: str = ""
     buffer_capacity_pct: float = 15.0
@@ -168,29 +252,37 @@ class BRDDocument(BaseModel):
     business_impacts: List[str]
     in_scope: List[str]
     out_of_scope: List[str]
-    ai_interventions: List[Dict[str, Any]]
-    non_ai_interventions: List[Dict[str, Any]]
-    user_personas: List[Dict[str, str]]
+    ai_interventions: List[Dict[str, Any]] = []
+    non_ai_interventions: List[Dict[str, Any]] = []
+    user_personas: List[Dict[str, str]] = []
     target_architecture_narrative: str
-    azure_services_used: List[Dict[str, str]]
+    azure_services_used: List[Dict[str, str]] = []
     data_flow_narrative: str
-    responsible_ai_governance: List[str]
-    security_compliance: List[str]
-    # Functional Scope & Contract Categories
-    legal_categories: List[str] = ["Lease", "Vendor", "Service", "Facilities", "Technology", "Marketing"]
-    foundation_llm_architecture: str = "Azure OpenAI reasoning/thinking tier (GPT-5 Thinking/Reasoning)"
-    grounding_surface_mode: str = "Work (Tenant data only, no public web retrieval) via M365 Copilot / Azure AI Agent services"
-    parser_delimiters: str = "Block headers (<<<BEGIN:NAME>>>) and pipe delimiters (|), 30k char cell limit, 0.72 synonym confidence threshold"
-    evaluation_decision_logic: str = "Pass 1: Explicit Clause Extraction | Pass 2: Three-Tier Status [Agree, Agree with Management Approval, Not Agree]"
+    responsible_ai_governance: List[str] = []
+    security_compliance: List[str] = []
 
-    # Technical Components (6 Components)
+    # Canonical Model Arrays per reference.txt
+    canonical_requirements: List[RequirementItem] = []
+    capabilities: List[CapabilityItem] = []
+    data_flows: List[DataFlowItem] = []
+    calculation_ledger: List[CalculationLedgerItem] = []
+    hitl_gates: HITLGates = HITLGates()
+
+    # Functional Scope & Settings
+    legal_categories: List[str] = ["Lease", "Vendor", "Service", "Facilities", "Technology", "Marketing"]
+    foundation_llm_architecture: str = "Azure OpenAI / Google Gemini reasoning tier"
+    grounding_surface_mode: str = "Work (Tenant data only, no public web retrieval)"
+    parser_delimiters: str = "Block headers (<<<BEGIN:NAME>>>) and pipe delimiters (|)"
+    evaluation_decision_logic: str = "Pass 1: Clause Extraction | Pass 2: Three-Tier Status [Agree, Agree with Mgmt, Not Agree]"
+
+    # Technical Components
     technical_components: List[TechnicalComponent] = []
     
     # Sizing & Infrastructure
     sizing_metrics: SizingMetrics = SizingMetrics()
     sizing_bom: List[SizingBOM] = []
     
-    # Enterprise Expansions
+    # Enterprise & Rate Cards
     currency_code: str = "USD"
     currency_symbol: str = "$"
     currency_exchange_rate: float = 1.0
@@ -209,17 +301,17 @@ class BRDDocument(BaseModel):
     blended_hourly_rate: float = 30.0
     daily_working_hours: float = 8.0
     
-    # 12 Disciplines & 18 Phases & Tasks
+    # Disciplines & Phases
     role_efforts: List[RoleEffort]
     project_phases: List[ProjectPhase]
     task_estimates: List[TaskEstimate] = []
     
-    # Schedule Feasibility & Day-Wise Plan
+    # Feasibility & Day-Wise Plan
     schedule_feasibility: ScheduleFeasibility
     day_wise_schedule: List[DayWiseTask] = []
     
-    # Assumptions Gate
-    assumptions: List[AssumptionItem]
+    # Assumptions
+    assumptions: List[AssumptionItem] = []
     assumption_gate_passed: bool = True
 
 class RevisionSnapshot(BaseModel):
@@ -262,3 +354,4 @@ class ProjectSession(BaseModel):
     messages: List[ChatMessage] = []
     brd: Optional[BRDDocument] = None
     handoff_dossier: Optional[Dict[str, Any]] = None
+    hitl_gates: HITLGates = HITLGates()

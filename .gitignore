@@ -16,5 +16,6 @@ exports/*.docx
 exports/*.xlsx
 exports/*.csv
 exports/*.pptx
+exports/*.pdf
 test_features.py
 

@@ -36,14 +36,27 @@ async function loadSettings() {
       updateProviderBadge(data.active_provider, data);
       
       const modalSelect = document.getElementById("modalProviderSelect");
-      if (modalSelect) modalSelect.value = data.active_provider;
+      if (modalSelect) modalSelect.value = data.active_provider || "google";
       onModalProviderChange();
       
       if (data.gemini_api_key) document.getElementById("modalGeminiKey").value = data.gemini_api_key;
+      if (data.google_model) document.getElementById("modalGoogleModel").value = data.google_model;
+      if (data.google_endpoint) document.getElementById("modalGoogleEndpoint").value = data.google_endpoint;
+      
       if (data.azure_openai_endpoint) document.getElementById("modalAzureEndpoint").value = data.azure_openai_endpoint;
       if (data.azure_openai_api_key) document.getElementById("modalAzureKey").value = data.azure_openai_api_key;
+      if (data.azure_deployment) document.getElementById("modalAzureDeployment").value = data.azure_deployment;
+      if (data.azure_api_version) document.getElementById("modalAzureApiVersion").value = data.azure_api_version;
+
       if (data.aws_region) document.getElementById("modalAWSRegion").value = data.aws_region;
       if (data.aws_access_key) document.getElementById("modalAWSAccessKey").value = data.aws_access_key;
+      if (data.aws_secret_key) document.getElementById("modalAWSSecretKey").value = data.aws_secret_key;
+      if (data.aws_session_token) document.getElementById("modalAWSSessionToken").value = data.aws_session_token;
+      if (data.aws_model) document.getElementById("modalAWSModel").value = data.aws_model;
+
+      if (data.openai_endpoint) document.getElementById("modalOpenAIEndpoint").value = data.openai_endpoint;
+      if (data.openai_api_key) document.getElementById("modalOpenAIKey").value = data.openai_api_key;
+      if (data.openai_model) document.getElementById("modalOpenAIModel").value = data.openai_model;
     }
   } catch (err) {
     console.error("Failed to load settings:", err);
@@ -53,13 +66,17 @@ async function loadSettings() {
 function updateProviderBadge(provider, data) {
   const badgeText = document.getElementById("activeProviderText");
   if (!badgeText) return;
+  data = data || {};
   
   if (provider === "azure") {
-    badgeText.textContent = `AI: Azure OpenAI (GPT-4o/5)`;
+    badgeText.textContent = `AI: Azure OpenAI (${data.azure_deployment || "gpt-4o"})`;
   } else if (provider === "aws") {
-    badgeText.textContent = `AI: AWS Bedrock (Claude 3.5)`;
+    const m = (data.aws_model || "Bedrock").split(".").pop();
+    badgeText.textContent = `AI: AWS Bedrock (${m})`;
+  } else if (provider === "openai") {
+    badgeText.textContent = `AI: OpenAI / Custom (${data.openai_model || "gpt-4o"})`;
   } else {
-    badgeText.textContent = `AI: Google Studio (Gemini 2.5)`;
+    badgeText.textContent = `AI: Google Studio (${data.google_model || "gemini-2.5-flash"})`;
   }
 }
 
@@ -620,6 +637,12 @@ function renderBRDWorkbench(brd) {
 
   // Render Day-Wise Schedule
   renderDayWiseSchedule(brd.day_wise_schedule || [], brd);
+
+  // Render Canonical 17 Reqs, Capability Catalog, Data Flows & HITL Gates
+  renderCanonicalModel(brd);
+
+  // Render Deterministic Calculation Ledger & Impact Analysis
+  renderCalculationLedger(brd);
 }
 
 // Global Schedule Cache for Filtering
@@ -1050,6 +1073,11 @@ function downloadPPTX() {
   window.open(`/api/export-pptx?session_id=${currentSessionId}`, "_blank");
 }
 
+function downloadPDFBRD() {
+  if (!currentSessionId) return;
+  window.open(`/api/export/pdf?session_id=${currentSessionId}`, "_blank");
+}
+
 function openBRDPreview() {
   if (!currentSessionId) return;
   window.open(`/api/export-brd?session_id=${currentSessionId}`, "_blank");
@@ -1123,18 +1151,84 @@ function onModalProviderChange() {
   document.getElementById("googleSettingsGroup").style.display = (prov === "google") ? "block" : "none";
   document.getElementById("azureSettingsGroup").style.display = (prov === "azure") ? "block" : "none";
   document.getElementById("awsSettingsGroup").style.display = (prov === "aws") ? "block" : "none";
+  const openaiGroup = document.getElementById("openaiSettingsGroup");
+  if (openaiGroup) openaiGroup.style.display = (prov === "openai") ? "block" : "none";
+}
+
+async function testProviderConnection() {
+  const banner = document.getElementById("testConnStatusBanner");
+  if (!banner) return;
+  banner.style.display = "block";
+  banner.style.background = "rgba(56, 189, 248, 0.15)";
+  banner.style.borderColor = "rgba(56, 189, 248, 0.4)";
+  banner.style.color = "var(--primary)";
+  banner.innerHTML = "⏳ <strong>Testing live cloud AI provider connection...</strong> Pinging remote endpoint...";
+
+  const prov = document.getElementById("modalProviderSelect").value;
+  const payload = {
+    active_provider: prov,
+    gemini_api_key: (document.getElementById("modalGeminiKey")?.value || "").trim(),
+    google_model: (document.getElementById("modalGoogleModel")?.value || "").trim(),
+    google_endpoint: (document.getElementById("modalGoogleEndpoint")?.value || "").trim(),
+    azure_openai_endpoint: (document.getElementById("modalAzureEndpoint")?.value || "").trim(),
+    azure_openai_api_key: (document.getElementById("modalAzureKey")?.value || "").trim(),
+    azure_deployment: (document.getElementById("modalAzureDeployment")?.value || "").trim(),
+    azure_api_version: (document.getElementById("modalAzureApiVersion")?.value || "").trim(),
+    aws_region: (document.getElementById("modalAWSRegion")?.value || "").trim(),
+    aws_access_key: (document.getElementById("modalAWSAccessKey")?.value || "").trim(),
+    aws_secret_key: (document.getElementById("modalAWSSecretKey")?.value || "").trim(),
+    aws_session_token: (document.getElementById("modalAWSSessionToken")?.value || "").trim(),
+    aws_model: (document.getElementById("modalAWSModel")?.value || "").trim(),
+    openai_endpoint: (document.getElementById("modalOpenAIEndpoint")?.value || "").trim(),
+    openai_api_key: (document.getElementById("modalOpenAIKey")?.value || "").trim(),
+    openai_model: (document.getElementById("modalOpenAIModel")?.value || "").trim()
+  };
+
+  try {
+    const res = await fetch("/api/settings/test-connection", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (result.success) {
+      banner.style.background = "rgba(16, 185, 129, 0.15)";
+      banner.style.borderColor = "rgba(16, 185, 129, 0.4)";
+      banner.style.color = "var(--success)";
+      banner.innerHTML = `✅ <strong>Connected Successfully!</strong> Provider: <code>${result.provider}</code> | Model: <code>${result.model}</code> | Latency: <strong>${result.latency_ms} ms</strong><br><small style="color:#cbd5e1;">${result.message}</small>`;
+    } else {
+      banner.style.background = "rgba(239, 68, 68, 0.15)";
+      banner.style.borderColor = "rgba(239, 68, 68, 0.4)";
+      banner.style.color = "#f87171";
+      banner.innerHTML = `❌ <strong>Connection Failed:</strong> ${result.message}`;
+    }
+  } catch (err) {
+    banner.style.background = "rgba(239, 68, 68, 0.15)";
+    banner.style.borderColor = "rgba(239, 68, 68, 0.4)";
+    banner.style.color = "#f87171";
+    banner.innerHTML = `❌ <strong>Network / Gateway Error:</strong> ${err.message}`;
+  }
 }
 
 async function saveSettingsFromModal() {
   const prov = document.getElementById("modalProviderSelect").value;
   const payload = {
-    provider: prov,
-    gemini_api_key: document.getElementById("modalGeminiKey").value,
-    azure_openai_endpoint: document.getElementById("modalAzureEndpoint").value,
-    azure_openai_api_key: document.getElementById("modalAzureKey").value,
-    aws_region: document.getElementById("modalAWSRegion").value,
-    aws_access_key: document.getElementById("modalAWSAccessKey").value,
-    aws_secret_key: document.getElementById("modalAWSSecretKey").value
+    active_provider: prov,
+    gemini_api_key: (document.getElementById("modalGeminiKey")?.value || "").trim(),
+    google_model: (document.getElementById("modalGoogleModel")?.value || "").trim(),
+    google_endpoint: (document.getElementById("modalGoogleEndpoint")?.value || "").trim(),
+    azure_openai_endpoint: (document.getElementById("modalAzureEndpoint")?.value || "").trim(),
+    azure_openai_api_key: (document.getElementById("modalAzureKey")?.value || "").trim(),
+    azure_deployment: (document.getElementById("modalAzureDeployment")?.value || "").trim(),
+    azure_api_version: (document.getElementById("modalAzureApiVersion")?.value || "").trim(),
+    aws_region: (document.getElementById("modalAWSRegion")?.value || "").trim(),
+    aws_access_key: (document.getElementById("modalAWSAccessKey")?.value || "").trim(),
+    aws_secret_key: (document.getElementById("modalAWSSecretKey")?.value || "").trim(),
+    aws_session_token: (document.getElementById("modalAWSSessionToken")?.value || "").trim(),
+    aws_model: (document.getElementById("modalAWSModel")?.value || "").trim(),
+    openai_endpoint: (document.getElementById("modalOpenAIEndpoint")?.value || "").trim(),
+    openai_api_key: (document.getElementById("modalOpenAIKey")?.value || "").trim(),
+    openai_model: (document.getElementById("modalOpenAIModel")?.value || "").trim()
   };
   
   try {
@@ -1150,6 +1244,267 @@ async function saveSettingsFromModal() {
     }
   } catch (err) {
     console.error("Save settings failed:", err);
+  }
+}
+
+// Canonical Model Rendering
+function renderCanonicalModel(brd) {
+  if (!brd) return;
+
+  // 17 Canonical Requirements Table
+  const reqTbody = document.getElementById("canonicalReqsTableBody");
+  if (reqTbody && brd.canonical_requirements) {
+    reqTbody.innerHTML = brd.canonical_requirements.map(r => `
+      <tr>
+        <td><strong>${r.id}</strong></td>
+        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${r.category}</span></td>
+        <td><span class="badge ${r.priority === 'High' ? 'badge-warning' : 'badge-info'}" style="font-size: 0.72rem;">${r.priority || 'Medium'}</span></td>
+        <td><span class="badge badge-success" style="font-size: 0.72rem;">${r.status || 'Active'}</span></td>
+        <td><span style="font-size: 0.78rem; color: #94a3b8;">${r.actor || 'System'}</span></td>
+        <td style="font-weight: 500; color: #f1f5f9; font-size: 0.82rem;">${r.statement || r.description || r.title}</td>
+        <td style="font-size: 0.8rem; color: var(--primary);">${r.acceptance_criteria || ''}</td>
+      </tr>
+    `).join("");
+  }
+
+  // Capability Catalog
+  const capTbody = document.getElementById("capabilitiesTableBody");
+  if (capTbody && brd.capabilities) {
+    capTbody.innerHTML = brd.capabilities.map(c => {
+      const isInScope = (c.scope_status === "IN_SCOPE" || c.in_scope);
+      const comps = Array.isArray(c.components) ? c.components.join(", ") : (c.components || "");
+      return `
+        <tr style="${isInScope ? '' : 'opacity: 0.65;'}">
+          <td><strong>${c.capability_id || c.code}</strong></td>
+          <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${c.category || 'Core'}</span></td>
+          <td style="font-weight: 500; color: #f1f5f9;">${c.name}</td>
+          <td>
+            <span class="badge ${isInScope ? 'badge-success' : 'badge-warning'}" style="font-size: 0.72rem;">
+              ${c.scope_status || (isInScope ? 'IN_SCOPE' : 'OUT_OF_SCOPE')}
+            </span>
+          </td>
+          <td style="font-size: 0.8rem; color: #94a3b8;">${c.description || ''}</td>
+          <td style="font-size: 0.78rem; color: var(--primary);">${comps}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  // Data Flows
+  const dfTbody = document.getElementById("dataFlowsTableBody");
+  if (dfTbody && brd.data_flows) {
+    dfTbody.innerHTML = brd.data_flows.map(df => `
+      <tr>
+        <td><strong>${df.flow_id || df.id}</strong></td>
+        <td style="font-weight: 500; color: #f1f5f9;">${df.name || df.flow_name}</td>
+        <td><code>${df.source || df.source_system}</code></td>
+        <td><code>${df.target || df.target_system}</code></td>
+        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${df.protocol}</span></td>
+        <td style="font-size: 0.8rem; color: #cbd5e1;">${df.data_objects || df.data_payload}</td>
+        <td style="font-size: 0.8rem; color: #f87171;">${df.failure_handling || df.security_control}</td>
+      </tr>
+    `).join("");
+  }
+
+  // HITL Gates
+  if (brd.hitl_gates) {
+    renderHITLGates(brd.hitl_gates);
+  }
+}
+
+// 4 HITL Gates Rendering & Approval
+function renderHITLGates(gates) {
+  gates = gates || {};
+  const g1 = !!(gates.gate1_requirements_approved || gates.gate_1_scope_confirmed);
+  const g2 = !!(gates.gate2_solution_approved || gates.gate_2_feasibility_confirmed);
+  const g3 = !!(gates.gate3_estimate_approved || gates.gate_3_commercial_confirmed);
+  const g4 = !!(gates.gate4_brd_approved || gates.gate_4_executive_signoff);
+
+  updateGateBadgeUI("gate1Badge", "btnApproveGate1", g1, gates.gate1_notes || gates.gate_1_notes);
+  updateGateBadgeUI("gate2Badge", "btnApproveGate2", g2, gates.gate2_notes || gates.gate_2_notes);
+  updateGateBadgeUI("gate3Badge", "btnApproveGate3", g3, gates.gate3_notes || gates.gate_3_notes);
+  updateGateBadgeUI("gate4Badge", "btnApproveGate4", g4, gates.gate4_notes || gates.gate_4_notes);
+}
+
+function updateGateBadgeUI(badgeId, btnId, isPassed, notes) {
+  const badge = document.getElementById(badgeId);
+  const btn = document.getElementById(btnId);
+  if (badge) {
+    badge.textContent = isPassed ? "PASSED" : "PENDING";
+    badge.style.background = isPassed ? "rgba(16, 185, 129, 0.2)" : "rgba(245, 158, 11, 0.2)";
+    badge.style.color = isPassed ? "#10b981" : "#f59e0b";
+  }
+  if (btn) {
+    if (isPassed) {
+      btn.textContent = "✅ Approved";
+      btn.disabled = true;
+      btn.style.opacity = "0.7";
+      btn.style.cursor = "default";
+    } else {
+      btn.textContent = "Approve Gate";
+      btn.disabled = false;
+      btn.style.opacity = "1";
+      btn.style.cursor = "pointer";
+    }
+  }
+}
+
+async function approveHITLGate(gateId) {
+  if (!currentSessionId) return;
+  const promptText = `Enter sign-off notes for ${gateId.replace('_', ' ').toUpperCase()}:`;
+  const notes = prompt(promptText, "Approved by Lead Architect per reference.txt guidelines.") || "Approved";
+  try {
+    const res = await fetch("/api/gates/approve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        gate: gateId,
+        approved: true,
+        notes: notes
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.hitl_gates) {
+        if (currentSessionData.brd) {
+          currentSessionData.brd.hitl_gates = data.hitl_gates;
+        }
+        renderHITLGates(data.hitl_gates);
+      }
+    }
+  } catch (err) {
+    console.error("Gate approval failed:", err);
+  }
+}
+
+// Calculation Ledger Rendering
+function renderCalculationLedger(brd) {
+  const tbody = document.getElementById("calcLedgerTableBody");
+  if (!tbody || !brd || !brd.calculation_ledger) return;
+
+  tbody.innerHTML = brd.calculation_ledger.map(item => {
+    const resSummary = typeof item.result === "object" ? JSON.stringify(item.result) : (item.result || item.output_value || "");
+    return `
+      <tr>
+        <td><strong>${item.calculation_id || item.step_id}</strong></td>
+        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${item.calculation_type || item.component_or_multiplier}</span></td>
+        <td style="font-family: monospace; font-size: 0.78rem; color: var(--primary);">${item.formula || item.formula_applied}</td>
+        <td style="font-weight: 600; color: var(--success); font-size: 0.82rem;">${resSummary}</td>
+        <td style="font-size: 0.76rem; color: #94a3b8;">${item.timestamp || ""}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// Impact Analysis Parameter Handler
+function onImpactParamChange() {
+  const sel = document.getElementById("impactParamSelect");
+  const oldValInput = document.getElementById("impactOldVal");
+  const newValInput = document.getElementById("impactNewVal");
+  if (!sel || !oldValInput || !newValInput) return;
+
+  const brd = currentSessionData ? currentSessionData.brd : null;
+  const param = sel.value;
+
+  if (param === "users") {
+    const curUsers = (brd && brd.sizing_metrics) ? brd.sizing_metrics.target_users : 200;
+    oldValInput.value = curUsers;
+    newValInput.value = curUsers * 2.5;
+  } else if (param === "tier") {
+    const curTier = brd ? brd.delivery_tier : "PoC";
+    oldValInput.value = curTier;
+    newValInput.value = (curTier === "PoC" || curTier === "Starter") ? "MVP" : "Full Scale Enterprise";
+  } else if (param === "duration") {
+    const curWeeks = brd ? brd.total_duration_weeks : 6.0;
+    oldValInput.value = `${curWeeks.toFixed(1)} wks`;
+    newValInput.value = `${(curWeeks + 2.0).toFixed(1)} wks`;
+  } else if (param === "rate") {
+    const curRate = (brd && brd.blended_hourly_rate) ? brd.blended_hourly_rate : 30.0;
+    oldValInput.value = `$${curRate}/hr`;
+    newValInput.value = `$${curRate + 10}/hr`;
+  }
+}
+
+// Interactive Impact Analysis Calculation
+async function runInteractiveImpactAnalysis() {
+  if (!currentSessionId) return;
+
+  const sel = document.getElementById("impactParamSelect");
+  const oldValInput = document.getElementById("impactOldVal");
+  const newValInput = document.getElementById("impactNewVal");
+  if (!sel || !oldValInput || !newValInput) return;
+
+  const param = sel.value;
+  const oldVal = oldValInput.value;
+  const newVal = newValInput.value;
+
+  try {
+    const res = await fetch("/api/impact-analysis", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        parameter_changed: param,
+        old_value: oldVal,
+        new_value: newVal
+      })
+    });
+    if (res.ok) {
+      const result = await res.json();
+      renderImpactAnalysisResults(result);
+    }
+  } catch (err) {
+    console.error("Impact analysis failed:", err);
+  }
+}
+
+function renderImpactAnalysisResults(result) {
+  if (!result) return;
+  const container = document.getElementById("impactResultsContainer");
+  if (container) container.style.display = "block";
+
+  const sym = (currentSessionData && currentSessionData.brd) ? (currentSessionData.brd.currency_symbol || "$") : "$";
+
+  const narrEl = document.getElementById("impactNarrative");
+  if (narrEl) {
+    narrEl.textContent = result.narrative_explanation || "";
+  }
+
+  const deltaDaysEl = document.getElementById("impactDeltaDays");
+  if (deltaDaysEl) {
+    const sign = result.delta_days >= 0 ? "+" : "";
+    deltaDaysEl.textContent = `${sign}${result.delta_days.toFixed(1)} d`;
+    deltaDaysEl.style.color = result.delta_days > 0 ? "#f87171" : "var(--success)";
+  }
+
+  const deltaCostEl = document.getElementById("impactDeltaCost");
+  if (deltaCostEl) {
+    const sign = result.delta_cost_usd >= 0 ? "+" : "";
+    deltaCostEl.textContent = `${sign}${sym}${Math.round(result.delta_cost_usd).toLocaleString()}`;
+    deltaCostEl.style.color = result.delta_cost_usd > 0 ? "#f87171" : "var(--success)";
+  }
+
+  const deltaFteEl = document.getElementById("impactDeltaFTE");
+  if (deltaFteEl) {
+    const sign = result.delta_fte >= 0 ? "+" : "";
+    deltaFteEl.textContent = `${sign}${result.delta_fte.toFixed(2)} FTE`;
+  }
+
+  const detailsEl = document.getElementById("impactAffectedDetails");
+  if (detailsEl) {
+    let affectedHtml = "";
+    if (result.affected_dimensions && Object.keys(result.affected_dimensions).length > 0) {
+      affectedHtml += "<strong>Affected Dimensions:</strong><ul style='margin: 4px 0 8px 18px;'>";
+      for (const [dim, val] of Object.entries(result.affected_dimensions)) {
+        affectedHtml += `<li><strong>${dim}</strong>: ${typeof val === 'object' ? JSON.stringify(val) : val}</li>`;
+      }
+      affectedHtml += "</ul>";
+    }
+    if (result.unaffected_dimensions && result.unaffected_dimensions.length > 0) {
+      affectedHtml += `<strong>Unaffected Dimensions (Protected Scope):</strong> <code>${result.unaffected_dimensions.join(', ')}</code>`;
+    }
+    detailsEl.innerHTML = affectedHtml;
   }
 }
 

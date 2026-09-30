@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any, List
 from backend.models import (
     ProjectSession, ChatMessage, AnswerItem, BRDDocument,
     AssumptionItem, TaskEstimate, RoleEffort, ProjectPhase,
-    TechnicalComponent, SizingMetrics, SizingBOM
+    TechnicalComponent, SizingMetrics, SizingBOM, HITLGates
 )
 from backend.agent_discovery import (
     STATIC_QUESTIONS, process_user_answer, get_current_question,
@@ -21,6 +21,12 @@ from backend.agent_discovery import (
 from backend.agent_planner import generate_brd
 from backend.pptx_generator import create_presentation_deck
 from backend.file_processor import extract_text_from_file
+from backend.export_generator import (
+    generate_word_brd, generate_pdf_brd,
+    generate_excel_financial_model, generate_jira_backlog_csv
+)
+from backend.llm_gateway import LLMGateway
+from backend.impact_engine import calculate_change_impact
 from backend.config import get_settings, update_settings, AISettings
 from backend.admin_store import (
     get_admin_defaults, save_admin_defaults,
@@ -80,6 +86,7 @@ def get_session_endpoint(session_id: Optional[str] = None):
     session = get_or_create_session(session_id)
     current_q = get_current_question(session)
     questions = get_discovery_questions()
+    gates = getattr(session, "hitl_gates", None) or HITLGates()
     return {
         "session_id": session.session_id,
         "current_question_index": session.current_question_index,
@@ -91,7 +98,8 @@ def get_session_endpoint(session_id: Optional[str] = None):
         "has_brd": session.brd is not None,
         "brd": session.brd.model_dump() if session.brd else None,
         "has_handoff": session.handoff_dossier is not None,
-        "handoff_data": session.handoff_dossier
+        "handoff_data": session.handoff_dossier,
+        "hitl_gates": gates.model_dump()
     }
 
 class ChatInput(BaseModel):
@@ -396,6 +404,40 @@ def export_jira_endpoint(session_id: str):
         filename=filename
     )
 
+@app.get("/api/export/pdf")
+def export_pdf_endpoint(session_id: str):
+    session = get_or_create_session(session_id)
+    if not session.brd:
+        session.brd = generate_brd(session)
+    export_dir = "exports"
+    os.makedirs(export_dir, exist_ok=True)
+    safe_client = re.sub(r'[^\w\-]', '_', session.brd.client_name)[:30]
+    filename = f"BRD_{safe_client}_{session.session_id[:8]}.pdf"
+    output_path = os.path.join(export_dir, filename)
+    generate_pdf_brd(session.brd, output_path)
+    return FileResponse(
+        path=output_path,
+        media_type="application/pdf",
+        filename=filename
+    )
+
+@app.get("/api/export/docx")
+def export_docx_endpoint(session_id: str):
+    session = get_or_create_session(session_id)
+    if not session.brd:
+        session.brd = generate_brd(session)
+    export_dir = "exports"
+    os.makedirs(export_dir, exist_ok=True)
+    safe_client = re.sub(r'[^\w\-]', '_', session.brd.client_name)[:30]
+    filename = f"BRD_{safe_client}_{session.session_id[:8]}.docx"
+    output_path = os.path.join(export_dir, filename)
+    generate_word_brd(session.brd, output_path)
+    return FileResponse(
+        path=output_path,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename=filename
+    )
+
 @app.get("/api/export-pptx")
 def export_pptx_endpoint(session_id: str):
     session = get_or_create_session(session_id)
@@ -516,32 +558,152 @@ def get_settings_endpoint():
     return get_settings().model_dump()
 
 class SettingsPayload(BaseModel):
-    provider: str
+    provider: Optional[str] = None
+    active_provider: Optional[str] = None
+    google_api_key: Optional[str] = None
+    google_endpoint: Optional[str] = None
+    google_model: Optional[str] = None
+    google_temperature: Optional[float] = None
     gemini_api_key: Optional[str] = None
     azure_openai_endpoint: Optional[str] = None
     azure_openai_api_key: Optional[str] = None
+    azure_deployment: Optional[str] = None
+    azure_api_version: Optional[str] = None
+    azure_temperature: Optional[float] = None
     aws_access_key: Optional[str] = None
     aws_secret_key: Optional[str] = None
+    aws_session_token: Optional[str] = None
     aws_region: Optional[str] = None
+    aws_model_id: Optional[str] = None
+    aws_model: Optional[str] = None
+    openai_endpoint: Optional[str] = None
+    openai_api_key: Optional[str] = None
+    openai_model: Optional[str] = None
 
 @app.post("/api/settings")
 def save_settings_endpoint(payload: SettingsPayload):
     curr = get_settings()
-    curr.active_provider = payload.provider
-    if payload.gemini_api_key is not None:
-        curr.gemini_api_key = payload.gemini_api_key
+    p = payload.provider or payload.active_provider
+    if p:
+        curr.active_provider = p
+    if payload.google_api_key is not None:
+        curr.google_api_key = payload.google_api_key
+    elif payload.gemini_api_key is not None:
+        curr.google_api_key = payload.gemini_api_key
+    if payload.google_endpoint is not None:
+        curr.google_endpoint = payload.google_endpoint
+    if payload.google_model is not None:
+        curr.google_model = payload.google_model
+    if payload.google_temperature is not None:
+        curr.google_temperature = payload.google_temperature
     if payload.azure_openai_endpoint is not None:
-        curr.azure_openai_endpoint = payload.azure_openai_endpoint
+        curr.azure_endpoint = payload.azure_openai_endpoint
     if payload.azure_openai_api_key is not None:
-        curr.azure_openai_api_key = payload.azure_openai_api_key
+        curr.azure_api_key = payload.azure_openai_api_key
+    if payload.azure_deployment is not None:
+        curr.azure_deployment = payload.azure_deployment
+    if payload.azure_api_version is not None:
+        curr.azure_api_version = payload.azure_api_version
+    if payload.azure_temperature is not None:
+        curr.azure_temperature = payload.azure_temperature
     if payload.aws_access_key is not None:
-        curr.aws_access_key = payload.aws_access_key
+        curr.aws_access_key_id = payload.aws_access_key
     if payload.aws_secret_key is not None:
-        curr.aws_secret_key = payload.aws_secret_key
+        curr.aws_secret_access_key = payload.aws_secret_key
+    if payload.aws_session_token is not None:
+        curr.aws_session_token = payload.aws_session_token
     if payload.aws_region is not None:
         curr.aws_region = payload.aws_region
+    if payload.aws_model_id is not None:
+        curr.aws_model_id = payload.aws_model_id
+    elif payload.aws_model is not None:
+        curr.aws_model_id = payload.aws_model
+    if payload.openai_endpoint is not None:
+        curr.openai_endpoint = payload.openai_endpoint
+    if payload.openai_api_key is not None:
+        curr.openai_api_key = payload.openai_api_key
+    if payload.openai_model is not None:
+        curr.openai_model = payload.openai_model
     update_settings(curr)
     return {"status": "success", "settings": curr.model_dump()}
+
+@app.post("/api/settings/test-connection")
+def test_connection_endpoint(payload: Optional[SettingsPayload] = None):
+    if payload:
+        curr = get_settings()
+        p = payload.provider or payload.active_provider
+        if p:
+            curr.active_provider = p
+        if payload.google_api_key: curr.google_api_key = payload.google_api_key
+        elif payload.gemini_api_key: curr.google_api_key = payload.gemini_api_key
+        if payload.google_endpoint: curr.google_endpoint = payload.google_endpoint
+        if payload.google_model: curr.google_model = payload.google_model
+        if payload.azure_openai_endpoint: curr.azure_endpoint = payload.azure_openai_endpoint
+        if payload.azure_openai_api_key: curr.azure_api_key = payload.azure_openai_api_key
+        if payload.azure_deployment: curr.azure_deployment = payload.azure_deployment
+        if payload.aws_access_key: curr.aws_access_key_id = payload.aws_access_key
+        if payload.aws_secret_key: curr.aws_secret_access_key = payload.aws_secret_key
+        if payload.aws_region: curr.aws_region = payload.aws_region
+        if payload.aws_model_id: curr.aws_model_id = payload.aws_model_id
+        elif payload.aws_model: curr.aws_model_id = payload.aws_model
+        if payload.openai_endpoint: curr.openai_endpoint = payload.openai_endpoint
+        if payload.openai_api_key: curr.openai_api_key = payload.openai_api_key
+        if payload.openai_model: curr.openai_model = payload.openai_model
+        return LLMGateway.test_connection(curr)
+    return LLMGateway.test_connection()
+
+class ImpactRequest(BaseModel):
+    session_id: str
+    parameter_changed: str
+    old_value: Any
+    new_value: Any
+
+@app.post("/api/impact-analysis")
+def impact_analysis_endpoint(payload: ImpactRequest):
+    session = get_or_create_session(payload.session_id)
+    if not session.brd:
+        session.brd = generate_brd(session)
+    res = calculate_change_impact(
+        current_brd=session.brd,
+        parameter_changed=payload.parameter_changed,
+        old_value=payload.old_value,
+        new_value=payload.new_value
+    )
+    return res.model_dump()
+
+class GateApprovalPayload(BaseModel):
+    session_id: str
+    gate: str
+    approved: bool = True
+    notes: Optional[str] = None
+
+@app.post("/api/gates/approve")
+def approve_gate_endpoint(payload: GateApprovalPayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "hitl_gates") or not session.hitl_gates:
+        session.hitl_gates = HITLGates()
+    g = payload.gate.lower().strip()
+    if "1" in g or "req" in g:
+        session.hitl_gates.gate1_requirements_approved = payload.approved
+        session.hitl_gates.gate1_notes = payload.notes
+    elif "2" in g or "sol" in g:
+        session.hitl_gates.gate2_solution_approved = payload.approved
+        session.hitl_gates.gate2_notes = payload.notes
+    elif "3" in g or "est" in g:
+        session.hitl_gates.gate3_estimate_approved = payload.approved
+        session.hitl_gates.gate3_notes = payload.notes
+    elif "4" in g or "brd" in g:
+        session.hitl_gates.gate4_brd_approved = payload.approved
+        session.hitl_gates.gate4_notes = payload.notes
+    if session.brd:
+        session.brd.hitl_gates = session.hitl_gates
+    return {"status": "success", "hitl_gates": session.hitl_gates.model_dump()}
+
+@app.get("/api/gates")
+def get_gates_endpoint(session_id: str):
+    session = get_or_create_session(session_id)
+    gates = getattr(session, "hitl_gates", None) or HITLGates()
+    return {"status": "success", "hitl_gates": gates.model_dump()}
 
 @app.get("/api/admin/defaults")
 def get_admin_defaults_endpoint():

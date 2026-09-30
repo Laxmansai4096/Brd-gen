@@ -365,3 +365,243 @@ def generate_jira_backlog_csv(brd: BRDDocument, output_path: str) -> str:
             })
             
     return output_path
+
+def generate_pdf_brd(brd: BRDDocument, output_path: str) -> str:
+    """Generates an executive-ready, corporate-grade PDF BRD document per reference.txt."""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+
+    doc = SimpleDocTemplate(
+        output_path,
+        pagesize=letter,
+        leftMargin=40,
+        rightMargin=40,
+        topMargin=40,
+        bottomMargin=40
+    )
+
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle(
+        'DocTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=20,
+        leading=24,
+        textColor=colors.HexColor('#0F172A'),
+        alignment=1, # Center
+        spaceAfter=6
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'DocSub',
+        parent=styles['Normal'],
+        fontName='Helvetica-Oblique',
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#475569'),
+        alignment=1,
+        spaceAfter=15
+    )
+
+    h1_style = ParagraphStyle(
+        'SecH1',
+        parent=styles['Heading2'],
+        fontName='Helvetica-Bold',
+        fontSize=13,
+        leading=17,
+        textColor=colors.HexColor('#0E7490'),
+        spaceBefore=12,
+        spaceAfter=6
+    )
+
+    body_style = ParagraphStyle(
+        'SecBody',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor('#1E293B'),
+        spaceAfter=6
+    )
+
+    table_header_style = ParagraphStyle(
+        'TH',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=10,
+        textColor=colors.white
+    )
+
+    table_cell_style = ParagraphStyle(
+        'TD',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=7.5,
+        leading=10,
+        textColor=colors.HexColor('#1E293B')
+    )
+
+    story = []
+
+    # Title & Metadata Banner
+    story.append(Paragraph("BUSINESS REQUIREMENTS DOCUMENT (BRD)", title_style))
+    story.append(Paragraph(f"{brd.project_title.upper()}", title_style))
+    story.append(Paragraph(f"Client: {brd.client_name} &nbsp;|&nbsp; Delivery Tier: {brd.delivery_tier} ({brd.tier_kind}) &nbsp;|&nbsp; Duration: {brd.total_duration_weeks:.1f} Weeks", subtitle_style))
+    story.append(Spacer(1, 8))
+
+    # Summary Stats Table
+    stats_data = [
+        [
+            Paragraph("<b>Total Effort:</b>", table_cell_style),
+            Paragraph(f"{brd.total_person_days:.1f} Person-Days ({brd.total_person_hours:.0f} hrs)", table_cell_style),
+            Paragraph("<b>Total Labour Cost:</b>", table_cell_style),
+            Paragraph(f"{brd.currency_symbol}{brd.total_labour_cost_usd:,.2f} ({brd.currency_symbol}{brd.blended_hourly_rate:.0f}/hr)", table_cell_style),
+        ],
+        [
+            Paragraph("<b>Working Calendar:</b>", table_cell_style),
+            Paragraph(f"{brd.daily_working_hours:.1f} hrs/day, 5 days/wk", table_cell_style),
+            Paragraph("<b>Cloud Infrastructure:</b>", table_cell_style),
+            Paragraph(f"${brd.sizing_metrics.total_monthly_cloud_cost_usd:,.2f}/mo", table_cell_style),
+        ],
+        [
+            Paragraph("<b>Start / End Dates:</b>", table_cell_style),
+            Paragraph(f"{brd.start_date} &rarr; {brd.target_end_date}", table_cell_style),
+            Paragraph("<b>Feasibility Status:</b>", table_cell_style),
+            Paragraph("FEASIBLE (All constraints satisfied)" if brd.schedule_feasibility.is_feasible else f"STRETCHED (+{brd.schedule_feasibility.resolved_duration_weeks - brd.schedule_feasibility.reference_duration_weeks:.1f} wks)", table_cell_style),
+        ]
+    ]
+    t_stats = Table(stats_data, colWidths=[110, 155, 110, 155])
+    t_stats.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F8FAFC')),
+        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+        ('PADDING', (0, 0), (-1, -1), 5),
+    ]))
+    story.append(t_stats)
+    story.append(Spacer(1, 12))
+
+    # 1. Executive Summary & Problem
+    story.append(Paragraph("1. Executive Summary & Problem Statement", h1_style))
+    story.append(Paragraph(brd.executive_summary, body_style))
+    story.append(Paragraph(f"<b>Core Challenge:</b> {brd.problem_statement}", body_style))
+    story.append(Paragraph(f"<b>Solution Approach (6 Sentences):</b> {brd.solution_summary_six_sentences}", body_style))
+    story.append(Spacer(1, 8))
+
+    # 2. Scope Demarcation
+    story.append(Paragraph("2. Scope Demarcation & Capabilities", h1_style))
+    scope_data = [[Paragraph("<b>In-Scope Deliverables</b>", table_header_style), Paragraph("<b>Explicitly Out-of-Scope</b>", table_header_style)]]
+    max_len = max(len(brd.in_scope), len(brd.out_of_scope))
+    for i in range(max_len):
+        in_s = brd.in_scope[i] if i < len(brd.in_scope) else ""
+        out_s = brd.out_of_scope[i] if i < len(brd.out_of_scope) else ""
+        scope_data.append([Paragraph(f"&bull; {in_s}", table_cell_style), Paragraph(f"&bull; {out_s}", table_cell_style)])
+    
+    t_scope = Table(scope_data, colWidths=[265, 265])
+    t_scope.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0E7490')),
+        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+        ('PADDING', (0, 0), (-1, -1), 4),
+    ]))
+    story.append(t_scope)
+    story.append(Spacer(1, 10))
+
+    # 3. 12-Discipline Resource Allocation & Cost
+    story.append(Paragraph("3. 12-Discipline Resource Allocation & Cost Plan", h1_style))
+    roles_table_data = [[
+        Paragraph("<b>Code</b>", table_header_style),
+        Paragraph("<b>Discipline Role</b>", table_header_style),
+        Paragraph("<b>Days</b>", table_header_style),
+        Paragraph("<b>Hours</b>", table_header_style),
+        Paragraph("<b>Rate</b>", table_header_style),
+        Paragraph("<b>Cost</b>", table_header_style),
+        Paragraph("<b>FTE</b>", table_header_style)
+    ]]
+    for r in brd.role_efforts:
+        roles_table_data.append([
+            Paragraph(r.role_code, table_cell_style),
+            Paragraph(r.role, table_cell_style),
+            Paragraph(f"{r.days:.1f} d", table_cell_style),
+            Paragraph(f"{r.hours:.0f} h", table_cell_style),
+            Paragraph(f"${r.rate_hourly:.0f}/h", table_cell_style),
+            Paragraph(f"${r.cost:,.0f}", table_cell_style),
+            Paragraph(f"{r.total_assigned_fte:.2f}", table_cell_style),
+        ])
+    roles_table_data.append([
+        Paragraph("<b>TOTAL</b>", table_cell_style),
+        Paragraph("<b>12 Disciplines Standardized</b>", table_cell_style),
+        Paragraph(f"<b>{brd.total_person_days:.1f} d</b>", table_cell_style),
+        Paragraph(f"<b>{brd.total_person_hours:.0f} h</b>", table_cell_style),
+        Paragraph(f"<b>${brd.blended_hourly_rate:.0f}/h</b>", table_cell_style),
+        Paragraph(f"<b>${brd.total_labour_cost_usd:,.0f}</b>", table_cell_style),
+        Paragraph("-", table_cell_style),
+    ])
+    t_roles = Table(roles_table_data, colWidths=[40, 160, 55, 55, 55, 80, 85])
+    t_roles.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0E7490')),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E2E8F0')),
+        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+        ('PADDING', (0, 0), (-1, -1), 4),
+    ]))
+    story.append(t_roles)
+    story.append(Spacer(1, 10))
+
+    # 4. Cloud Infrastructure Bill of Materials
+    story.append(Paragraph("4. Cloud Infrastructure Bill of Materials (BoM)", h1_style))
+    bom_data = [[
+        Paragraph("<b>Component</b>", table_header_style),
+        Paragraph("<b>SKU / Service</b>", table_header_style),
+        Paragraph("<b>Tier</b>", table_header_style),
+        Paragraph("<b>Monthly (USD)</b>", table_header_style),
+        Paragraph("<b>Justification</b>", table_header_style)
+    ]]
+    for b in brd.sizing_bom:
+        bom_data.append([
+            Paragraph(b.component, table_cell_style),
+            Paragraph(b.sku_or_service, table_cell_style),
+            Paragraph(b.tier, table_cell_style),
+            Paragraph(f"${b.monthly_cost_usd:,.2f}", table_cell_style),
+            Paragraph(b.justification, table_cell_style)
+        ])
+    t_bom = Table(bom_data, colWidths=[80, 140, 80, 70, 160])
+    t_bom.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0E7490')),
+        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+        ('PADDING', (0, 0), (-1, -1), 4),
+    ]))
+    story.append(t_bom)
+    story.append(Spacer(1, 10))
+
+    # 5. Technical Components
+    story.append(Paragraph("5. Technical Architecture Components", h1_style))
+    comp_data = [[
+        Paragraph("<b>ID</b>", table_header_style),
+        Paragraph("<b>Name</b>", table_header_style),
+        Paragraph("<b>Technology</b>", table_header_style),
+        Paragraph("<b>Key Design Decisions & Security</b>", table_header_style)
+    ]]
+    for c in brd.technical_components:
+        comp_data.append([
+            Paragraph(c.id, table_cell_style),
+            Paragraph(c.name, table_cell_style),
+            Paragraph(c.technology_choice or c.technology, table_cell_style),
+            Paragraph(f"{c.key_design_decisions} | {c.security_rai_controls}", table_cell_style)
+        ])
+    t_comp = Table(comp_data, colWidths=[40, 120, 120, 250])
+    t_comp.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0E7490')),
+        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+        ('PADDING', (0, 0), (-1, -1), 4),
+    ]))
+    story.append(t_comp)
+
+    doc.build(story)
+    return output_path
+

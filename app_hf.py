@@ -28,21 +28,18 @@ from app import app as fastapi_app
 
 # Native Gradio application rendering the Workbench
 with gr.Blocks(title="AI BRD Generator & Workbench", fill_height=True) as demo:
-    with gr.Row():
-        gr.Markdown("### ⚡ AI BRD Generator & Project Planner Workbench")
-    with gr.Row():
-        gr.HTML(
-            """
-            <iframe src="/static/index.html" width="100%" height="950px" style="border:none; width:100%; min-height:92vh; border-radius:8px;"></iframe>
-            """
-        )
+    gr.HTML(
+        """
+        <iframe src="/app/" width="100%" height="950px" style="border:none; width:100%; min-height:92vh; border-radius:8px;"></iframe>
+        """
+    )
 
-# Mount FastAPI endpoints onto Gradio's internal ASGI router
-for route in fastapi_app.routes:
-    demo.app.routes.append(route)
+# Mount FastAPI app cleanly as a sub-application under /app
+demo.app.mount("/app", fastapi_app)
 
 if __name__ == "__main__":
     demo.queue().launch(server_name="0.0.0.0", server_port=7860, show_api=False)
+
 
 
 

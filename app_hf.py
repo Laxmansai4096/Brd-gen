@@ -16,12 +16,12 @@ with gr.Blocks(title="AI BRD Generator & Workbench", theme=gr.themes.Base()) as 
         """
     )
 
-# Mount Gradio app into FastAPI under /gradio
+# Mount FastAPI app onto Gradio
 app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
 
-# Main execution for Hugging Face Spaces
+# On Hugging Face Spaces with 'sdk: gradio', HF automatically looks for 'demo'
+# and launches it on port 7860. If executed directly as a script:
 if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 7860))
-    uvicorn.run("app_hf:fastapi_app", host="0.0.0.0", port=port)
+    demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)), app_kwargs={"docs_url": None})
+
 

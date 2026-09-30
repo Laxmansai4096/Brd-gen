@@ -165,7 +165,7 @@ body {
   border-color: var(--primary);
 }
 
-/* Split Screen Container */
+/* 3-Column Modern Workspace Container */
 .workspace-container {
   display: flex;
   flex-direction: row;
@@ -178,10 +178,324 @@ body {
   position: relative;
 }
 
-/* Left Half: Chatbot Area (50%) */
+/* LEFT SIDEBAR: 290px User Profile, History & Workspace Navigation */
+.sidebar-panel {
+  width: 290px;
+  min-width: 290px;
+  max-width: 290px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
+  background: #0d1322;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.sidebar-scroll-area {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* User Profile Card */
+.user-profile-widget {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0284c7 0%, #818cf8 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid rgba(56, 189, 248, 0.4);
+  position: relative;
+}
+
+.status-online-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+  border: 2px solid #0f172a;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.profile-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-role {
+  font-size: 0.74rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.profile-tenant {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+/* Quick Action Buttons */
+.sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-sidebar-action {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.btn-sidebar-action.primary {
+  background: var(--primary-gradient);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+.btn-sidebar-action.primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.5);
+}
+
+.btn-sidebar-action.secondary {
+  background: rgba(30, 41, 59, 0.7);
+  color: #cbd5e1;
+  border: 1px solid var(--border-color);
+}
+
+.btn-sidebar-action.secondary:hover {
+  background: rgba(51, 65, 85, 0.9);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* Sidebar Search Box */
+.sidebar-search-box {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  gap: 6px;
+}
+
+.sidebar-search-box input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.8rem;
+  width: 100%;
+  outline: none;
+}
+
+/* Section Header in Sidebar */
+.sidebar-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.sidebar-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.sidebar-count-badge {
+  font-size: 0.7rem;
+  background: rgba(148, 163, 184, 0.15);
+  padding: 1px 6px;
+  border-radius: 10px;
+  color: var(--text-muted);
+}
+
+/* Project Folder Items */
+.project-folders-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-folder-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.project-folder-card:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.project-folder-card.active {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: var(--primary);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
+}
+
+.project-folder-header {
+  padding: 10px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.project-folder-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.folder-title-text {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-meta {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.project-subfiles {
+  padding: 6px 10px 10px 28px;
+  border-top: 1px solid rgba(71, 85, 105, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.project-subfile-link {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.project-subfile-link:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--primary);
+}
+
+.file-type-tag {
+  font-size: 0.68rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* Admin Nav Items */
+.admin-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-nav-btn {
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.admin-nav-btn:hover {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: var(--border-color);
+  color: #fff;
+}
+
+.sidebar-footer-widget {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-color);
+  background: rgba(15, 23, 42, 0.95);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+/* CENTER PANEL: Discovery Chatbot (380px - 440px) */
 .chat-panel {
-  width: 50%;
-  min-width: 320px;
+  width: 400px;
+  min-width: 350px;
+  max-width: 440px;
+  flex-shrink: 0;
   border-right: 1px solid var(--border-color);
   background: var(--bg-panel-left);
   display: flex;

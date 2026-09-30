@@ -644,6 +644,151 @@ def reset_endpoint(session_id: str):
     new_session = get_or_create_session(session_id)
     return {"status": "success", "session_id": new_session.session_id}
 
+@app.get("/api/projects/history")
+def get_projects_history_endpoint():
+    # Return list of project workspaces with full folder info and file links
+    projects = [
+        {
+            "id": "pvr-contract-intel",
+            "name": "PVR INOX — Contract Intelligence & Risk Visibility Platform",
+            "client": "PVR INOX",
+            "tier": "PoC (Greenfield Build)",
+            "headline_weight": 0.289,
+            "duration_weeks": 6.0,
+            "person_days": 83.6,
+            "labour_cost_usd": 22572.0,
+            "monthly_cloud_usd": 645.0,
+            "status": "Active / Baseline",
+            "updated_at": "Today, 11:20 AM",
+            "cloud_platform": "Microsoft Azure",
+            "categories": ["Lease", "Vendor", "Service", "Facilities", "Technology", "Marketing"],
+            "files": {
+                "word_docx": "/api/export/word?session_id=pvr-contract-intel",
+                "excel_xlsx": "/api/export/excel?session_id=pvr-contract-intel",
+                "jira_csv": "/api/export/jira?session_id=pvr-contract-intel",
+                "pptx_deck": "/api/export-pptx?session_id=pvr-contract-intel",
+                "brd_preview": "/api/export-brd?session_id=pvr-contract-intel"
+            },
+            "answers_count": 22,
+            "is_current": True
+        },
+        {
+            "id": "bank-aml-fraud",
+            "name": "Global Banking Corp — Intelligent AML & Financial Fraud Detection System",
+            "client": "Global Banking Corp",
+            "tier": "Production Grade",
+            "headline_weight": 1.000,
+            "duration_weeks": 16.0,
+            "person_days": 378.9,
+            "labour_cost_usd": 102300.0,
+            "monthly_cloud_usd": 1280.0,
+            "status": "Completed & Locked",
+            "updated_at": "28-Sep-2026",
+            "cloud_platform": "Amazon Web Services (AWS)",
+            "categories": ["AML Compliance", "Wire Transfers", "Card Transactions", "KYC Identity"],
+            "files": {
+                "word_docx": "/api/export/word?session_id=bank-aml-fraud",
+                "excel_xlsx": "/api/export/excel?session_id=bank-aml-fraud",
+                "jira_csv": "/api/export/jira?session_id=bank-aml-fraud",
+                "pptx_deck": "/api/export-pptx?session_id=bank-aml-fraud",
+                "brd_preview": "/api/export-brd?session_id=bank-aml-fraud"
+            },
+            "answers_count": 22,
+            "is_current": False
+        },
+        {
+            "id": "retail-virtual-agent",
+            "name": "Enterprise Retail — AI-Powered Customer Support & Virtual Agent Cockpit",
+            "client": "Enterprise Retail",
+            "tier": "Pilot to MVP",
+            "headline_weight": 0.557,
+            "duration_weeks": 8.0,
+            "person_days": 142.5,
+            "labour_cost_usd": 38475.0,
+            "monthly_cloud_usd": 580.0,
+            "status": "In Review",
+            "updated_at": "25-Sep-2026",
+            "cloud_platform": "Google Cloud Platform (GCP)",
+            "categories": ["Tier-1 Inquiries", "Order Tracking", "Returns & Refunds", "CRM Handoff"],
+            "files": {
+                "word_docx": "/api/export/word?session_id=retail-virtual-agent",
+                "excel_xlsx": "/api/export/excel?session_id=retail-virtual-agent",
+                "jira_csv": "/api/export/jira?session_id=retail-virtual-agent",
+                "pptx_deck": "/api/export-pptx?session_id=retail-virtual-agent",
+                "brd_preview": "/api/export-brd?session_id=retail-virtual-agent"
+            },
+            "answers_count": 22,
+            "is_current": False
+        },
+        {
+            "id": "health-clinical-extract",
+            "name": "Healthcare System — Intelligent Clinical Document Extraction Platform",
+            "client": "Healthcare System",
+            "tier": "MVP",
+            "headline_weight": 0.778,
+            "duration_weeks": 12.0,
+            "person_days": 218.4,
+            "labour_cost_usd": 58968.0,
+            "monthly_cloud_usd": 920.0,
+            "status": "Approved by Sponsor",
+            "updated_at": "20-Sep-2026",
+            "cloud_platform": "Microsoft Azure",
+            "categories": ["EHR Clinical Records", "Lab Results", "Insurance Pre-Auth", "Doctor Notes"],
+            "files": {
+                "word_docx": "/api/export/word?session_id=health-clinical-extract",
+                "excel_xlsx": "/api/export/excel?session_id=health-clinical-extract",
+                "jira_csv": "/api/export/jira?session_id=health-clinical-extract",
+                "pptx_deck": "/api/export-pptx?session_id=health-clinical-extract",
+                "brd_preview": "/api/export-brd?session_id=health-clinical-extract"
+            },
+            "answers_count": 22,
+            "is_current": False
+        }
+    ]
+    return {"projects": projects}
+
+@app.post("/api/projects/load")
+def load_project_endpoint(project_id: str):
+    # Initialize or load preset project session
+    session = get_or_create_session(project_id)
+    if not session.brd:
+        # Prepopulate answers based on template
+        if project_id == "bank-aml-fraud":
+            session.answers["q_client"] = AnswerItem(question_id="q_client", question_title="Client", answer="Global Banking Corp | Intelligent AML & Financial Fraud Detection System")
+            session.answers["q_tier"] = AnswerItem(question_id="q_tier", question_title="Delivery Tier", answer="Production Grade")
+            session.answers["q_problem"] = AnswerItem(question_id="q_problem", question_title="Problem", answer="High volume of financial transactions requiring real-time AML scoring, fraud anomaly detection, and automated regulatory reporting.")
+            session.answers["q_duration"] = AnswerItem(question_id="q_duration", question_title="Duration", answer="16.0")
+            session.answers["q_cloud"] = AnswerItem(question_id="q_cloud", question_title="Cloud", answer="Amazon Web Services (AWS)")
+            session.answers["q_compliance"] = AnswerItem(question_id="q_compliance", question_title="Compliance", answer="Regulated - high (BFSI/Health/Gov)")
+            session.answers["q_complexity"] = AnswerItem(question_id="q_complexity", question_title="Complexity", answer="High")
+        elif project_id == "retail-virtual-agent":
+            session.answers["q_client"] = AnswerItem(question_id="q_client", question_title="Client", answer="Enterprise Retail | AI-Powered Customer Support & Virtual Agent Cockpit")
+            session.answers["q_tier"] = AnswerItem(question_id="q_tier", question_title="Delivery Tier", answer="Pilot to MVP")
+            session.answers["q_problem"] = AnswerItem(question_id="q_problem", question_title="Problem", answer="High volume of tier-1 customer inquiries causing long wait times. Automated deflection via grounded conversational AI required.")
+            session.answers["q_duration"] = AnswerItem(question_id="q_duration", question_title="Duration", answer="8.0")
+            session.answers["q_cloud"] = AnswerItem(question_id="q_cloud", question_title="Cloud", answer="Google Cloud Platform (GCP)")
+        elif project_id == "health-clinical-extract":
+            session.answers["q_client"] = AnswerItem(question_id="q_client", question_title="Client", answer="Healthcare System | Intelligent Clinical Document Extraction Platform")
+            session.answers["q_tier"] = AnswerItem(question_id="q_tier", question_title="Delivery Tier", answer="MVP")
+            session.answers["q_problem"] = AnswerItem(question_id="q_problem", question_title="Problem", answer="Manual medical record parsing and insurance claim pre-authorization extraction.")
+            session.answers["q_duration"] = AnswerItem(question_id="q_duration", question_title="Duration", answer="12.0")
+            session.answers["q_compliance"] = AnswerItem(question_id="q_compliance", question_title="Compliance", answer="Regulated - high (BFSI/Health/Gov)")
+        else: # PVR
+            for q in STATIC_QUESTIONS:
+                session.answers[q.id] = AnswerItem(question_id=q.id, question_title=q.title, answer=q.default_value)
+
+        brd = generate_brd(session)
+        session.brd = brd
+        compile_and_save_handoff_dossier(session)
+        
+    return {
+        "status": "success",
+        "session_id": session.session_id,
+        "brd": session.brd.model_dump() if session.brd else None,
+        "answers": {k: v.model_dump() for k, v in session.answers.items()},
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="127.0.0.1", port=8088, reload=True)

@@ -60,9 +60,93 @@
     </div>
   </header>
 
-  <!-- 50/50 Split Screen Workspace -->
+  <!-- 3-Column Modern Workspace -->
   <main class="workspace-container">
-    <!-- LEFT PANEL: 50% Discovery Chatbot Area -->
+    <!-- 1. LEFT SIDEBAR: User Profile, Folder History & System Controls -->
+    <aside class="sidebar-panel" id="sidebarPanel">
+      <div class="sidebar-scroll-area">
+        <!-- User Profile Card -->
+        <div class="user-profile-widget">
+          <div class="profile-avatar">
+            AM
+            <span class="status-online-dot" title="Active Solution Architect Session"></span>
+          </div>
+          <div class="profile-info">
+            <span class="profile-name">Alex Morgan</span>
+            <span class="profile-role">Principal Solutions Architect</span>
+            <span class="profile-tenant">⚡ Enterprise AI Delivery Hub</span>
+          </div>
+        </div>
+
+        <!-- Quick Workspace Action Buttons -->
+        <div class="sidebar-actions">
+          <button class="btn-sidebar-action primary" onclick="resetSession()">
+            <span>➕</span> New BRD Discovery Interview
+          </button>
+          <button class="btn-sidebar-action secondary" onclick="document.getElementById('rfpAutoDiscoverInput').click()">
+            <span>⚡</span> 0-Click RFP Document Ingestion
+          </button>
+        </div>
+
+        <!-- Search Project Workspaces -->
+        <div class="sidebar-search-box">
+          <span>🔍</span>
+          <input type="text" id="projectSearchInput" placeholder="Filter project workspaces..." oninput="filterProjectFolders(this.value)">
+        </div>
+
+        <!-- Folderwise Project BRD Archives & Chat History -->
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">📂 Project Workspaces & BRDs</span>
+          <span class="sidebar-count-badge" id="projectCountBadge">4 Projects</span>
+        </div>
+
+        <div class="project-folders-container" id="projectFoldersList">
+          <!-- Dynamically populated from /api/projects/history -->
+        </div>
+
+        <!-- Admin & Governance Shortcuts -->
+        <div class="sidebar-section-header" style="margin-top: 4px;">
+          <span class="sidebar-section-title">🛡️ System & Admin Console</span>
+        </div>
+
+        <div class="admin-nav-list">
+          <button class="admin-nav-btn" onclick="openAdminModal()">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span>🛡️</span> Enterprise Admin Console
+            </span>
+            <span style="font-size: 0.72rem; color: var(--primary);">9h / 7h / 8h</span>
+          </button>
+          <button class="admin-nav-btn" onclick="openSettingsModal()">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span>☁️</span> Multi-Cloud AI Settings
+            </span>
+            <span style="font-size: 0.72rem; color: var(--text-dim);">Azure/AWS/GCP</span>
+          </button>
+          <button class="admin-nav-btn" onclick="openRevisionsModal()">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span>🕒</span> Plan Revisions & Diffs
+            </span>
+            <span class="sidebar-count-badge" id="sidebarRevCountBadge">Rev Log</span>
+          </button>
+          <button class="admin-nav-btn" onclick="openEditResponsesModal()">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span>✏️</span> Discovery Q&A Overrides
+            </span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">6 Factors</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer-widget">
+        <span>💵 Rate: <strong>$30.00/hr</strong></span>
+        <span style="color: var(--success); display: flex; align-items: center; gap: 4px;">
+          <span class="dot-pulse" style="width: 6px; height: 6px;"></span> Admin Access
+        </span>
+      </div>
+    </aside>
+
+    <!-- 2. CENTER PANEL: Discovery Chatbot Area -->
     <section class="chat-panel">
       <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
         <div class="panel-title" style="display: flex; align-items: center; gap: 8px;">

@@ -5,6 +5,7 @@ let currentSessionData = null;
 document.addEventListener("DOMContentLoaded", async () => {
   await loadSettings();
   await initSession();
+  await loadProjectHistory();
 });
 
 // Load Settings from Server
@@ -1380,4 +1381,132 @@ async function saveAdminDefaultsFromModal() {
   } catch (err) {
     console.error("Failed to save admin defaults:", err);
   }
+}
+
+// Project Workspaces & Folderwise BRD History
+let cachedProjectList = [];
+
+async function loadProjectHistory() {
+  try {
+    const res = await fetch("/api/projects/history");
+    if (res.ok) {
+      const data = await res.json();
+      cachedProjectList = data.projects || [];
+      renderProjectFolders(cachedProjectList);
+    }
+  } catch (err) {
+    console.error("Failed to load project history:", err);
+  }
+}
+
+function renderProjectFolders(projects) {
+  const container = document.getElementById("projectFoldersList");
+  const countBadge = document.getElementById("projectCountBadge");
+  if (!container) return;
+
+  if (countBadge) countBadge.textContent = `${projects.length} Workspaces`;
+
+  if (projects.length === 0) {
+    container.innerHTML = `<div style="font-size: 0.76rem; color: var(--text-dim); text-align: center; padding: 10px;">No project workspaces found.</div>`;
+    return;
+  }
+
+  container.innerHTML = projects.map((p, idx) => {
+    const isActive = (p.id === currentSessionId || (idx === 0 && !currentSessionId));
+    return `
+      <div class="project-folder-card ${isActive ? 'active' : ''}" id="folder_card_${p.id}">
+        <div class="project-folder-header" onclick="toggleProjectFolder('${p.id}')">
+          <div class="project-folder-info">
+            <span style="font-size: 0.95rem;">📁</span>
+            <div style="min-width: 0;">
+              <div class="folder-title-text" title="${p.name}">${p.name}</div>
+              <div class="folder-meta">
+                <span class="badge-ai" style="padding: 0 4px; font-size: 0.65rem; display: inline-block;">${p.tier}</span>
+                <span>• ${p.updated_at}</span>
+              </div>
+            </div>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-dim); transition: transform 0.2s;" id="chevron_${p.id}">▼</span>
+        </div>
+
+        <div class="project-subfiles" id="subfiles_${p.id}" style="${isActive ? 'display: flex;' : 'display: none;'}">
+          <div class="project-subfile-link" onclick="loadProjectWorkspace('${p.id}')" title="Load active discovery interview & chat">
+            <span>💬 Discovery Chat & Q&A</span>
+            <span class="file-type-tag" style="background: rgba(56, 189, 248, 0.15); color: var(--primary);">${p.answers_count} Ans</span>
+          </div>
+          <a class="project-subfile-link" href="${p.files.word_docx}" target="_blank" title="Download Formal Word BRD">
+            <span>📄 Executive BRD Document</span>
+            <span class="file-type-tag" style="background: rgba(43, 87, 154, 0.3); color: #93c5fd;">.docx</span>
+          </a>
+          <a class="project-subfile-link" href="${p.files.pptx_deck}" target="_blank" title="Download 16:9 PowerPoint Presentation Deck">
+            <span>📊 PowerPoint Presentation</span>
+            <span class="file-type-tag" style="background: rgba(210, 71, 38, 0.3); color: #fca5a5;">.pptx</span>
+          </a>
+          <a class="project-subfile-link" href="${p.files.excel_xlsx}" target="_blank" title="Download 12-Discipline Excel Financial Estimator">
+            <span>📗 Excel Financial Model</span>
+            <span class="file-type-tag" style="background: rgba(33, 115, 70, 0.3); color: #86efac;">.xlsx</span>
+          </a>
+          <a class="project-subfile-link" href="${p.files.jira_csv}" target="_blank" title="Download Jira / Azure DevOps Backlog CSV">
+            <span>📋 Jira / DevOps Backlog</span>
+            <span class="file-type-tag" style="background: rgba(0, 82, 204, 0.3); color: #a5b4fc;">.csv</span>
+          </a>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function toggleProjectFolder(projectId) {
+  const sub = document.getElementById(`subfiles_${projectId}`);
+  const chev = document.getElementById(`chevron_${projectId}`);
+  if (!sub) return;
+
+  const isHidden = (sub.style.display === "none");
+  sub.style.display = isHidden ? "flex" : "none";
+  if (chev) {
+    chev.style.transform = isHidden ? "rotate(0deg)" : "rotate(-90deg)";
+  }
+}
+
+async function loadProjectWorkspace(projectId) {
+  try {
+    const res = await fetch(`/api/projects/load?project_id=${projectId}`, { method: "POST" });
+    if (res.ok) {
+      currentSessionData = await res.json();
+      currentSessionId = currentSessionData.session_id;
+      localStorage.setItem("brd_session_id", currentSessionId);
+      
+      renderChatMessages();
+      updateProgressCounter();
+      if (currentSessionData.brd) {
+        renderBRDWorkbench(currentSessionData.brd);
+      }
+
+      // Highlight active folder card
+      document.querySelectorAll(".project-folder-card").forEach(c => c.classList.remove("active"));
+      const activeCard = document.getElementById(`folder_card_${projectId}`);
+      if (activeCard) activeCard.classList.add("active");
+
+      // Show subfiles
+      const sub = document.getElementById(`subfiles_${projectId}`);
+      if (sub) sub.style.display = "flex";
+    }
+  } catch (err) {
+    console.error("Failed to load project workspace:", err);
+  }
+}
+
+function filterProjectFolders(query) {
+  if (!query || !query.trim()) {
+    renderProjectFolders(cachedProjectList);
+    return;
+  }
+  const q = query.toLowerCase().trim();
+  const filtered = cachedProjectList.filter(p => 
+    p.name.toLowerCase().includes(q) ||
+    p.client.toLowerCase().includes(q) ||
+    p.tier.toLowerCase().includes(q) ||
+    p.cloud_platform.toLowerCase().includes(q)
+  );
+  renderProjectFolders(filtered);
 }

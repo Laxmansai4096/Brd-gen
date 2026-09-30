@@ -21,9 +21,12 @@ class HolidayEntry(BaseModel):
 class LocationCalendar(BaseModel):
     country_code: str
     country_name: str
+    currency_code: str = "USD"
+    currency_symbol: str = "$"
     working_days_per_week: int = 5
     daily_working_hours: float = 8.0
-    hourly_rate: float = 30.0
+    hourly_rate: float = 30.0          # Base USD rate
+    hourly_rate_local: float = 30.0    # Rate in native location currency
     annual_holiday_allowance: int = 12
     holidays: List[HolidayEntry] = []
 
@@ -398,9 +401,12 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
     "IN": LocationCalendar(
         country_code="IN",
         country_name="India",
+        currency_code="INR",
+        currency_symbol="₹",
         working_days_per_week=5,
         daily_working_hours=9.0,
         hourly_rate=25.0,
+        hourly_rate_local=2100.0,
         annual_holiday_allowance=12,
         holidays=[
             HolidayEntry(date="2026-01-26", name="Republic Day", type="Statutory"),
@@ -416,9 +422,12 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
     "UK": LocationCalendar(
         country_code="UK",
         country_name="United Kingdom",
+        currency_code="GBP",
+        currency_symbol="£",
         working_days_per_week=5,
         daily_working_hours=7.0,
         hourly_rate=65.0,
+        hourly_rate_local=52.0,
         annual_holiday_allowance=8,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Bank Holiday"),
@@ -434,9 +443,12 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
     "US": LocationCalendar(
         country_code="US",
         country_name="United States",
+        currency_code="USD",
+        currency_symbol="$",
         working_days_per_week=5,
         daily_working_hours=8.0,
         hourly_rate=85.0,
+        hourly_rate_local=85.0,
         annual_holiday_allowance=11,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -452,9 +464,12 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
     "EU": LocationCalendar(
         country_code="EU",
         country_name="European Union",
+        currency_code="EUR",
+        currency_symbol="€",
         working_days_per_week=5,
         daily_working_hours=7.5,
         hourly_rate=60.0,
+        hourly_rate_local=55.0,
         annual_holiday_allowance=10,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -465,9 +480,12 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
     "SG": LocationCalendar(
         country_code="SG",
         country_name="Singapore",
+        currency_code="SGD",
+        currency_symbol="S$",
         working_days_per_week=5,
         daily_working_hours=8.5,
         hourly_rate=50.0,
+        hourly_rate_local=68.0,
         annual_holiday_allowance=11,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -480,9 +498,12 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
     "AE": LocationCalendar(
         country_code="AE",
         country_name="United Arab Emirates",
+        currency_code="AED",
+        currency_symbol="AED ",
         working_days_per_week=5,
         daily_working_hours=8.0,
         hourly_rate=45.0,
+        hourly_rate_local=165.0,
         annual_holiday_allowance=14,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -496,9 +517,12 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
     "AU": LocationCalendar(
         country_code="AU",
         country_name="Australia",
+        currency_code="AUD",
+        currency_symbol="A$",
         working_days_per_week=5,
         daily_working_hours=7.5,
         hourly_rate=55.0,
+        hourly_rate_local=82.0,
         annual_holiday_allowance=11,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -511,9 +535,12 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
     "CA": LocationCalendar(
         country_code="CA",
         country_name="Canada",
+        currency_code="CAD",
+        currency_symbol="C$",
         working_days_per_week=5,
         daily_working_hours=8.0,
         hourly_rate=65.0,
+        hourly_rate_local=88.0,
         annual_holiday_allowance=10,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -524,9 +551,12 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
     "JP": LocationCalendar(
         country_code="JP",
         country_name="Japan",
+        currency_code="JPY",
+        currency_symbol="¥",
         working_days_per_week=5,
         daily_working_hours=8.0,
         hourly_rate=70.0,
+        hourly_rate_local=10500.0,
         annual_holiday_allowance=16,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -598,6 +628,12 @@ def get_calendars() -> Dict[str, Any]:
                         merged_cal.update(saved[code])
                         if "hourly_rate" not in saved[code] or saved[code]["hourly_rate"] is None:
                             merged_cal["hourly_rate"] = cal.get("hourly_rate", 30.0)
+                        if "hourly_rate_local" not in saved[code] or saved[code]["hourly_rate_local"] is None:
+                            merged_cal["hourly_rate_local"] = cal.get("hourly_rate_local", 30.0)
+                        if "currency_code" not in saved[code] or saved[code]["currency_code"] is None:
+                            merged_cal["currency_code"] = cal.get("currency_code", "USD")
+                        if "currency_symbol" not in saved[code] or saved[code]["currency_symbol"] is None:
+                            merged_cal["currency_symbol"] = cal.get("currency_symbol", "$")
                         defaults_dict[code] = merged_cal
                     else:
                         defaults_dict[code] = cal
@@ -626,24 +662,33 @@ def get_calendar_for_geography(geo_name_or_code: str) -> Dict[str, Any]:
     return cals.get("IN", {
         "country_code": "IN",
         "country_name": "India",
+        "currency_code": "INR",
+        "currency_symbol": "₹",
         "working_days_per_week": 5,
         "daily_working_hours": 9.0,
         "hourly_rate": 25.0,
+        "hourly_rate_local": 2100.0,
         "annual_holiday_allowance": 12,
         "holidays": []
     })
 
-def upsert_calendar(country_code: str, country_name: str, working_days: int = 5, daily_working_hours: float = 8.0, hourly_rate: float = 30.0, annual_allowance: int = 12) -> Dict[str, Any]:
+def upsert_calendar(country_code: str, country_name: str, working_days: int = 5, daily_working_hours: float = 8.0, hourly_rate: float = 30.0, hourly_rate_local: Optional[float] = None, currency_code: str = "USD", currency_symbol: str = "$", annual_allowance: int = 12) -> Dict[str, Any]:
     cals = get_calendars()
     code = country_code.strip().upper()
     existing = cals.get(code, {})
     holidays = existing.get("holidays", [])
+    
+    local_rate = hourly_rate_local if hourly_rate_local is not None else float(hourly_rate)
+    
     cal = {
         "country_code": code,
         "country_name": country_name.strip() or existing.get("country_name", code),
+        "currency_code": currency_code or existing.get("currency_code", "USD"),
+        "currency_symbol": currency_symbol or existing.get("currency_symbol", "$"),
         "working_days_per_week": int(working_days),
         "daily_working_hours": float(daily_working_hours),
         "hourly_rate": float(hourly_rate),
+        "hourly_rate_local": float(local_rate),
         "annual_holiday_allowance": int(annual_allowance),
         "holidays": holidays
     }

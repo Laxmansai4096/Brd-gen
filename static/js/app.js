@@ -1231,27 +1231,40 @@ function renderAdminCalendarsTable() {
 
   tbody.innerHTML = Object.entries(cachedAdminCalendars).map(([code, cal]) => {
     const hours = cal.daily_working_hours || 8.0;
-    const rate = cal.hourly_rate || 30.0;
+    const rateUsd = cal.hourly_rate || 30.0;
+    const rateLocal = cal.hourly_rate_local || rateUsd;
+    const sym = cal.currency_symbol || "$";
+    const curr = cal.currency_code || "USD";
     const hCount = (cal.holidays || []).length;
     return `
       <tr>
         <td><strong>${code}</strong></td>
-        <td>${cal.country_name}</td>
+        <td>
+          <div style="font-weight: 600; font-size: 0.84rem;">${cal.country_name}</div>
+          <div style="font-size: 0.72rem; color: var(--text-dim);">${curr} (${sym.trim()})</div>
+        </td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="font-size: 0.82rem; color: var(--primary); font-weight: 700;">${sym}</span>
+            <input type="number" step="1.0" id="rate_local_${code}" class="form-control admin-field" style="width: 82px; padding: 4px 6px; font-size: 0.82rem; font-weight: 600;" value="${rateLocal}" ${isAdminEditMode ? '' : 'disabled'} onchange="saveLocationCalendar('${code}')">
+            <span style="font-size: 0.72rem; color: var(--text-dim);">${curr}</span>
+          </div>
+        </td>
         <td>
           <div style="display: flex; align-items: center; gap: 4px;">
             <span style="font-size: 0.8rem; color: var(--text-muted);">$</span>
-            <input type="number" step="1.0" id="rate_${code}" class="form-control admin-field" style="width: 75px; padding: 4px 6px; font-size: 0.82rem;" value="${rate}" ${isAdminEditMode ? '' : 'disabled'} onchange="saveLocationCalendar('${code}')">
-            <span style="font-size: 0.74rem; color: var(--text-dim);">/hr</span>
+            <input type="number" step="1.0" id="rate_${code}" class="form-control admin-field" style="width: 70px; padding: 4px 6px; font-size: 0.82rem;" value="${rateUsd}" ${isAdminEditMode ? '' : 'disabled'} onchange="saveLocationCalendar('${code}')">
+            <span style="font-size: 0.72rem; color: var(--text-dim);">/hr</span>
           </div>
         </td>
         <td>
           <div style="display: flex; align-items: center; gap: 4px;">
-            <input type="number" step="0.5" id="hours_${code}" class="form-control admin-field" style="width: 70px; padding: 4px 6px; font-size: 0.82rem;" value="${hours}" ${isAdminEditMode ? '' : 'disabled'} onchange="saveLocationCalendar('${code}')">
-            <span style="font-size: 0.74rem; color: var(--text-dim);">hrs</span>
+            <input type="number" step="0.5" id="hours_${code}" class="form-control admin-field" style="width: 65px; padding: 4px 6px; font-size: 0.82rem;" value="${hours}" ${isAdminEditMode ? '' : 'disabled'} onchange="saveLocationCalendar('${code}')">
+            <span style="font-size: 0.72rem; color: var(--text-dim);">hrs</span>
           </div>
         </td>
-        <td>${cal.working_days_per_week || 5} d/wk</td>
-        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.75rem;">${hCount} Holidays</span></td>
+        <td style="font-size: 0.82rem;">${cal.working_days_per_week || 5} d/wk</td>
+        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${hCount} Hol</span></td>
         <td>
           <button class="btn-header admin-field" style="padding: 3px 8px; font-size: 0.75rem;" ${isAdminEditMode ? '' : 'disabled'} onclick="saveLocationCalendar('${code}')">Save</button>
         </td>
@@ -1265,10 +1278,12 @@ async function saveLocationCalendar(countryCode) {
   if (!cal) return;
 
   const hoursEl = document.getElementById(`hours_${countryCode}`);
-  const rateEl = document.getElementById(`rate_${countryCode}`);
+  const rateUsdEl = document.getElementById(`rate_${countryCode}`);
+  const rateLocalEl = document.getElementById(`rate_local_${countryCode}`);
   
   const hours = hoursEl ? parseFloat(hoursEl.value) || 8.0 : (cal.daily_working_hours || 8.0);
-  const rate = rateEl ? parseFloat(rateEl.value) || 30.0 : (cal.hourly_rate || 30.0);
+  const rateUsd = rateUsdEl ? parseFloat(rateUsdEl.value) || 30.0 : (cal.hourly_rate || 30.0);
+  const rateLocal = rateLocalEl ? parseFloat(rateLocalEl.value) || rateUsd : (cal.hourly_rate_local || rateUsd);
 
   try {
     const res = await fetch("/api/admin/calendars", {
@@ -1277,15 +1292,19 @@ async function saveLocationCalendar(countryCode) {
       body: JSON.stringify({
         country_code: countryCode,
         country_name: cal.country_name,
+        currency_code: cal.currency_code || "USD",
+        currency_symbol: cal.currency_symbol || "$",
         working_days_per_week: cal.working_days_per_week || 5,
         daily_working_hours: hours,
-        hourly_rate: rate,
+        hourly_rate: rateUsd,
+        hourly_rate_local: rateLocal,
         annual_holiday_allowance: cal.annual_holiday_allowance || 12
       })
     });
     if (res.ok) {
       cal.daily_working_hours = hours;
-      cal.hourly_rate = rate;
+      cal.hourly_rate = rateUsd;
+      cal.hourly_rate_local = rateLocal;
       await triggerReplan();
     }
   } catch (err) {

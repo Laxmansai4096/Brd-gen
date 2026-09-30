@@ -12,11 +12,18 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_client",
         title="Client & Engagement Name",
         prompt="Who is the client/account, and what is the working title for this initiative?",
-        type="text",
+        type="dropdown",
+        options=[
+            QuestionOption(value="PVR INOX | Contract Intelligence & Risk Visibility Platform", label="PVR INOX | Contract Intelligence & Risk Visibility Platform (Recommended)", description="Automated contract risk classification and clause extraction"),
+            QuestionOption(value="Enterprise Retail | AI-Powered Customer Support & Virtual Agent Cockpit", label="Enterprise Retail | AI Support & Agent Cockpit", description="Omnichannel customer support resolution and CRM integration"),
+            QuestionOption(value="Global Banking Corp | Intelligent AML & Financial Fraud Detection System", label="Global Bank | Financial Fraud & AML Detection", description="Real-time transaction risk scoring and compliance tracking"),
+            QuestionOption(value="Healthcare System | Intelligent Clinical Document Extraction Platform", label="Healthcare | Clinical Document Extraction", description="Layout-aware medical record and claims extraction"),
+            QuestionOption(value="SaaS Tech Corp | Enterprise Knowledge Base & Neural Search Accelerator", label="SaaS Enterprise | Neural Search & Knowledge Base", description="High-throughput hybrid vector retrieval engine")
+        ],
         default_value="PVR INOX | Contract Intelligence & Risk Visibility Platform",
         category="Scope",
         priority="Blocker",
-        help_text="e.g., PVR INOX — Contract Intelligence & Risk Visibility Platform"
+        help_text="Select an enterprise template or pick 'Custom Input' to type your exact client and project title."
     ),
     QuestionItem(
         id="q_tier",
@@ -45,7 +52,29 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_problem",
         title="Problem Statement & Business Challenge",
         prompt="Describe the business problem, manual bottlenecks, and key objectives in 2 to 5 sentences.",
-        type="text",
+        type="dropdown",
+        options=[
+            QuestionOption(
+                value="Limited visibility into contractual risk exposure across contracts and business functions. Manual review by scarce legal experts is slow, disconnected, and lacks traceability. The solution must extract clauses across 6 legal categories (Lease, Vendor, Service, Facilities, Technology, Marketing), assess them against category principles (Agree, Agree with Management Approval, Not Agree), and produce a centralized contract risk register with bounding-box coordinate traceability.",
+                label="Contract Risk & Legal Bottlenecks (Recommended)",
+                description="Extract clauses across 6 categories, 2-pass principle evaluation, centralized risk register"
+            ),
+            QuestionOption(
+                value="High volume of tier-1 customer inquiries causing long wait times, operational overhead, and inconsistent support responses. Manual handling slows resolution and causes agent fatigue. The solution must automate customer deflection via grounded conversational AI, provide human support agent assist, and execute CRM workflows with sub-2-second latency.",
+                label="Customer Support & Omnichannel Deflection",
+                description="Automate tier-1 inquiries, real-time agent-assist, CRM tool calling"
+            ),
+            QuestionOption(
+                value="Manual document ingestion and data extraction across invoices, receipts, and claim forms causes high defect rates, processing delays, and compliance risks. The solution must execute layout-aware OCR extraction, validate business rules, and export structured outputs with 100% audit provenance.",
+                label="Intelligent Document & Invoice Extraction",
+                description="Automated layout-aware OCR parsing, validation gates, structured database persistence"
+            ),
+            QuestionOption(
+                value="Enterprise knowledge is fragmented across disparate wikis, file drives, and databases, forcing employees to spend hours locating accurate information. The solution must provide a secure hybrid neural search engine with semantic embeddings, BM25 keyword matching, and strict RBAC.",
+                label="Enterprise Knowledge Base & Neural Search",
+                description="Hybrid vector and keyword search across enterprise document repositories"
+            )
+        ],
         default_value="Limited visibility into contractual risk exposure across contracts and business functions. Manual review by scarce legal experts is slow, disconnected, and lacks traceability. The solution must extract clauses across 6 legal categories (Lease, Vendor, Service, Facilities, Technology, Marketing), assess them against category principles (Agree, Agree with Management Approval, Not Agree), and produce a centralized contract risk register with bounding-box coordinate traceability.",
         category="Scope",
         priority="Blocker",
@@ -59,7 +88,8 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         options=[
             QuestionOption(value="Lease, Vendor, Service, Facilities, Technology, Marketing", label="6 Core Categories (Recommended)", description="Lease, Vendor, Service, Facilities, Technology, Marketing"),
             QuestionOption(value="Lease, Vendor, Service", label="3 Commercial Categories", description="Lease, Vendor, and Service contracts only"),
-            QuestionOption(value="Technology, Facilities, Marketing", label="3 Operational Categories", description="Technology, Facilities, and Marketing contracts only")
+            QuestionOption(value="Technology, Facilities, Marketing", label="3 Operational Categories", description="Technology, Facilities, and Marketing contracts only"),
+            QuestionOption(value="Enterprise Procurement, NDAs, Master Service Agreements", label="Enterprise Procurement & MSAs", description="Procurement, NDAs, and MSAs")
         ],
         default_value="Lease, Vendor, Service, Facilities, Technology, Marketing",
         category="Scope",
@@ -72,11 +102,11 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="What is the targeted reference duration for this phase in calendar weeks?",
         type="dropdown",
         options=[
-            QuestionOption(value="4.0", label="4 Weeks", description="Aggressive sprint"),
-            QuestionOption(value="6.0", label="6 Weeks (Standard Baseline)", description="Standard 6-week baseline (30 working days)"),
-            QuestionOption(value="8.0", label="8 Weeks", description="Extended PoC / Pilot"),
-            QuestionOption(value="12.0", label="12 Weeks", description="MVP Standard"),
-            QuestionOption(value="16.0", label="16 Weeks", description="Full Production Grade")
+            QuestionOption(value="4.0", label="4.0 Weeks", description="Aggressive 4-week sprint (20 working days)"),
+            QuestionOption(value="6.0", label="6.0 Weeks (Standard Baseline)", description="Standard 6-week baseline (30 working days)"),
+            QuestionOption(value="8.0", label="8.0 Weeks", description="Extended 8-week PoC / Pilot (40 working days)"),
+            QuestionOption(value="12.0", label="12.0 Weeks", description="MVP Standard 12-week build (60 working days)"),
+            QuestionOption(value="16.0", label="16.0 Weeks", description="Full Production Grade 16-week delivery (80 working days)")
         ],
         default_value="6.0",
         category="Scope",
@@ -87,7 +117,13 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_start_date",
         title="Project Target Start Date",
         prompt="When is the targeted project kick-off / start date? (YYYY-MM-DD)",
-        type="date",
+        type="dropdown",
+        options=[
+            QuestionOption(value="2026-09-30", label="2026-09-30 (Scheduled Baseline)", description="Start without external procurement lag"),
+            QuestionOption(value="2026-10-05", label="2026-10-05 (Q4 Kick-Off)", description="Beginning of October"),
+            QuestionOption(value="2026-10-15", label="2026-10-15 (Mid-October)", description="Mid-month start"),
+            QuestionOption(value="2026-11-02", label="2026-11-02 (November Sprint)", description="Beginning of November")
+        ],
         default_value="2026-09-30",
         category="Scope",
         priority="High",
@@ -114,7 +150,13 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_usecases_count",
         title="Distinct Use Cases / Capabilities",
         prompt="How many distinct AI/business use cases or capabilities are in scope for this phase? (Baseline is 1)",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="1", label="1 Use Case (Standard Baseline - 1.000x)", description="Single primary capability: Contract Risk & Principle Extraction"),
+            QuestionOption(value="2", label="2 Use Cases (Factor 1.250x)", description="Two distinct functional capabilities"),
+            QuestionOption(value="3", label="3 Use Cases (Factor 1.500x)", description="Three business capabilities"),
+            QuestionOption(value="5", label="5 Use Cases (Factor 2.000x)", description="Multi-department enterprise capabilities")
+        ],
         default_value="1",
         category="Scale",
         priority="High",
@@ -124,7 +166,13 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_personas_count",
         title="User Personas Count",
         prompt="How many distinct user personas or stakeholder roles will interact with the system? (Baseline is 2)",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="4", label="4 Personas (Active: Legal, Procurement, Risk, Sponsor - Factor 1.450)", description="Legal Counsel, Procurement Lead, Risk Officer, Executive Sponsor (Elasticity: 0.45)"),
+            QuestionOption(value="2", label="2 Personas (Standard Baseline - Factor 1.000)", description="Primary business user and administrator"),
+            QuestionOption(value="1", label="1 Persona (Single Role - Factor 0.775)", description="Single designated user type"),
+            QuestionOption(value="6", label="6 Personas (Enterprise Cross-Functional - Factor 1.900)", description="Broad stakeholder group across legal, ops, audit, and execs")
+        ],
         default_value="4",
         category="Scale",
         priority="High",
@@ -134,7 +182,13 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_integrations_count",
         title="System Integrations Count",
         prompt="How many inbound/outbound enterprise system integrations are required in this phase? (Baseline is 2)",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="0", label="0 Integrations (Manual Upload / Blob Storage - Floor 0.500x)", description="Manual PDF uploads directly to Azure Blob Storage (Scaled to floor factor 0.500)"),
+            QuestionOption(value="1", label="1 Integration (Factor 0.675x)", description="Single REST API / ERP connector"),
+            QuestionOption(value="2", label="2 Integrations (Standard Baseline - Factor 1.000x)", description="Two external system connectors"),
+            QuestionOption(value="4", label="4 Integrations (Factor 1.650x)", description="Four enterprise integrations (CRM, ERP, Document Store, Auth)")
+        ],
         default_value="0",
         category="Scale",
         priority="High",
@@ -144,7 +198,13 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_datasources_count",
         title="Distinct Data Sources",
         prompt="How many distinct data sources or document repositories feed into this solution? (Baseline is 2)",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="2", label="2 Data Sources (Contract Blob Storage + Risk Spreadsheet - Baseline 1.000x)", description="Azure Blob Storage contract repository + historical risk register spreadsheet"),
+            QuestionOption(value="1", label="1 Data Source (Single Repository - Factor 0.750x)", description="Single digital PDF upload repository"),
+            QuestionOption(value="3", label="3 Data Sources (Factor 1.250x)", description="Blob Storage, SQL Database, and SharePoint repository"),
+            QuestionOption(value="5", label="5 Data Sources (Enterprise Data Lake - Factor 1.750x)", description="Enterprise data lake, CRM, ERP, Blob, and Wiki")
+        ],
         default_value="2",
         category="Scale",
         priority="High",
@@ -154,7 +214,12 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_channels_count",
         title="Delivery Channels",
         prompt="How many user-facing delivery channels are in scope (e.g., Web Cockpit, Mobile, Teams Bot, REST API)?",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="1", label="1 Channel (Web Cockpit UI - Baseline 1.000x)", description="Interactive browser-based demonstration and review cockpit"),
+            QuestionOption(value="2", label="2 Channels (Web Cockpit + Microsoft Teams Bot - Factor 1.300x)", description="Web browser app and integrated Teams bot"),
+            QuestionOption(value="3", label="3 Channels (Web + Mobile App + REST API - Factor 1.600x)", description="Web, iOS/Android mobile client, and public REST API")
+        ],
         default_value="1",
         category="Scale",
         priority="Medium",
@@ -164,7 +229,12 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_languages_count",
         title="Languages Supported",
         prompt="How many languages must be processed by the document intelligence engine?",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="1", label="1 Language (English Digital Documents - Baseline 1.000x)", description="Clean English digital PDFs only"),
+            QuestionOption(value="2", label="2 Languages (English + Regional / European - Factor 1.350x)", description="Bilingual document processing"),
+            QuestionOption(value="5", label="5 Languages (Multilingual Enterprise - Factor 2.000x)", description="Global multilingual extraction")
+        ],
         default_value="1",
         category="Scale",
         priority="Medium",
@@ -174,7 +244,12 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_envs_count",
         title="Deployment Environments",
         prompt="How many isolated cloud environments must be provisioned (e.g., Dev, Test, Prod)?",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="3", label="3 Environments (Dev, Test, Prod - Baseline 1.000x)", description="Development, Test/QA, and Production subscriptions"),
+            QuestionOption(value="2", label="2 Environments (Dev, Prod - Factor 0.800x)", description="Development and Production only"),
+            QuestionOption(value="4", label="4 Environments (Dev, Test, Staging/UAT, Prod - Factor 1.200x)", description="Development, Test, Staging, and Production")
+        ],
         default_value="3",
         category="Scale",
         priority="High",
@@ -184,7 +259,12 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_components_count",
         title="Architecture Components Count",
         prompt="How many distinct deployable architecture components carry the target solution? (Baseline is 6)",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="6", label="6 Components (Landing, Search, Reasoning, DB, Eval, UI - Baseline 1.000x)", description="6 microservices: Landing/Ingestion, Search Index, LLM Engine, Database, Eval Harness, UI Cockpit"),
+            QuestionOption(value="4", label="4 Components (Lean Pipeline - Factor 0.800x)", description="Ingestion, Search, LLM Engine, UI Cockpit"),
+            QuestionOption(value="8", label="8 Components (Enterprise Scaled Microservices - Factor 1.300x)", description="Comprehensive enterprise distributed architecture")
+        ],
         default_value="6",
         category="Scale",
         priority="High",
@@ -364,7 +444,13 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_named_users",
         title="Total Named Users",
         prompt="How many total named users are entitled to access the platform?",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="200", label="200 Named Users (Standard Baseline)", description="200 named legal, procurement, and risk reviewers"),
+            QuestionOption(value="50", label="50 Named Users (Pilot Cohort)", description="Initial business team"),
+            QuestionOption(value="500", label="500 Named Users (Department-Wide)", description="Expanded division rollout"),
+            QuestionOption(value="1000", label="1,000 Named Users (Enterprise Scale)", description="Full enterprise legal community")
+        ],
         default_value="200",
         category="Sizing",
         priority="Medium",
@@ -374,7 +460,13 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_concurrent_users",
         title="Peak Concurrent Users",
         prompt="What is the maximum number of simultaneous users active during peak hours?",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="50", label="50 Peak Concurrent Users (Standard Baseline)", description="50 simultaneous active sessions during peak hours"),
+            QuestionOption(value="20", label="20 Peak Concurrent Users (Pilot)", description="Controlled concurrency"),
+            QuestionOption(value="100", label="100 Peak Concurrent Users (High Concurrency)", description="High peak traffic demand"),
+            QuestionOption(value="250", label="250 Peak Concurrent Users (Enterprise Peak)", description="High-scale concurrent review workflows")
+        ],
         default_value="50",
         category="Sizing",
         priority="Medium",
@@ -384,7 +476,13 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         id="q_daily_requests",
         title="Model Requests per Day",
         prompt="What is the estimated volume of document processing/analysis requests per day?",
-        type="number",
+        type="dropdown",
+        options=[
+            QuestionOption(value="2000", label="2,000 Requests / Day (Peak 3.00 RPS Baseline)", description="2,000 requests per day with peak processing speed of 3.00 RPS"),
+            QuestionOption(value="500", label="500 Requests / Day (Lean Volume)", description="Light daily batch traffic"),
+            QuestionOption(value="5000", label="5,000 Requests / Day (High Throughput)", description="High daily document turnover"),
+            QuestionOption(value="10000", label="10,000 Requests / Day (Enterprise Processing)", description="Continuous heavy document processing")
+        ],
         default_value="2000",
         category="Sizing",
         priority="Medium",

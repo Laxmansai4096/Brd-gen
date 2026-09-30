@@ -116,90 +116,114 @@ function renderChatMessages() {
 }
 
 function renderQuickSuggestions() {
-  const container = document.getElementById("quickSuggestions");
-  const textInput = document.getElementById("chatInput");
-  const numInput = document.getElementById("chatNumberInput");
   const dropdownSelect = document.getElementById("chatDropdownSelect");
+  const customWrapper = document.getElementById("customInputWrapper");
+  const customInput = document.getElementById("chatCustomInput");
   
-  if (!container) return;
-  container.innerHTML = "";
+  if (!dropdownSelect) return;
   
   const curQ = currentSessionData ? currentSessionData.current_question : null;
   if (!curQ) {
-    if (textInput) textInput.style.display = "block";
-    if (numInput) numInput.style.display = "none";
-    if (dropdownSelect) dropdownSelect.style.display = "none";
+    dropdownSelect.style.display = "none";
+    if (customWrapper) customWrapper.style.display = "none";
     return;
   }
   
-  if (curQ.type === "dropdown" && curQ.options && curQ.options.length > 0) {
-    // Show dropdown selector directly in the input bar
-    if (textInput) textInput.style.display = "none";
-    if (numInput) numInput.style.display = "none";
-    if (dropdownSelect) {
-      dropdownSelect.style.display = "block";
-      dropdownSelect.innerHTML = "";
-      
-      curQ.options.forEach((opt) => {
-        const op = document.createElement("option");
-        op.value = opt.value;
-        op.textContent = `${opt.label} ${opt.description ? '— ' + opt.description : ''}`;
-        if (opt.value === curQ.default_value) op.selected = true;
-        dropdownSelect.appendChild(op);
-      });
-      dropdownSelect.focus();
-    }
-    // Redundant dynamic chips removed per user request
-    
-  } else if (curQ.type === "number") {
-    // Show dedicated number input in the input bar
-    if (textInput) textInput.style.display = "none";
-    if (dropdownSelect) dropdownSelect.style.display = "none";
-    if (numInput) {
-      numInput.style.display = "block";
-      numInput.value = curQ.default_value || "1";
-      numInput.placeholder = `Enter number for ${curQ.title} (e.g. ${curQ.default_value})...`;
-      numInput.focus();
-    }
-    
-  } else if (curQ.type === "date") {
-    // Show date input picker
-    if (numInput) numInput.style.display = "none";
-    if (dropdownSelect) dropdownSelect.style.display = "none";
-    if (textInput) {
-      textInput.style.display = "block";
-      textInput.type = "date";
-      textInput.value = curQ.default_value || "2026-10-05";
-      textInput.focus();
-    }
-    
-  } else {
-    // Standard Text input
-    if (numInput) numInput.style.display = "none";
-    if (dropdownSelect) dropdownSelect.style.display = "none";
-    if (textInput) {
-      textInput.style.display = "block";
-      textInput.type = "text";
-      textInput.value = "";
-      textInput.placeholder = `Type your answer for ${curQ.title}...`;
-      textInput.focus();
-    }
+  // Reset visibility
+  dropdownSelect.style.display = "block";
+  if (customWrapper) customWrapper.style.display = "none";
+  if (customInput) customInput.value = "";
+  
+  dropdownSelect.innerHTML = "";
+  
+  let optionsList = [];
+  
+  // Check if current question has predefined options
+  if (curQ.options && curQ.options.length > 0) {
+    optionsList = [...curQ.options];
   }
-
-  // Check if the latest message from agent has interactive follow-up / blueprint options
+  
+  // Check if latest message from agent has HITL follow-up options
   const msgs = currentSessionData.messages || [];
   const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
   if (lastMsg && lastMsg.hitl_options && lastMsg.hitl_options.length > 0) {
     lastMsg.hitl_options.forEach((opt) => {
-      const chip = document.createElement("button");
-      chip.className = "suggestion-chip";
-      chip.style.cssText = "margin: 4px 6px; padding: 8px 14px; font-size: 0.82rem; border-radius: 12px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #fff; cursor: pointer; text-align: left; display: block; width: 100%;";
-      chip.innerHTML = `<strong>${opt.label}</strong><br><span style="font-size: 0.76rem; color: var(--text-muted);">${opt.value}</span>`;
-      chip.onclick = () => {
-        sendMessageWithText(opt.value);
-      };
-      container.appendChild(chip);
+      if (!optionsList.some(o => o.value === opt.value)) {
+        optionsList.push({
+          value: opt.value,
+          label: opt.label,
+          description: opt.description || ""
+        });
+      }
     });
+  }
+  
+  if (optionsList.length > 0) {
+    optionsList.forEach((opt) => {
+      const op = document.createElement("option");
+      op.value = opt.value;
+      const desc = opt.description ? ` — ${opt.description}` : '';
+      op.textContent = `${opt.label}${desc}`;
+      if (opt.value === curQ.default_value) {
+        op.selected = true;
+      }
+      dropdownSelect.appendChild(op);
+    });
+  } else {
+    // If no explicit options, add the default value as an option
+    const defOp = document.createElement("option");
+    defOp.value = curQ.default_value || "";
+    defOp.textContent = `${curQ.default_value || "Recommended Default"} (Default)`;
+    defOp.selected = true;
+    dropdownSelect.appendChild(defOp);
+  }
+  
+  // ALWAYS ADD THE FINAL OPTION: Custom Input (Anti-Gravity / User custom answer)
+  const customOp = document.createElement("option");
+  customOp.value = "__CUSTOM__";
+  customOp.textContent = `✏️ Custom Input (Type your own answer / anti gravity)...`;
+  customOp.style.color = "var(--primary)";
+  customOp.style.fontWeight = "600";
+  dropdownSelect.appendChild(customOp);
+  
+  dropdownSelect.focus();
+}
+
+function handleDropdownChange() {
+  const dropdownSelect = document.getElementById("chatDropdownSelect");
+  const customWrapper = document.getElementById("customInputWrapper");
+  const customInput = document.getElementById("chatCustomInput");
+  
+  if (!dropdownSelect) return;
+  
+  if (dropdownSelect.value === "__CUSTOM__") {
+    dropdownSelect.style.display = "none";
+    if (customWrapper) customWrapper.style.display = "flex";
+    if (customInput) {
+      const curQ = currentSessionData ? currentSessionData.current_question : null;
+      customInput.placeholder = curQ ? `Type custom answer for ${curQ.title}...` : "Type your custom answer...";
+      customInput.value = "";
+      customInput.focus();
+    }
+  }
+}
+
+function cancelCustomInput() {
+  const dropdownSelect = document.getElementById("chatDropdownSelect");
+  const customWrapper = document.getElementById("customInputWrapper");
+  
+  if (customWrapper) customWrapper.style.display = "none";
+  if (dropdownSelect) {
+    dropdownSelect.style.display = "block";
+    dropdownSelect.selectedIndex = 0;
+    dropdownSelect.focus();
+  }
+}
+
+function handleCustomInputKeyDown(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendUserMessage();
   }
 }
 
@@ -218,31 +242,27 @@ function handleDropdownKeyDown(e) {
   }
 }
 
-function handleInputKeyDown(e) {
-  if (e.key === "Enter") {
-    sendUserMessage();
-  }
-}
-
-function handleNumberInputKeyDown(e) {
-  if (e.key === "Enter") {
-    sendUserMessage();
-  }
-}
-
 function sendUserMessage() {
-  const textInput = document.getElementById("chatInput");
-  const numInput = document.getElementById("chatNumberInput");
   const dropdownSelect = document.getElementById("chatDropdownSelect");
+  const customWrapper = document.getElementById("customInputWrapper");
+  const customInput = document.getElementById("chatCustomInput");
   
   let answer = "";
   
-  if (dropdownSelect && dropdownSelect.style.display !== "none") {
-    answer = dropdownSelect.value;
-  } else if (numInput && numInput.style.display !== "none") {
-    answer = numInput.value.trim();
-  } else if (textInput && textInput.style.display !== "none") {
-    answer = textInput.value.trim();
+  if (customWrapper && customWrapper.style.display !== "none") {
+    answer = customInput.value.trim();
+    if (!answer && currentSessionData && currentSessionData.current_question) {
+      answer = currentSessionData.current_question.default_value;
+    }
+  } else if (dropdownSelect && dropdownSelect.style.display !== "none") {
+    if (dropdownSelect.value === "__CUSTOM__") {
+      answer = customInput ? customInput.value.trim() : "";
+      if (!answer && currentSessionData && currentSessionData.current_question) {
+        answer = currentSessionData.current_question.default_value;
+      }
+    } else {
+      answer = dropdownSelect.value;
+    }
   }
   
   if (!answer && currentSessionData && currentSessionData.current_question) {
@@ -251,7 +271,7 @@ function sendUserMessage() {
   
   if (!answer) return;
   
-  if (textInput) textInput.value = "";
+  if (customInput) customInput.value = "";
   sendMessageWithText(answer);
 }
 

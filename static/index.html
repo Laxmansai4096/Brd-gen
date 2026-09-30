@@ -87,32 +87,27 @@
 
       <!-- Chat Controls & File Attachment Area -->
       <div class="chat-controls">
-        <!-- Quick Suggestions / Option Chips -->
-        <div class="quick-suggestions" id="quickSuggestions">
-          <!-- Dynamically populated per question -->
-        </div>
-
-        <!-- Dynamic Input Row (adapts to text, dropdown, or number) -->
-        <div class="input-row" id="chatInputRow">
+        <div class="input-row" id="chatInputRow" style="align-items: center;">
           <label class="btn-attach" title="Attach Document (PDF, TXT, CSV, DOCX)">
             📎
             <input type="file" id="fileInput" onchange="handleFileUpload(event)" style="display: none;"
               accept=".pdf,.txt,.csv,.json,.doc,.docx">
           </label>
           
-          <!-- Text Input -->
-          <input type="text" class="chat-input" id="chatInput"
-            placeholder="Type your answer or pick from options above..." onkeydown="handleInputKeyDown(event)">
-            
-          <!-- Number Input -->
-          <input type="number" class="chat-input" id="chatNumberInput" style="display: none;"
-            placeholder="Enter number..." onkeydown="handleNumberInputKeyDown(event)">
-            
-          <!-- Dropdown Select -->
-          <select class="chat-input toolbar-dropdown" id="chatDropdownSelect" style="display: none;" onkeydown="handleDropdownKeyDown(event)">
+          <!-- Unified Question Options Dropdown (Last option is always Custom Input) -->
+          <select class="chat-input toolbar-dropdown" id="chatDropdownSelect" onchange="handleDropdownChange()" onkeydown="handleDropdownKeyDown(event)" style="flex: 1; min-height: 42px; font-size: 0.88rem; cursor: pointer;">
           </select>
+
+          <!-- Custom Input Field (shown when user selects Custom Input option) -->
+          <div id="customInputWrapper" style="display: none; flex: 1; align-items: center; gap: 8px;">
+            <input type="text" class="chat-input" id="chatCustomInput"
+              placeholder="Type your custom answer (or custom input)..." onkeydown="handleCustomInputKeyDown(event)" style="flex: 1;">
+            <button class="btn-header" onclick="cancelCustomInput()" style="padding: 6px 12px; font-size: 0.8rem; white-space: nowrap; height: 42px; border: 1px solid var(--border-color);" title="Return to predefined options">
+              ↩ Options
+            </button>
+          </div>
           
-          <button class="btn-send" onclick="sendUserMessage()" title="Send Answer">
+          <button class="btn-send" onclick="sendUserMessage()" title="Send Answer" style="height: 42px; width: 42px; display: flex; align-items: center; justify-content: center;">
             ➤
           </button>
         </div>

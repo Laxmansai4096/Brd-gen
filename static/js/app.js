@@ -729,29 +729,52 @@ function openEditResponsesModal() {
     }
   };
 
+  // 1. Project Timeline & Scheduling Factors
   setVal("edit_q_client", "q_client", "PVR INOX — Contract Intelligence & Risk Visibility Platform");
-  setVal("edit_q_tier", "q_tier", "PoC");
-  setVal("edit_q_start_date", "q_start_date", "2026-10-05");
-  setVal("edit_q_buffer_strategy", "q_buffer_strategy", "15% Shadow / Backup Capacity (Recommended)");
-  setVal("edit_q_problem", "q_problem", "Automate business contract ingestion, risk classification, and clause extraction.");
   setVal("edit_q_duration", "q_duration", "6.0");
-  setVal("edit_q_cloud", "q_cloud", "Microsoft Azure");
+  setVal("edit_q_start_date", "q_start_date", "2026-09-30");
   setVal("edit_q_geography", "q_geography", "India");
-  setVal("edit_q_usecases", "q_usecases", "1");
-  setVal("edit_q_personas", "q_personas", "4");
-  setVal("edit_q_integrations", "q_integrations", "0");
-  setVal("edit_q_datasources", "q_datasources", "2");
-  setVal("edit_q_channels", "q_channels", "1");
-  setVal("edit_q_languages", "q_languages", "1");
-  setVal("edit_q_envs", "q_envs", "3");
-  setVal("edit_q_components", "q_components", "6");
+  setVal("edit_q_buffer_strategy", "q_buffer_strategy", "15% Shadow / Backup Capacity (Recommended)");
+  setVal("edit_q_approval_gate", "q_approval_gate", "Strict (All assumptions must be Approved)");
+
+  // 2. Delivery Effort & Sizing Multipliers
+  setVal("edit_q_tier", "q_tier", "PoC");
   setVal("edit_q_complexity", "q_complexity", "Low");
   setVal("edit_q_compliance", "q_compliance", "Internal policy only");
   setVal("edit_q_security", "q_security", "Standard");
+  setVal("edit_q_usecases", "q_usecases_count", "1");
+  setVal("edit_q_personas", "q_personas_count", "4");
+  setVal("edit_q_integrations", "q_integrations_count", "0");
+  setVal("edit_q_datasources", "q_datasources_count", "2");
+  setVal("edit_q_channels", "q_channels_count", "1");
+  setVal("edit_q_envs", "q_envs_count", "3");
+  setVal("edit_q_languages", "q_languages_count", "1");
+  setVal("edit_q_components", "q_components_count", "6");
+
+  // 3. Technology Stack, Cloud & Infrastructure Factors
+  setVal("edit_q_cloud", "q_cloud", "Microsoft Azure");
   setVal("edit_q_hadr", "q_hadr", "None (single instance)");
+  setVal("edit_q_onprem_footprint", "q_onprem_footprint", "Zero on-premises components permitted (No hybrid tunnels/VPN)");
+  setVal("edit_q_subscription_isolation", "q_subscription_isolation", "Dedicated newly created non-production cloud subscription");
+
+  // 4. AI Engine, RAG Pipeline & Model Sizing Factors
+  setVal("edit_q_foundation_llm", "q_foundation_llm", "Azure OpenAI reasoning/thinking tier (GPT-5 Thinking/Reasoning parameters)");
+  setVal("edit_q_grounding_mode", "q_grounding_mode", "Work (Tenant data only, disabling public web retrieval) using M365 Copilot / Azure AI Agent services");
   setVal("edit_q_named_users", "q_named_users", "200");
   setVal("edit_q_concurrent_users", "q_concurrent_users", "50");
   setVal("edit_q_daily_requests", "q_daily_requests", "2000");
+
+  // 5. Data Governance, Security & Administrative Control Factors
+  setVal("edit_q_identity_auth", "q_identity_auth", "Microsoft Entra ID enforces Single Sign-On (SSO) and Role-Based Access Control (RBAC)");
+  setVal("edit_q_secrets_mgmt", "q_secrets_mgmt", "Azure Key Vault using platform-managed keys (CMEK and air-gapped excluded)");
+  setVal("edit_q_component_auth", "q_component_auth", "HTTPS authenticated via Azure Managed Identities (zero hardcoded credentials)");
+  setVal("edit_q_retention", "q_retention", "Mandatory 12-month data retention rule for logs and telemetry");
+
+  // 6. Functional Scope, Ingestion & Parser Contract Factors
+  setVal("edit_q_legal_categories", "q_legal_categories", "Lease, Vendor, Service, Facilities, Technology, Marketing");
+  setVal("edit_q_multi_pass_policy", "q_multi_pass_policy", "Pass 1 extracts explicit standard clauses | Pass 2 evaluates ambiguous terms: Agree, Agree with Management Approval, Not Agree");
+  setVal("edit_q_parser_delimiters", "q_parser_delimiters", "Block headers (<<<BEGIN:NAME>>>) and pipe (|), 30,000 char limit, 0.72 synonym confidence");
+  setVal("edit_q_problem", "q_problem", "Automate business contract ingestion, risk classification, and clause extraction.");
 
   document.getElementById("editResponsesModal").classList.add("active");
 }
@@ -767,29 +790,52 @@ async function saveEditedResponsesAndReplan() {
   };
 
   const overrides = {
+    // 1. Timeline & Scheduling
     q_client: getVal("edit_q_client"),
-    q_tier: getVal("edit_q_tier"),
-    q_start_date: getVal("edit_q_start_date"),
-    q_buffer_strategy: getVal("edit_q_buffer_strategy"),
-    q_problem: getVal("edit_q_problem"),
     q_duration: getVal("edit_q_duration"),
-    q_cloud: getVal("edit_q_cloud"),
+    q_start_date: getVal("edit_q_start_date"),
     q_geography: getVal("edit_q_geography"),
-    q_usecases: getVal("edit_q_usecases"),
-    q_personas: getVal("edit_q_personas"),
-    q_integrations: getVal("edit_q_integrations"),
-    q_datasources: getVal("edit_q_datasources"),
-    q_channels: getVal("edit_q_channels"),
-    q_languages: getVal("edit_q_languages"),
-    q_envs: getVal("edit_q_envs"),
-    q_components: getVal("edit_q_components"),
+    q_buffer_strategy: getVal("edit_q_buffer_strategy"),
+    q_approval_gate: getVal("edit_q_approval_gate"),
+
+    // 2. Effort & Sizing Multipliers
+    q_tier: getVal("edit_q_tier"),
     q_complexity: getVal("edit_q_complexity"),
     q_compliance: getVal("edit_q_compliance"),
     q_security: getVal("edit_q_security"),
+    q_usecases_count: getVal("edit_q_usecases"),
+    q_personas_count: getVal("edit_q_personas"),
+    q_integrations_count: getVal("edit_q_integrations"),
+    q_datasources_count: getVal("edit_q_datasources"),
+    q_channels_count: getVal("edit_q_channels"),
+    q_envs_count: getVal("edit_q_envs"),
+    q_languages_count: getVal("edit_q_languages"),
+    q_components_count: getVal("edit_q_components"),
+
+    // 3. Tech Stack & Cloud
+    q_cloud: getVal("edit_q_cloud"),
     q_hadr: getVal("edit_q_hadr"),
+    q_onprem_footprint: getVal("edit_q_onprem_footprint"),
+    q_subscription_isolation: getVal("edit_q_subscription_isolation"),
+
+    // 4. AI Engine & Sizing
+    q_foundation_llm: getVal("edit_q_foundation_llm"),
+    q_grounding_mode: getVal("edit_q_grounding_mode"),
     q_named_users: getVal("edit_q_named_users"),
     q_concurrent_users: getVal("edit_q_concurrent_users"),
-    q_daily_requests: getVal("edit_q_daily_requests")
+    q_daily_requests: getVal("edit_q_daily_requests"),
+
+    // 5. Governance & Security
+    q_identity_auth: getVal("edit_q_identity_auth"),
+    q_secrets_mgmt: getVal("edit_q_secrets_mgmt"),
+    q_component_auth: getVal("edit_q_component_auth"),
+    q_retention: getVal("edit_q_retention"),
+
+    // 6. Functional Scope & Parser
+    q_legal_categories: getVal("edit_q_legal_categories"),
+    q_multi_pass_policy: getVal("edit_q_multi_pass_policy"),
+    q_parser_delimiters: getVal("edit_q_parser_delimiters"),
+    q_problem: getVal("edit_q_problem")
   };
 
   try {

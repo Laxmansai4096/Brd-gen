@@ -7,6 +7,7 @@ from backend.models import QuestionItem, QuestionOption, AnswerItem, ProjectSess
 from backend.admin_store import get_admin_defaults, get_calendar_for_geography, DELIVERY_TIERS
 
 STATIC_QUESTIONS: List[QuestionItem] = [
+    # 1. Project Timeline & Scheduling Factors
     QuestionItem(
         id="q_client",
         title="Client & Engagement Name",
@@ -23,17 +24,17 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="What is the targeted delivery tier for this engagement?",
         type="dropdown",
         options=[
-            QuestionOption(value="PoC", label="Proof of Concept (PoC) [Base]", description="Throwaway build, happy path, sampled data, single env"),
-            QuestionOption(value="Pilot", label="Pilot Trial [Base]", description="Limited live trial with controlled cohort, real data, ring-fenced"),
-            QuestionOption(value="MVP", label="Minimum Viable Product (MVP) [Base]", description="Production-grade core slice, real users, automated CI/CD"),
-            QuestionOption(value="Production Grade", label="Production Grade [Base]", description="Full enterprise readiness, enforced NFRs, full HA/DR"),
-            QuestionOption(value="PoC to Pilot", label="PoC to Pilot [Transition]", description="Uplift existing PoC to controlled live trial with rework uplift"),
-            QuestionOption(value="PoC to MVP", label="PoC to MVP [Transition]", description="Uplift existing PoC directly to releasable MVP slice"),
-            QuestionOption(value="PoC to Production Grade", label="PoC to Production Grade [Transition]", description="Uplift existing PoC straight to full production grade"),
-            QuestionOption(value="Pilot to MVP", label="Pilot to MVP [Transition]", description="Uplift running pilot into releasable MVP"),
-            QuestionOption(value="Pilot to Production Grade", label="Pilot to Production Grade [Transition]", description="Uplift running pilot to full production grade"),
-            QuestionOption(value="MVP to Production Grade", label="MVP to Production Grade [Transition]", description="Harden live MVP to full production grade"),
-            QuestionOption(value="Incremental Production Grade", label="Incremental Production Grade [Delta]", description="Delta release on live solution (30% scope share)")
+            QuestionOption(value="PoC", label="Proof of Concept (PoC) [Base 0.289]", description="Throwaway build, happy path, sampled data, single env, headline weight 0.289"),
+            QuestionOption(value="Pilot", label="Pilot Trial [Base 0.525]", description="Limited live trial with controlled cohort, real data, ring-fenced"),
+            QuestionOption(value="MVP", label="Minimum Viable Product (MVP) [Base 0.778]", description="Production-grade core slice, real users, automated CI/CD"),
+            QuestionOption(value="Production Grade", label="Production Grade [Base 1.000]", description="Full enterprise readiness, enforced NFRs, full HA/DR"),
+            QuestionOption(value="PoC to Pilot", label="PoC to Pilot [Transition 0.320]", description="Uplift existing PoC to controlled live trial with rework uplift"),
+            QuestionOption(value="PoC to MVP", label="PoC to MVP [Transition 0.612]", description="Uplift existing PoC directly to releasable MVP slice"),
+            QuestionOption(value="PoC to Production Grade", label="PoC to Production Grade [Transition 0.867]", description="Uplift existing PoC straight to full production grade"),
+            QuestionOption(value="Pilot to MVP", label="Pilot to MVP [Transition 0.342]", description="Uplift running pilot into releasable MVP"),
+            QuestionOption(value="Pilot to Production Grade", label="Pilot to Production Grade [Transition 0.597]", description="Uplift running pilot to full production grade"),
+            QuestionOption(value="MVP to Production Grade", label="MVP to Production Grade [Transition 0.305]", description="Harden live MVP to full production grade"),
+            QuestionOption(value="Incremental Production Grade", label="Incremental Production Grade [Delta 0.300]", description="Delta release on live solution (30% scope share)")
         ],
         default_value="PoC",
         category="Scope",
@@ -45,10 +46,25 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         title="Problem Statement & Business Challenge",
         prompt="Describe the business problem, manual bottlenecks, and key objectives in 2 to 5 sentences.",
         type="text",
-        default_value="Limited visibility into contractual risk exposure across contracts and business functions. Manual review by scarce legal experts is slow, disconnected, and lacks traceability. The solution must extract clauses across categories, assess them against category principles (Agree, Agree with Management Approval, Not Agree), and produce a centralized contract risk register.",
+        default_value="Limited visibility into contractual risk exposure across contracts and business functions. Manual review by scarce legal experts is slow, disconnected, and lacks traceability. The solution must extract clauses across 6 legal categories (Lease, Vendor, Service, Facilities, Technology, Marketing), assess them against category principles (Agree, Agree with Management Approval, Not Agree), and produce a centralized contract risk register with bounding-box coordinate traceability.",
         category="Scope",
         priority="Blocker",
         help_text="Detail who is impacted, bottlenecks, and what decision or action this solution enables."
+    ),
+    QuestionItem(
+        id="q_legal_categories",
+        title="In-Scope Business & Legal Categories",
+        prompt="Which contract categories are in scope for clause extraction and principle assessment?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="Lease, Vendor, Service, Facilities, Technology, Marketing", label="6 Core Categories (Recommended)", description="Lease, Vendor, Service, Facilities, Technology, Marketing"),
+            QuestionOption(value="Lease, Vendor, Service", label="3 Commercial Categories", description="Lease, Vendor, and Service contracts only"),
+            QuestionOption(value="Technology, Facilities, Marketing", label="3 Operational Categories", description="Technology, Facilities, and Marketing contracts only")
+        ],
+        default_value="Lease, Vendor, Service, Facilities, Technology, Marketing",
+        category="Scope",
+        priority="High",
+        help_text="6 standard categories: Lease, Vendor, Service, Facilities, Technology, Marketing."
     ),
     QuestionItem(
         id="q_duration",
@@ -57,7 +73,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         type="dropdown",
         options=[
             QuestionOption(value="4.0", label="4 Weeks", description="Aggressive sprint"),
-            QuestionOption(value="6.0", label="6 Weeks (Standard Baseline)", description="Standard 6-week baseline"),
+            QuestionOption(value="6.0", label="6 Weeks (Standard Baseline)", description="Standard 6-week baseline (30 working days)"),
             QuestionOption(value="8.0", label="8 Weeks", description="Extended PoC / Pilot"),
             QuestionOption(value="12.0", label="12 Weeks", description="MVP Standard"),
             QuestionOption(value="16.0", label="16 Weeks", description="Full Production Grade")
@@ -72,46 +88,10 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         title="Project Target Start Date",
         prompt="When is the targeted project kick-off / start date? (YYYY-MM-DD)",
         type="date",
-        default_value="2026-10-05",
+        default_value="2026-09-30",
         category="Scope",
         priority="High",
-        help_text="e.g. 2026-10-05 (Used to map exact day-wise working dates and regional statutory holidays)."
-    ),
-    QuestionItem(
-        id="q_cloud",
-        title="Primary Hyperscaler Platform",
-        prompt="Which cloud platform will host this solution?",
-        type="dropdown",
-        options=[
-            QuestionOption(value="Microsoft Azure", label="Microsoft Azure (Recommended)", description="Azure AI Document Intelligence, Azure OpenAI, AI Search, Blob Storage"),
-            QuestionOption(value="Google Cloud Platform", label="Google Cloud Platform (GCP)", description="Vertex AI, Gemini, Document AI, Cloud Storage"),
-            QuestionOption(value="Amazon Web Services", label="Amazon Web Services (AWS)", description="AWS Bedrock, Textract, OpenSearch, S3")
-        ],
-        default_value="Microsoft Azure",
-        category="Technical",
-        priority="Blocker",
-        help_text="Primary hyperscaler drives technical component architecture and SKU BoM."
-    ),
-    QuestionItem(
-        id="q_geography",
-        title="Deployment Geography & Residency",
-        prompt="What is the primary deployment geography and statutory calendar location?",
-        type="dropdown",
-        options=[
-            QuestionOption(value="India", label="India (Central / South)", description="9.0 hrs/day capacity • 12 statutory holidays allowance"),
-            QuestionOption(value="United States", label="United States (East / West)", description="8.0 hrs/day capacity • 11 statutory holidays allowance"),
-            QuestionOption(value="United Kingdom", label="United Kingdom", description="7.0 hrs/day capacity • 8 statutory holidays allowance"),
-            QuestionOption(value="European Union", label="European Union (GDPR)", description="7.5 hrs/day capacity • 10 statutory holidays allowance"),
-            QuestionOption(value="Singapore", label="Singapore / APAC", description="8.5 hrs/day capacity • 11 statutory holidays allowance"),
-            QuestionOption(value="United Arab Emirates", label="United Arab Emirates", description="8.0 hrs/day capacity • 14 statutory holidays allowance"),
-            QuestionOption(value="Australia", label="Australia", description="7.5 hrs/day capacity • 11 statutory holidays allowance"),
-            QuestionOption(value="Canada", label="Canada", description="8.0 hrs/day capacity • 10 statutory holidays allowance"),
-            QuestionOption(value="Japan", label="Japan", description="8.0 hrs/day capacity • 16 statutory holidays allowance")
-        ],
-        default_value="India",
-        category="Technical",
-        priority="Blocker",
-        help_text="Determines statutory calendar, daily working capacity, and data residency boundaries."
+        help_text="e.g. 2026-09-30 (Used to map exact day-wise working dates and regional statutory holidays)."
     ),
     QuestionItem(
         id="q_buffer_strategy",
@@ -121,14 +101,15 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         options=[
             QuestionOption(value="15% Shadow / Backup Capacity (Recommended)", label="15% Standby Backup Capacity (Recommended)", description="Maintains 15% shadow engineers on standby to absorb sick leaves, attrition, and sudden sprint spikes"),
             QuestionOption(value="10% Standard Staffing Buffer", label="10% Standard Staffing Buffer", description="Standard 10% contingency buffer"),
-            QuestionOption(value="5% Lean Staffing", label="5% Lean Staffing", description="Minimal backup buffer (higher risk of milestone slippage)")
+            QuestionOption(value="25% High-Resilience Shadow Engineering", label="25% High-Resilience Shadow Engineering", description="Heavy standby buffer for mission-critical timelines"),
+            QuestionOption(value="0% Dedicated Core Only (Zero Standby)", label="0% Dedicated Core Only (Zero Standby)", description="Minimal backup buffer (higher risk of milestone slippage)")
         ],
         default_value="15% Shadow / Backup Capacity (Recommended)",
         category="Resourcing",
         priority="High",
         help_text="Ensures zero delivery delay in case of resource leaves or unexpected technical blockers."
     ),
-    # Granular Scale Drivers
+    # 2. Delivery Effort & Sizing Multipliers (Scale Drivers)
     QuestionItem(
         id="q_usecases_count",
         title="Distinct Use Cases / Capabilities",
@@ -137,7 +118,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="1",
         category="Scale",
         priority="High",
-        help_text="Count genuinely distinct business capabilities (e.g. 1 for Contract Risk Intelligence)."
+        help_text="1 for Contract Risk & Principle Extraction Intelligence (Factor: 1.000)."
     ),
     QuestionItem(
         id="q_personas_count",
@@ -147,7 +128,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="4",
         category="Scale",
         priority="High",
-        help_text="e.g., Legal Counsel, Procurement Lead, Risk Officer, Executive Sponsor (Total: 4)."
+        help_text="4 active personas: Legal Counsel, Procurement Lead, Risk Officer, Executive Sponsor (Factor: 1.450, Elasticity: 0.45)."
     ),
     QuestionItem(
         id="q_integrations_count",
@@ -157,7 +138,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="0",
         category="Scale",
         priority="High",
-        help_text="Enter 0 for PoC manual upload, or count external ERP/CLM/IAM systems."
+        help_text="0 external interfaces for PoC manual upload (Scaled to floor factor 0.500, Elasticity: 0.65)."
     ),
     QuestionItem(
         id="q_datasources_count",
@@ -167,7 +148,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="2",
         category="Scale",
         priority="High",
-        help_text="e.g., Blob Storage contract repository + historical risk register spreadsheet (Total: 2)."
+        help_text="Blob Storage contract repository + historical risk register spreadsheet (Total: 2, Factor: 1.000)."
     ),
     QuestionItem(
         id="q_channels_count",
@@ -177,7 +158,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="1",
         category="Scale",
         priority="Medium",
-        help_text="Enter 1 for single Web Cockpit UI."
+        help_text="1 for single Web Cockpit UI (Factor: 1.000)."
     ),
     QuestionItem(
         id="q_languages_count",
@@ -187,7 +168,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="1",
         category="Scale",
         priority="Medium",
-        help_text="Enter 1 for English-only contracts."
+        help_text="1 for English-only clean digital PDFs (Factor: 1.000)."
     ),
     QuestionItem(
         id="q_envs_count",
@@ -197,7 +178,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="3",
         category="Scale",
         priority="High",
-        help_text="Enter 3 for Dev, Test, and Prod / UAT."
+        help_text="3 for Dev, Test, and Prod / UAT (Factor: 1.000)."
     ),
     QuestionItem(
         id="q_components_count",
@@ -207,7 +188,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="6",
         category="Scale",
         priority="High",
-        help_text="Enter 6 for Landing, Search Index, Reasoning Engine, Database, Eval Harness, UI Cockpit."
+        help_text="6 for Landing, Search Index, Reasoning Engine, Database, Eval Harness, UI Cockpit (Factor: 1.000)."
     ),
     QuestionItem(
         id="q_complexity",
@@ -215,15 +196,15 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="What is the overall technical complexity of the domain and algorithms?",
         type="dropdown",
         options=[
-            QuestionOption(value="Low", label="Low (0.85x Multiplier)", description="Standard RAG, structured documents, straightforward schemas"),
-            QuestionOption(value="Medium", label="Medium (1.00x Baseline)", description="Moderate multi-step extraction and custom ontologies"),
-            QuestionOption(value="High", label="High (1.25x Multiplier)", description="Deep agentic reasoning, cross-document reasoning"),
-            QuestionOption(value="Very High", label="Very High (1.50x Multiplier)", description="Custom model fine-tuning, complex multi-modal pipelines")
+            QuestionOption(value="Low", label="Low (0.850 Multiplier)", description="Standard RAG, structured documents, straightforward schemas"),
+            QuestionOption(value="Medium", label="Medium (1.000 Baseline)", description="Moderate multi-step extraction and custom ontologies"),
+            QuestionOption(value="High", label="High (1.250 Multiplier)", description="Deep agentic reasoning, cross-document reasoning"),
+            QuestionOption(value="Very High", label="Very High (1.500 Multiplier)", description="Custom model fine-tuning, complex multi-modal pipelines")
         ],
         default_value="Low",
         category="Scale",
         priority="High",
-        help_text="Applies a flat multiplier across all task library estimates."
+        help_text="Graded as Low, applying a flat 0.850 multiplier across task library."
     ),
     QuestionItem(
         id="q_compliance",
@@ -231,15 +212,15 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="What is the compliance posture governing this system's data and operations?",
         type="dropdown",
         options=[
-            QuestionOption(value="None", label="None (1.00x)", description="No specific regulatory governance"),
-            QuestionOption(value="Internal policy only", label="Internal Policy Only (1.05x)", description="Company data governance and confidentiality standards"),
-            QuestionOption(value="Regulated - moderate", label="Regulated - Moderate (1.15x)", description="Standard industry regulatory audit requirements"),
-            QuestionOption(value="Regulated - high (BFSI/Health/Gov)", label="Regulated - High (1.30x)", description="Strict statutory audits (BFSI, HIPAA, Government)")
+            QuestionOption(value="None", label="None (1.000x)", description="No specific regulatory governance"),
+            QuestionOption(value="Internal policy only", label="Internal Policy Only (1.050x)", description="Bound by internal data governance (+5% uplift on COMP tasks)"),
+            QuestionOption(value="Regulated - moderate", label="Regulated - Moderate (1.150x)", description="Standard industry regulatory audit requirements"),
+            QuestionOption(value="Regulated - high (BFSI/Health/Gov)", label="Regulated - High (1.300x)", description="Strict statutory audits (BFSI, HIPAA, Government)")
         ],
         default_value="Internal policy only",
         category="Scale",
         priority="High",
-        help_text="Uplifts compliance-flagged (COMP) engineering tasks."
+        help_text="Bound by Internal policy only, triggering 1.050 (+5%) uplift on COMP tasks."
     ),
     QuestionItem(
         id="q_security",
@@ -247,16 +228,138 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="What security posture and network isolation is mandated for this solution?",
         type="dropdown",
         options=[
-            QuestionOption(value="Standard", label="Standard (1.00x)", description="HTTPS, RBAC, platform-managed encryption"),
-            QuestionOption(value="Enhanced", label="Enhanced (1.12x)", description="VNet injection, Private Endpoints, Customer-Managed Keys"),
-            QuestionOption(value="Restricted / Air-gapped", label="Restricted / Air-Gapped (1.30x)", description="Zero internet ingress/egress, strict isolation")
+            QuestionOption(value="Standard", label="Standard (1.000 Baseline)", description="HTTPS, RBAC, platform-managed encryption keys, Managed Identities"),
+            QuestionOption(value="Enhanced", label="Enhanced (1.120x)", description="VNet injection, Private Endpoints, Customer-Managed Keys (CMEK)"),
+            QuestionOption(value="Restricted / Air-gapped", label="Restricted / Air-Gapped (1.300x)", description="Zero internet ingress/egress, air-gapped isolation")
         ],
         default_value="Standard",
         category="Scale",
         priority="High",
-        help_text="Uplifts security-flagged (SEC) engineering tasks."
+        help_text="Standard security posture, keeping SEC tasks at baseline 1.000 multiplier."
     ),
-    # Granular Sizing Drivers
+    # 3. Technology Stack, Cloud & Infrastructure Factors
+    QuestionItem(
+        id="q_cloud",
+        title="Primary Hyperscaler Platform",
+        prompt="Which cloud platform will host this solution?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="Microsoft Azure", label="Microsoft Azure (Sole Approved Platform)", description="Azure AI Document Intelligence, Azure OpenAI, AI Search, Blob Storage"),
+            QuestionOption(value="Google Cloud Platform", label="Google Cloud Platform (GCP)", description="Vertex AI, Gemini, Document AI, Cloud Storage"),
+            QuestionOption(value="Amazon Web Services", label="Amazon Web Services (AWS)", description="AWS Bedrock, Textract, OpenSearch, S3")
+        ],
+        default_value="Microsoft Azure",
+        category="Technical",
+        priority="Blocker",
+        help_text="Microsoft Azure is the sole approved platform, preventing cross-cloud complexity."
+    ),
+    QuestionItem(
+        id="q_geography",
+        title="Deployment Geography & Statutory Holidays",
+        prompt="What is the primary deployment geography and statutory calendar location?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="India", label="India (9.0 hrs/day • Fixed Statutory Holidays)", description="5 days/wk, 9.0 hrs/day capacity, Republic Day, Independence Day, Gandhi Jayanti"),
+            QuestionOption(value="United States", label="United States (8.0 hrs/day)", description="8.0 hrs/day capacity • 11 statutory holidays"),
+            QuestionOption(value="United Kingdom", label="United Kingdom (7.0 hrs/day)", description="7.0 hrs/day capacity • 8 statutory holidays"),
+            QuestionOption(value="European Union", label="European Union (7.5 hrs/day)", description="7.5 hrs/day capacity • 10 statutory holidays"),
+            QuestionOption(value="Singapore", label="Singapore (8.5 hrs/day)", description="8.5 hrs/day capacity • 11 statutory holidays")
+        ],
+        default_value="India",
+        category="Technical",
+        priority="Blocker",
+        help_text="India region locks 5 days/wk, 9.0 hrs/day and regional statutory holidays."
+    ),
+    QuestionItem(
+        id="q_onprem_footprint",
+        title="On-Premises Infrastructure Footprint",
+        prompt="Are any on-premises server components or hybrid network tunnels required?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="No (Zero On-Premises Footprint)", label="No (Zero On-Premises Footprint, 100% Cloud Native)", description="Zero on-premise components; no ExpressRoute/VPN tunnels required"),
+            QuestionOption(value="Yes (Hybrid Tunnels Required)", label="Yes (Hybrid ExpressRoute / VPN Required)", description="Requires hybrid network integration to on-prem datacenters")
+        ],
+        default_value="No (Zero On-Premises Footprint)",
+        category="Technical",
+        priority="High",
+        help_text="Zero on-premises footprint eliminates hybrid tunnel dependencies."
+    ),
+    QuestionItem(
+        id="q_subscription_isolation",
+        title="Subscription & Tenant Isolation",
+        prompt="What cloud subscription topology will host the deployment?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="Dedicated Non-Production Subscription", label="Dedicated Non-Production Cloud Subscription", description="Newly created dedicated non-prod subscription guaranteeing network isolation"),
+            QuestionOption(value="Shared Corporate Non-Production Subscription", label="Shared Corporate Non-Production Subscription", description="Shared non-production subscription with resource-group level RBAC"),
+            QuestionOption(value="Isolated Regulated Tenant", label="Isolated Regulated Tenant", description="Strictly separated cloud tenant with dedicated landing zone")
+        ],
+        default_value="Dedicated Non-Production Subscription",
+        category="Technical",
+        priority="High",
+        help_text="Guarantees clean network isolation from live corporate environments."
+    ),
+    QuestionItem(
+        id="q_hadr_tier",
+        title="High Availability & Disaster Recovery (HA/DR)",
+        prompt="What High Availability and Disaster Recovery footprint tier is required for hosting?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="None (single instance)", label="None (Single Instance - 1.000x Footprint)", description="Standard single-instance footprint in India region; eliminates multi-region complexity"),
+            QuestionOption(value="Zone redundant", label="Zone Redundant (1.350x)", description="Multi-Availability Zone redundancy within primary region"),
+            QuestionOption(value="Region pair - active/passive", label="Region Pair - Active/Passive (1.600x)", description="Secondary failover region for disaster recovery"),
+            QuestionOption(value="Region pair - active/active", label="Region Pair - Active/Active (2.000x)", description="Dual active regions with global traffic routing")
+        ],
+        default_value="None (single instance)",
+        category="Technical",
+        priority="Medium",
+        help_text="None (single instance) applies 1.000 footprint multiplier."
+    ),
+    # 4. AI Engine, RAG Pipeline & Model Sizing Factors
+    QuestionItem(
+        id="q_foundation_llm",
+        title="Foundation LLM Architecture",
+        prompt="Which foundation model reasoning tier will interpret open-textured legal clauses?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="Azure OpenAI Reasoning (GPT-5 Thinking/Reasoning)", label="Azure OpenAI Reasoning Tier (GPT-5 Thinking/Reasoning)", description="Optimized for multi-pass interpretation of open-textured negotiated legal clauses"),
+            QuestionOption(value="Azure OpenAI GPT-4o Standard", label="Azure OpenAI GPT-4o Standard", description="General-purpose high-speed multimodal reasoning"),
+            QuestionOption(value="Anthropic Claude 3.5 Sonnet", label="Anthropic Claude 3.5 Sonnet", description="Long-context legal extraction engine"),
+            QuestionOption(value="Google Gemini 2.5 Pro", label="Google Gemini 2.5 Pro", description="Deep multi-document reasoning")
+        ],
+        default_value="Azure OpenAI Reasoning (GPT-5 Thinking/Reasoning)",
+        category="AI & RAG",
+        priority="High",
+        help_text="Azure OpenAI reasoning tier interprets open-textured negotiated legal clauses."
+    ),
+    QuestionItem(
+        id="q_grounding_mode",
+        title="Grounding & Surface Mode",
+        prompt="What grounding boundary controls model retrieval access?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="Work (Tenant Data Only)", label="Work (Tenant Data Only, Public Web Disabled)", description="Grounding strictly locked to tenant contract corpus; zero public web search via M365 Copilot / Azure AI Agent services"),
+            QuestionOption(value="Hybrid (Tenant Data + Selective Public Web)", label="Hybrid (Tenant Data + Selective Public Web)", description="Enables external regulatory lookup alongside internal documents")
+        ],
+        default_value="Work (Tenant Data Only)",
+        category="AI & RAG",
+        priority="High",
+        help_text="Locked to 'Work' grounding, preventing external public web retrieval."
+    ),
+    QuestionItem(
+        id="q_doc_processing",
+        title="Document Processing & Layout Complexity",
+        prompt="What document intelligence technology parses layout-aware structures across ~600 sample contracts?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="Azure AI Document Intelligence Layout API", label="Azure AI Document Intelligence (Layout-Aware API)", description="Extracts text, tables, bounding-box coordinates across ~600 sample contracts"),
+            QuestionOption(value="Standard OCR Text Extraction", label="Standard OCR Text Extraction", description="Basic flat-text extraction without coordinate bounding boxes")
+        ],
+        default_value="Azure AI Document Intelligence Layout API",
+        category="AI & RAG",
+        priority="High",
+        help_text="Recovers bounding-box coordinates for 100% source clause traceability."
+    ),
     QuestionItem(
         id="q_named_users",
         title="Total Named Users",
@@ -265,7 +368,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="200",
         category="Sizing",
         priority="Medium",
-        help_text="Total legal, procurement, and risk reviewers with accounts."
+        help_text="200 named legal, procurement, and risk reviewers."
     ),
     QuestionItem(
         id="q_concurrent_users",
@@ -275,7 +378,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="50",
         category="Sizing",
         priority="Medium",
-        help_text="Drives API concurrency and App Service sizing."
+        help_text="50 peak concurrent users driving API concurrency."
     ),
     QuestionItem(
         id="q_daily_requests",
@@ -285,52 +388,50 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="2000",
         category="Sizing",
         priority="Medium",
-        help_text="Used to estimate LLM token throughput and Document Intelligence API calls."
+        help_text="2,000 requests per day with peak processing speed of 3.00 RPS."
     ),
-    QuestionItem(
-        id="q_hadr_tier",
-        title="High Availability & Disaster Recovery (HA/DR)",
-        prompt="What High Availability and Disaster Recovery footprint tier is required for hosting?",
-        type="dropdown",
-        options=[
-            QuestionOption(value="None (single instance)", label="None (Single Instance - 1.00x)", description="Standard single-region deployment for PoC/Pilot"),
-            QuestionOption(value="Zone redundant", label="Zone Redundant (1.35x)", description="Multi-Availability Zone redundancy within primary region"),
-            QuestionOption(value="Region pair - active/passive", label="Region Pair - Active/Passive (1.60x)", description="Secondary failover region for disaster recovery"),
-            QuestionOption(value="Region pair - active/active", label="Region Pair - Active/Active (2.00x)", description="Dual active regions with global traffic routing")
-        ],
-        default_value="None (single instance)",
-        category="Sizing",
-        priority="Medium",
-        help_text="Multiplies infrastructure cloud footprint and BoM costs."
-    ),
+    # 5. Data Governance & Parser Contract Factors
     QuestionItem(
         id="q_multi_pass_policy",
-        title="Extraction Pass Policy & Nuanced Terms",
-        prompt="How should ambiguous, vague, or negotiated contract terms be handled during extraction?",
+        title="Multi-Pass Evaluation Logic",
+        prompt="How should contract clauses and risk principles be evaluated?",
         type="dropdown",
         options=[
-            QuestionOption(value="Multi-Pass Agentic Extraction", label="Multi-Pass Agentic Extraction (Recommended)", description="Pass 1: standard clauses; Pass 2+: targeted retrieval for vague terms, capped at 3 passes before exception routing"),
-            QuestionOption(value="Single-Pass Extraction", label="Single-Pass Extraction Only", description="Single prompt extraction per document"),
-            QuestionOption(value="Strict Manual Flagging", label="Strict Manual Flagging", description="Route any non-standard clause directly to human review")
+            QuestionOption(value="Two-Pass Evaluation (Agree / Agree with Mgmt Approval / Not Agree)", label="Two-Pass Evaluation (3 Status Levels: Agree, Mgmt Approval, Not Agree)", description="Pass 1 extracts standard clauses; Pass 2 evaluates ambiguous terms to assign one of 3 statuses"),
+            QuestionOption(value="Single-Pass Flat Extraction", label="Single-Pass Flat Extraction", description="Single prompt pass without iterative disambiguation")
         ],
-        default_value="Multi-Pass Agentic Extraction",
+        default_value="Two-Pass Evaluation (Agree / Agree with Mgmt Approval / Not Agree)",
         category="Governance",
         priority="High",
-        help_text="Multi-pass balances precision with token limits and bounding-box provenance."
+        help_text="Two sequential steps: Pass 1 extracts clauses, Pass 2 evaluates three-tier status."
+    ),
+    QuestionItem(
+        id="q_parser_delimiters",
+        title="Parser Delimiters & Truncation Thresholds",
+        prompt="What formatting delimiters and cell thresholds govern parser ingestion?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="Block Headers (<<<BEGIN:NAME>>>) & Pipe (|), 30k Char Cap, 0.72 Synonym Threshold", label="Standard Format (<<<BEGIN:NAME>>> & Pipe |, 30k Char Cap, 0.72 Confidence)", description="30,000 char cell cap (>32k quarantined), 0.72 synonym confidence threshold, NOT PROVIDED placeholder"),
+            QuestionOption(value="Standard JSON Schema Key-Value Delimiters", label="Standard JSON Schema Parser", description="Pure JSON schema parsing without block headers")
+        ],
+        default_value="Block Headers (<<<BEGIN:NAME>>>) & Pipe (|), 30k Char Cap, 0.72 Synonym Threshold",
+        category="Governance",
+        priority="High",
+        help_text="Block headers, pipe delimiters, 30k char ceiling, 0.72 synonym match confidence."
     ),
     QuestionItem(
         id="q_approval_gate",
-        title="Human-in-the-Loop Decision Gate",
-        prompt="What governance protocol controls principle assessment and assumption approvals?",
+        title="Assumption & Approval Gating",
+        prompt="What governance gate protocol enforces stakeholder prerequisites before calculation?",
         type="dropdown",
         options=[
-            QuestionOption(value="Human-in-the-Loop Assistive Gate", label="Assistive AI with 100% Human Sign-Off (Recommended)", description="AI produces Agree / Agree with Approval / Not Agree; humans retain approval authority"),
-            QuestionOption(value="Autonomous Approval with Audit Log", label="Autonomous Automated Approval (High Risk)", description="AI directly approves without pre-execution human gate")
+            QuestionOption(value="Strict Assumption Gate (Blocks downline effort until all Approved)", label="Strict Assumption Gate (100% Approval Required)", description="Downline effort calculations and schedule are blocked until stakeholders mark all clarification questions as Approve"),
+            QuestionOption(value="Advisory Assumption Gate", label="Advisory Assumption Gate (Non-blocking)", description="Allows schedule generation with unapproved assumption warnings")
         ],
-        default_value="Human-in-the-Loop Assistive Gate",
+        default_value="Strict Assumption Gate (Blocks downline effort until all Approved)",
         category="Governance",
         priority="Blocker",
-        help_text="Ensures Responsible AI compliance and eliminates unauthorized legal liability."
+        help_text="Enforces strict gate: calculations blocked until all assumptions are Approved."
     )
 ]
 

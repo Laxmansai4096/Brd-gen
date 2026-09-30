@@ -1033,7 +1033,7 @@ def generate_brd(
             "6. Results rendered in interactive dashboard with audit-ready export."
         )
 
-    start_date_ans = get_str_ans("q_start_date", "2026-10-05")
+    start_date_ans = get_str_ans("q_start_date", "2026-09-30")
     buffer_strategy_ans = get_str_ans("q_buffer_strategy", "15% Shadow / Backup Capacity (Recommended)")
     buffer_pct = 15.0
     if "0%" in buffer_strategy_ans or "Zero" in buffer_strategy_ans:
@@ -1042,6 +1042,19 @@ def generate_brd(
         buffer_pct = 25.0
     elif "10%" in buffer_strategy_ans:
         buffer_pct = 10.0
+
+    # 6 Factor Sizing & Functional Fields
+    legal_cats_raw = get_str_ans("q_legal_categories", "Lease, Vendor, Service, Facilities, Technology, Marketing")
+    legal_categories_list = [c.strip() for c in legal_cats_raw.split(",") if c.strip()]
+    if not legal_categories_list:
+        legal_categories_list = ["Lease", "Vendor", "Service", "Facilities", "Technology", "Marketing"]
+
+    foundation_llm = get_str_ans("q_foundation_llm", "Azure OpenAI reasoning/thinking tier (GPT-5 Thinking/Reasoning parameters)")
+    grounding_mode = get_str_ans("q_grounding_mode", "Work (Tenant data only, disabling public web retrieval) using M365 Copilot / Azure AI Agent services")
+    parser_delims = get_str_ans("q_parser_delimiters", "Block headers (<<<BEGIN:NAME>>>) and pipe characters (|), 30,000 char cell text limit, 0.72 synonym confidence threshold")
+    eval_logic = get_str_ans("q_multi_pass_policy", "Pass 1 extracts explicit standard clauses | Pass 2 evaluates ambiguous terms to assign one of three statuses: Agree, Agree with Management Approval, or Not Agree")
+    onprem_footprint = get_str_ans("q_onprem_footprint", "Zero on-premises components permitted (No hybrid tunnels/VPN)")
+    sub_isolation = get_str_ans("q_subscription_isolation", "Dedicated newly created non-production cloud subscription")
 
     backup_resources_list = [
         {"role": "Shadow AI & ML Engineer", "level": "Senior", "location": geo_ans, "allocation_pct": f"{buffer_pct}%", "purpose": "Hot-standby for model tuning, evaluation pipeline blockers, and critical-path prompt engineering cover"},
@@ -1197,15 +1210,20 @@ def generate_brd(
         ],
         security_compliance=[
             f"Data strictly retained within the regional cloud residency boundary ({geo_ans}).",
-            "Managed identity and secret-less authentication between all cloud services.",
-            "Transparent Data Encryption (TDE / Cloud KMS) at rest and TLS 1.3 in transit.",
-            "Role-Based Access Control (RBAC) integrated with enterprise identity provider."
+            "Managed identity and secret-less authentication between all cloud services (HTTPS / Azure Managed Identities).",
+            "Transparent Data Encryption (TDE / Azure Key Vault platform-managed keys) at rest and TLS 1.3 in transit.",
+            "Role-Based Access Control (RBAC) integrated with Microsoft Entra ID SSO."
         ],
         risks_mitigations=[
             {"risk": "Data quality or knowledge base gaps degrade response accuracy", "mitigation": "Automated ingestion validation and fallback to human exception queue."},
             {"risk": "User prompt injection or unauthorized access attempts", "mitigation": "Input sanitization, content safety guardrails, and strict RBAC authorization."},
             {"risk": "Scope expansion beyond agreed use cases", "mitigation": "Scope frozen strictly to defined capabilities with formal change control procedures."}
         ],
+        legal_categories=legal_categories_list,
+        foundation_llm_architecture=foundation_llm,
+        grounding_surface_mode=grounding_mode,
+        parser_delimiters=parser_delims,
+        evaluation_decision_logic=eval_logic,
         technical_components=tech_components,
         sizing_metrics=sizing_metrics,
         sizing_bom=sizing_bom,

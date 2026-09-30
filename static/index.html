@@ -785,16 +785,61 @@
       </p>
 
       <div style="display: flex; flex-direction: column; gap: 18px;">
-        <!-- Section A: Client & Scope -->
+        <!-- Category 1: Project Timeline & Scheduling Factors -->
         <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">🏢 1. Client & Engagement Scope</h4>
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📅 1. Project Timeline & Scheduling Factors</h4>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="form-group">
               <label class="form-label">Client & Engagement Working Title</label>
               <input type="text" class="form-control" id="edit_q_client" placeholder="e.g., PVR INOX — Contract Intelligence">
             </div>
             <div class="form-group">
-              <label class="form-label">Delivery Tier (11 Tiers)</label>
+              <label class="form-label">Target Reference Duration (Weeks / 30 working days baseline)</label>
+              <input type="number" class="form-control" id="edit_q_duration" step="0.5" min="1" max="52" value="6.0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Scheduled Start Date</label>
+              <input type="date" class="form-control" id="edit_q_start_date" value="2026-09-30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Delivery Geography & Statutory Holidays</label>
+              <select class="form-control" id="edit_q_geography">
+                <option value="India">India (9.0 hrs/day, 12 fallback holidays)</option>
+                <option value="United Kingdom">United Kingdom (7.0 hrs/day)</option>
+                <option value="United States">United States (8.0 hrs/day)</option>
+                <option value="European Union">European Union (7.5 hrs/day)</option>
+                <option value="Singapore">Singapore (8.5 hrs/day)</option>
+                <option value="United Arab Emirates">United Arab Emirates (8.0 hrs/day)</option>
+                <option value="Australia">Australia (7.5 hrs/day)</option>
+                <option value="Canada">Canada (8.0 hrs/day)</option>
+                <option value="Japan">Japan (8.0 hrs/day)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Resource Buffer / Backup Strategy (Standby FTE)</label>
+              <select class="form-control" id="edit_q_buffer_strategy">
+                <option value="15% Shadow / Backup Capacity (Recommended)">15% Shadow / Backup Capacity (Recommended)</option>
+                <option value="10% Lean Standby Buffer">10% Lean Standby Buffer</option>
+                <option value="25% High-Resilience Shadow Engineering">25% High-Resilience Shadow Engineering</option>
+                <option value="0% Dedicated Core Only (Zero Standby)">0% Dedicated Core Only (Zero Standby)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Assumption & Approval Gating</label>
+              <select class="form-control" id="edit_q_approval_gate">
+                <option value="Strict (All assumptions must be Approved)">Strict (All assumptions must be Approved)</option>
+                <option value="Advisory (Non-blocking)">Advisory (Non-blocking)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category 2: Delivery Effort & Sizing Multipliers -->
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📊 2. Delivery Effort & Sizing Multipliers</h4>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">Delivery Tier Rigour</label>
               <select class="form-control" id="edit_q_tier">
                 <option value="PoC">PoC (Proof of Concept) [0.289]</option>
                 <option value="Pilot">Pilot [0.490]</option>
@@ -810,141 +855,174 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Target Project Kick-Off Start Date</label>
-              <input type="date" class="form-control" id="edit_q_start_date" value="2026-10-05">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Resource Buffer / Backup Strategy</label>
-              <select class="form-control" id="edit_q_buffer_strategy">
-                <option value="15% Shadow / Backup Capacity (Recommended)">15% Shadow / Backup Capacity (Recommended)</option>
-                <option value="10% Lean Standby Buffer">10% Lean Standby Buffer</option>
-                <option value="25% High-Resilience Shadow Engineering">25% High-Resilience Shadow Engineering</option>
-                <option value="0% Dedicated Core Only (Zero Standby)">0% Dedicated Core Only (Zero Standby)</option>
+              <label class="form-label">Technical Complexity Level</label>
+              <select class="form-control" id="edit_q_complexity">
+                <option value="Low">Low (0.850 multiplier)</option>
+                <option value="Medium">Medium (1.000 multiplier)</option>
+                <option value="High">High (1.250 multiplier)</option>
+                <option value="Very High">Very High (1.500 multiplier)</option>
               </select>
             </div>
-            <div class="form-group" style="grid-column: span 2;">
-              <label class="form-label">Business Problem & Functional Objectives</label>
-              <textarea class="form-control" id="edit_q_problem" rows="3"></textarea>
+            <div class="form-group">
+              <label class="form-label">Compliance & Regulatory Posture</label>
+              <select class="form-control" id="edit_q_compliance">
+                <option value="Internal policy only">Internal policy only (1.050 / +5% COMP uplift)</option>
+                <option value="None">None (1.000 multiplier)</option>
+                <option value="Regulated - moderate">Regulated - moderate (1.150 multiplier)</option>
+                <option value="Regulated - high (BFSI/Health/Gov)">Regulated - high (BFSI/Health/Gov) (1.300 multiplier)</option>
+              </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Reference Duration (Weeks)</label>
-              <input type="number" class="form-control" id="edit_q_duration" step="0.5" min="1" max="52">
+              <label class="form-label">Security Posture</label>
+              <select class="form-control" id="edit_q_security">
+                <option value="Standard">Standard (1.000 SEC multiplier)</option>
+                <option value="Enhanced">Enhanced (1.120 multiplier)</option>
+                <option value="Restricted / Air-gapped">Restricted / Air-gapped (1.300 multiplier)</option>
+              </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Target Cloud Platform</label>
+              <label class="form-label">Number of Use Cases</label>
+              <input type="number" class="form-control" id="edit_q_usecases" min="1" max="50" value="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">User Personas (Elasticity 0.45)</label>
+              <input type="number" class="form-control" id="edit_q_personas" min="1" max="50" value="4">
+            </div>
+            <div class="form-group">
+              <label class="form-label">External Integrations (Floor 0.50)</label>
+              <input type="number" class="form-control" id="edit_q_integrations" min="0" max="50" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Distinct Data Sources</label>
+              <input type="number" class="form-control" id="edit_q_datasources" min="1" max="50" value="2">
+            </div>
+            <div class="form-group">
+              <label class="form-label">User Interaction Channels</label>
+              <input type="number" class="form-control" id="edit_q_channels" min="1" max="20" value="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Deployment Environments</label>
+              <input type="number" class="form-control" id="edit_q_envs" min="1" max="10" value="3">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Languages Supported</label>
+              <input type="number" class="form-control" id="edit_q_languages" min="1" max="50" value="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Architecture Components</label>
+              <input type="number" class="form-control" id="edit_q_components" min="1" max="30" value="6">
+            </div>
+          </div>
+        </div>
+
+        <!-- Category 3: Technology Stack, Cloud & Infrastructure Factors -->
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">☁️ 3. Technology Stack, Cloud & Infrastructure Factors</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">Mandated Cloud Platform & Hyperscaler</label>
               <select class="form-control" id="edit_q_cloud">
-                <option value="Microsoft Azure">Microsoft Azure</option>
+                <option value="Microsoft Azure">Microsoft Azure (Sole Approved Platform)</option>
                 <option value="Google Cloud Platform (GCP)">Google Cloud Platform (GCP)</option>
                 <option value="Amazon Web Services (AWS)">Amazon Web Services (AWS)</option>
                 <option value="Hybrid / Multi-cloud">Hybrid / Multi-cloud</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Primary Delivery Geography</label>
-              <select class="form-control" id="edit_q_geography">
-                <option value="India">India (9.0 hrs/day)</option>
-                <option value="United Kingdom">United Kingdom (7.0 hrs/day)</option>
-                <option value="United States">United States (8.0 hrs/day)</option>
-                <option value="European Union">European Union (7.5 hrs/day)</option>
-                <option value="Singapore">Singapore (8.5 hrs/day)</option>
-                <option value="United Arab Emirates">United Arab Emirates (8.0 hrs/day)</option>
-                <option value="Australia">Australia (7.5 hrs/day)</option>
-                <option value="Canada">Canada (8.0 hrs/day)</option>
-                <option value="Japan">Japan (8.0 hrs/day)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section B: Scale Drivers -->
-        <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📊 2. Scale & Complexity Drivers</h4>
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-            <div class="form-group">
-              <label class="form-label">Number of Use Cases</label>
-              <input type="number" class="form-control" id="edit_q_usecases" min="1" max="50">
-            </div>
-            <div class="form-group">
-              <label class="form-label">User Personas</label>
-              <input type="number" class="form-control" id="edit_q_personas" min="1" max="50">
-            </div>
-            <div class="form-group">
-              <label class="form-label">External System Integrations</label>
-              <input type="number" class="form-control" id="edit_q_integrations" min="0" max="50">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Distinct Data Sources</label>
-              <input type="number" class="form-control" id="edit_q_datasources" min="1" max="50">
-            </div>
-            <div class="form-group">
-              <label class="form-label">User Interaction Channels</label>
-              <input type="number" class="form-control" id="edit_q_channels" min="1" max="20">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Languages Supported</label>
-              <input type="number" class="form-control" id="edit_q_languages" min="1" max="50">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Deployment Environments</label>
-              <input type="number" class="form-control" id="edit_q_envs" min="1" max="10">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Architecture Components</label>
-              <input type="number" class="form-control" id="edit_q_components" min="1" max="30">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Complexity Level</label>
-              <select class="form-control" id="edit_q_complexity">
-                <option value="Low">Low (0.85x)</option>
-                <option value="Medium">Medium (1.00x)</option>
-                <option value="High">High (1.25x)</option>
-                <option value="Very High">Very High (1.50x)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Regulatory & Compliance</label>
-              <select class="form-control" id="edit_q_compliance">
-                <option value="None">None (1.00x)</option>
-                <option value="Internal policy only">Internal policy only (1.05x)</option>
-                <option value="Regulated - moderate">Regulated - moderate (1.15x)</option>
-                <option value="Regulated - high (BFSI/Health/Gov)">Regulated - high (BFSI/Health/Gov) (1.30x)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Security Posture</label>
-              <select class="form-control" id="edit_q_security">
-                <option value="Standard">Standard (1.00x)</option>
-                <option value="Enhanced">Enhanced (1.12x)</option>
-                <option value="Restricted / Air-gapped">Restricted / Air-gapped (1.30x)</option>
-              </select>
-            </div>
-            <div class="form-group">
               <label class="form-label">HA / DR Resilience Tier</label>
               <select class="form-control" id="edit_q_hadr">
-                <option value="None (single instance)">None (single instance)</option>
-                <option value="Zone redundant">Zone redundant</option>
-                <option value="Region pair - active/passive">Region pair - active/passive</option>
-                <option value="Region pair - active/active">Region pair - active/active</option>
+                <option value="None (single instance)">None (single instance) [1.000 multiplier]</option>
+                <option value="Zone redundant">Zone redundant [1.200 multiplier]</option>
+                <option value="Region pair - active/passive">Region pair - active/passive [1.400 multiplier]</option>
+                <option value="Region pair - active/active">Region pair - active/active [1.800 multiplier]</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">On-Premises Infrastructure Footprint</label>
+              <select class="form-control" id="edit_q_onprem_footprint">
+                <option value="Zero on-premises components permitted (No hybrid tunnels/VPN)">Zero on-premises components (No ExpressRoute/VPN)</option>
+                <option value="Hybrid network tunnel required">Hybrid network tunnel required</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Subscription & Tenant Isolation</label>
+              <select class="form-control" id="edit_q_subscription_isolation">
+                <option value="Dedicated newly created non-production cloud subscription">Dedicated non-prod cloud subscription (Isolated)</option>
+                <option value="Shared enterprise subscription">Shared enterprise subscription</option>
               </select>
             </div>
           </div>
         </div>
 
-        <!-- Section C: Sizing & Users -->
+        <!-- Category 4: AI Engine, RAG Pipeline & Model Sizing Factors -->
         <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">👥 3. Sizing & Workload Expectations</h4>
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">🧠 4. AI Engine, RAG Pipeline & Model Sizing Factors</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">Foundation LLM Architecture</label>
+              <input type="text" class="form-control" id="edit_q_foundation_llm" value="Azure OpenAI reasoning/thinking tier (GPT-5 Thinking/Reasoning parameters)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Grounding & Surface Mode</label>
+              <input type="text" class="form-control" id="edit_q_grounding_mode" value="Work (Tenant data only, disabling public web retrieval) using M365 Copilot / Azure AI Agent services">
+            </div>
             <div class="form-group">
               <label class="form-label">Total Named Users</label>
-              <input type="number" class="form-control" id="edit_q_named_users" min="1">
+              <input type="number" class="form-control" id="edit_q_named_users" min="1" value="200">
             </div>
             <div class="form-group">
               <label class="form-label">Peak Concurrent Users</label>
-              <input type="number" class="form-control" id="edit_q_concurrent_users" min="1">
+              <input type="number" class="form-control" id="edit_q_concurrent_users" min="1" value="50">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label">Expected Daily Requests (Peak 3.00 RPS)</label>
+              <input type="number" class="form-control" id="edit_q_daily_requests" min="1" value="2000">
+            </div>
+          </div>
+        </div>
+
+        <!-- Category 5: Data Governance, Security & Administrative Control Factors -->
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">🛡️ 5. Data Governance, Security & Administrative Control Factors</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">Identity & Authentication Topology</label>
+              <input type="text" class="form-control" id="edit_q_identity_auth" value="Microsoft Entra ID enforces Single Sign-On (SSO) and Role-Based Access Control (RBAC)">
             </div>
             <div class="form-group">
-              <label class="form-label">Expected Daily Requests</label>
-              <input type="number" class="form-control" id="edit_q_daily_requests" min="1">
+              <label class="form-label">Secrets & Key Management</label>
+              <input type="text" class="form-control" id="edit_q_secrets_mgmt" value="Azure Key Vault using platform-managed keys (CMEK and air-gapped excluded)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Component-to-Component Authorization</label>
+              <input type="text" class="form-control" id="edit_q_component_auth" value="HTTPS authenticated via Azure Managed Identities (zero hardcoded credentials)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Data Retention Policy</label>
+              <input type="text" class="form-control" id="edit_q_retention" value="Mandatory 12-month data retention rule for logs and telemetry">
+            </div>
+          </div>
+        </div>
+
+        <!-- Category 6: Functional Scope, Ingestion & Parser Contract Factors -->
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📜 6. Functional Scope, Ingestion & Parser Contract Factors</h4>
+          <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">In-Scope Legal Categories (Comma-separated)</label>
+              <input type="text" class="form-control" id="edit_q_legal_categories" value="Lease, Vendor, Service, Facilities, Technology, Marketing">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Multi-Pass Evaluation Logic</label>
+              <input type="text" class="form-control" id="edit_q_multi_pass_policy" value="Pass 1 extracts explicit standard clauses | Pass 2 evaluates ambiguous terms: Agree, Agree with Management Approval, Not Agree">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Parser Delimiters & Truncation Thresholds</label>
+              <input type="text" class="form-control" id="edit_q_parser_delimiters" value="Block headers (<<<BEGIN:NAME>>>) and pipe (|), 30,000 char limit, 0.72 synonym confidence">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Business Problem & Functional Objectives</label>
+              <textarea class="form-control" id="edit_q_problem" rows="3"></textarea>
             </div>
           </div>
         </div>

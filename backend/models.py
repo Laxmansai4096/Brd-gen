@@ -176,8 +176,13 @@ class BRDDocument(BaseModel):
     data_flow_narrative: str
     responsible_ai_governance: List[str]
     security_compliance: List[str]
-    risks_mitigations: List[Dict[str, str]]
-    
+    # Functional Scope & Contract Categories
+    legal_categories: List[str] = ["Lease", "Vendor", "Service", "Facilities", "Technology", "Marketing"]
+    foundation_llm_architecture: str = "Azure OpenAI reasoning/thinking tier (GPT-5 Thinking/Reasoning)"
+    grounding_surface_mode: str = "Work (Tenant data only, no public web retrieval) via M365 Copilot / Azure AI Agent services"
+    parser_delimiters: str = "Block headers (<<<BEGIN:NAME>>>) and pipe delimiters (|), 30k char cell limit, 0.72 synonym confidence threshold"
+    evaluation_decision_logic: str = "Pass 1: Explicit Clause Extraction | Pass 2: Three-Tier Status [Agree, Agree with Management Approval, Not Agree]"
+
     # Technical Components (6 Components)
     technical_components: List[TechnicalComponent] = []
     

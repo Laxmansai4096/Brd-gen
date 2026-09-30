@@ -21,9 +21,10 @@ with gr.Blocks(title="AI BRD Generator & Workbench", fill_height=True) as demo:
 # Mount Gradio onto the existing FastAPI application
 app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
 
-# Export demo for Hugging Face Spaces Gradio runner (disable experimental Node.js SSR)
+# Export demo for Hugging Face Spaces Gradio runner
 if __name__ == "__main__":
-    demo.launch(ssr_mode=False)
+    demo.launch(server_name="0.0.0.0", server_port=7860)
+
 
 
 

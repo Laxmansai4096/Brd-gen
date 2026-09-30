@@ -309,14 +309,28 @@ async function handleFileUpload(event) {
 // Render Complete BRD Workbench
 function renderBRDWorkbench(brd) {
   if (!brd) return;
+
+  const sym = brd.currency_symbol || "$";
+  const rate = brd.currency_exchange_rate || 1.0;
+  const currCode = brd.currency_code || "USD";
+
+  // Global Currency Dropdown Sync
+  const currSelect = document.getElementById("globalCurrencySelect");
+  if (currSelect && currSelect.value !== currCode) {
+    currSelect.value = currCode;
+  }
   
   // Top Metrics Strip
   document.getElementById("metricTier").textContent = brd.delivery_tier;
   document.getElementById("metricDuration").textContent = `${brd.total_duration_weeks.toFixed(1)} wks (Headline: ${brd.headline_weight.toFixed(3)})`;
   document.getElementById("metricDays").textContent = `${brd.total_person_days.toFixed(1)} d`;
   document.getElementById("metricHours").textContent = `${brd.total_person_hours.toFixed(0)} Person-Hours`;
-  document.getElementById("metricCost").textContent = `$${brd.total_labour_cost_usd.toLocaleString()}`;
-  document.getElementById("metricCloudCost").textContent = `$${brd.sizing_metrics.total_monthly_cloud_cost_usd.toLocaleString()}/mo`;
+  
+  const convertedLabour = brd.total_labour_cost_converted || (brd.total_labour_cost_usd * rate);
+  document.getElementById("metricCost").textContent = `${sym}${Math.round(convertedLabour).toLocaleString()}`;
+  
+  const monthlyCloudConverted = (brd.sizing_metrics.total_monthly_cloud_cost_usd || 645) * rate;
+  document.getElementById("metricCloudCost").textContent = `${sym}${Math.round(monthlyCloudConverted).toLocaleString()}/mo`;
   
   const gatePassed = brd.assumption_gate_passed;
   const gateEl = document.getElementById("metricGateStatus");
@@ -350,24 +364,27 @@ function renderBRDWorkbench(brd) {
   // Tab 2: 12 Disciplines & Tasks
   const rolesTbody = document.getElementById("rolesTableBody");
   if (rolesTbody) {
-    rolesTbody.innerHTML = (brd.role_efforts || []).map(r => `
-      <tr>
-        <td><strong>${r.role_code}</strong></td>
-        <td><strong>${r.role}</strong></td>
-        <td style="color: var(--text-muted); font-size: 0.8rem;">${r.description}</td>
-        <td><strong>${r.days.toFixed(1)} d</strong></td>
-        <td>${r.hours.toFixed(0)} h</td>
-        <td style="color: var(--success); font-weight: 600;">$${r.cost.toLocaleString()}</td>
-        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.75rem;">${(r.active_fte || r.peak_fte || 0).toFixed(2)} FTE</span></td>
-        <td><span style="color: var(--primary); font-size: 0.75rem;">+${(r.buffer_fte || 0).toFixed(2)} FTE</span></td>
-        <td><strong style="color: #fff;">${(r.total_assigned_fte || r.peak_fte || 0).toFixed(2)} FTE</strong></td>
-      </tr>
-    `).join("") + `
+    rolesTbody.innerHTML = (brd.role_efforts || []).map(r => {
+      const roleCostConverted = (r.cost || 0) * rate;
+      return `
+        <tr>
+          <td><strong>${r.role_code}</strong></td>
+          <td><strong>${r.role}</strong></td>
+          <td style="color: var(--text-muted); font-size: 0.8rem;">${r.description}</td>
+          <td><strong>${r.days.toFixed(1)} d</strong></td>
+          <td>${r.hours.toFixed(0)} h</td>
+          <td style="color: var(--success); font-weight: 600;">${sym}${Math.round(roleCostConverted).toLocaleString()}</td>
+          <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.75rem;">${(r.active_fte || r.peak_fte || 0).toFixed(2)} FTE</span></td>
+          <td><span style="color: var(--primary); font-size: 0.75rem;">+${(r.buffer_fte || 0).toFixed(2)} FTE</span></td>
+          <td><strong style="color: #fff;">${(r.total_assigned_fte || r.peak_fte || 0).toFixed(2)} FTE</strong></td>
+        </tr>
+      `;
+    }).join("") + `
       <tr style="background: rgba(56, 189, 248, 0.1); font-weight: bold;">
-        <td colspan="3">TOTAL (12 Disciplines Standardized @ $30/hr)</td>
+        <td colspan="3">TOTAL (12 Disciplines Standardized @ ${sym}${(30 * rate).toFixed(2)}/hr)</td>
         <td>${brd.total_person_days.toFixed(1)} d</td>
         <td>${brd.total_person_hours.toFixed(0)} h</td>
-        <td style="color: var(--success);">$${brd.total_labour_cost_usd.toLocaleString()}</td>
+        <td style="color: var(--success);">${sym}${Math.round(convertedLabour).toLocaleString()}</td>
         <td colspan="3">-</td>
       </tr>
     `;
@@ -474,7 +491,17 @@ function renderBRDWorkbench(brd) {
     `).join("");
   }
 
-  // Tab 5: Sizing & Cloud BoM
+  // Tab 5: Sizing & Cloud BoM & 3-Year TCO
+  const tco = brd.tco_projection || {};
+  if (document.getElementById("tcoYear1")) document.getElementById("tcoYear1").textContent = `${sym}${Math.round((tco.year1_build_usd || 32628) * rate).toLocaleString()}`;
+  if (document.getElementById("tcoYear2")) document.getElementById("tcoYear2").textContent = `${sym}${Math.round((tco.year2_run_usd || 12713) * rate).toLocaleString()}`;
+  if (document.getElementById("tcoYear3")) document.getElementById("tcoYear3").textContent = `${sym}${Math.round((tco.year3_run_usd || 13678) * rate).toLocaleString()}`;
+  if (document.getElementById("tcoCumulative")) document.getElementById("tcoCumulative").textContent = `${sym}${Math.round((tco.total_3year_tco_usd || 59019) * rate).toLocaleString()}`;
+  if (document.getElementById("tcoBreakEven")) document.getElementById("tcoBreakEven").textContent = `Break-Even @ Month 14 (${tco.payg_advantage_pct || 46.5}% PayG Advantage)`;
+  if (document.getElementById("tcoPaygMonthly")) document.getElementById("tcoPaygMonthly").textContent = `${sym}${Math.round((monthlyCloudConverted || 645)).toLocaleString()}/mo`;
+  if (document.getElementById("tcoPtuMonthly")) document.getElementById("tcoPtuMonthly").textContent = `${sym}${Math.round(4800 * rate).toLocaleString()}/mo`;
+  if (document.getElementById("tcoStrategyBadge")) document.getElementById("tcoStrategyBadge").textContent = "Pay-As-You-Go Optimal (46.5% Savings)";
+
   const sizingGrid = document.getElementById("sizingMetricsGrid");
   const sm = brd.sizing_metrics;
   if (sizingGrid && sm) {
@@ -489,19 +516,43 @@ function renderBRDWorkbench(brd) {
 
   const bomTbody = document.getElementById("bomTableBody");
   if (bomTbody) {
-    bomTbody.innerHTML = (brd.sizing_bom || []).map(b => `
+    bomTbody.innerHTML = (brd.sizing_bom || []).map(b => {
+      const convertedCost = (b.monthly_cost_usd || 0) * rate;
+      return `
+        <tr>
+          <td><strong>${b.component}</strong></td>
+          <td>${b.sku_or_service}</td>
+          <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${b.tier}</span></td>
+          <td>${b.quantity}</td>
+          <td style="color: var(--success); font-weight: 600;">${sym}${Math.round(convertedCost).toLocaleString()}/mo</td>
+          <td style="font-size: 0.8rem; color: var(--text-muted);">${b.justification}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+  const bomTotalBanner = document.getElementById("bomTotalBanner");
+  if (bomTotalBanner && sm) bomTotalBanner.textContent = `${sym}${Math.round(monthlyCloudConverted).toLocaleString()} / month`;
+
+  // Tab: EU AI Act & ISO 42001 Governance Matrix
+  const aiAct = brd.ai_act_classification || {};
+  if (document.getElementById("aiActRiskBadge")) document.getElementById("aiActRiskBadge").textContent = aiAct.risk_tier || "Specific Transparency Risk";
+  if (document.getElementById("aiActClassificationTitle")) document.getElementById("aiActClassificationTitle").textContent = `${aiAct.risk_tier || "Specific Transparency"} Tier Assessment`;
+  if (document.getElementById("aiActJustification")) document.getElementById("aiActJustification").textContent = aiAct.justification || "Classification established based on system autonomy and user touchpoints.";
+  if (document.getElementById("aiActReq1")) document.getElementById("aiActReq1").textContent = (aiAct.mandatory_requirements || [])[0] || "AI Content Watermarking & Notice";
+  if (document.getElementById("aiActReq2")) document.getElementById("aiActReq2").textContent = (aiAct.mandatory_requirements || [])[1] || "Human-in-the-Loop Review Controls";
+  if (document.getElementById("aiActReq3")) document.getElementById("aiActReq3").textContent = (aiAct.mandatory_requirements || [])[2] || "Clause Coordinate Audit Trails";
+
+  const isoTbody = document.getElementById("isoTableBody");
+  if (isoTbody) {
+    isoTbody.innerHTML = (brd.iso_42001_controls || []).map(c => `
       <tr>
-        <td><strong>${b.component}</strong></td>
-        <td>${b.sku_or_service}</td>
-        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${b.tier}</span></td>
-        <td>${b.quantity}</td>
-        <td style="color: var(--success); font-weight: 600;">$${b.monthly_cost_usd.toFixed(2)}</td>
-        <td style="font-size: 0.8rem; color: var(--text-muted);">${b.justification}</td>
+        <td><strong>${c.control_id}</strong></td>
+        <td style="color: var(--primary); font-weight: 600;">${c.domain}</td>
+        <td style="font-size: 0.82rem; color: #cbd5e1;">${c.requirement}</td>
+        <td><span class="badge badge-success" style="font-size: 0.72rem;">${c.status || "Implemented"}</span></td>
       </tr>
     `).join("");
   }
-  const bomTotalBanner = document.getElementById("bomTotalBanner");
-  if (bomTotalBanner && sm) bomTotalBanner.textContent = `$${sm.total_monthly_cloud_cost_usd.toFixed(2)} / month`;
 
   // Tab 6: Assumptions Gate
   const asmTbody = document.getElementById("assumptionsTableBody");
@@ -834,7 +885,80 @@ function switchTab(tabId) {
   if (activeBtn) activeBtn.classList.add("active");
 }
 
-// Export Endpoints
+// 0-Click RFP Auto-Discovery Ingestion
+async function handleRfpAutoDiscovery(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const autoBtn = document.querySelector('button[onclick*="rfpUploadInput"]');
+  if (autoBtn) autoBtn.innerHTML = `<span>⏳</span> Ingesting RFP...`;
+
+  try {
+    const res = await fetch(`/api/upload?session_id=${currentSessionId}`, {
+      method: "POST",
+      body: formData
+    });
+    if (res.ok) {
+      const data = await res.json();
+      currentSessionData = data;
+      renderChatMessages();
+      if (data.brd) {
+        renderBRDWorkbench(data.brd);
+      }
+      alert("⚡ 0-Click RFP Ingestion & Discovery Complete! BRD, FinOps Sizing, and Day-Wise Schedule synthesized.");
+    } else {
+      const err = await res.json();
+      alert(`Auto-discovery failed: ${err.detail || "Server error"}`);
+    }
+  } catch (err) {
+    console.error("Auto discovery error:", err);
+    alert("Upload failed. Please check network connection.");
+  } finally {
+    if (autoBtn) autoBtn.innerHTML = `<span>⚡</span> 0-Click Auto-Discovery`;
+    event.target.value = "";
+  }
+}
+
+// Global Multi-Currency Switcher
+async function changeGlobalCurrency(currencyCode) {
+  try {
+    const res = await fetch("/api/replan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        currency_code: currencyCode,
+        overrides: {}
+      })
+    });
+    if (res.ok) {
+      currentSessionData = await res.json();
+      if (currentSessionData.brd) renderBRDWorkbench(currentSessionData.brd);
+    }
+  } catch (err) {
+    console.error("Currency switch error:", err);
+  }
+}
+
+// Enterprise Export Suite Endpoints
+function downloadWordBRD() {
+  if (!currentSessionId) return;
+  window.open(`/api/export/word?session_id=${currentSessionId}`, "_blank");
+}
+
+function downloadExcelModel() {
+  if (!currentSessionId) return;
+  window.open(`/api/export/excel?session_id=${currentSessionId}`, "_blank");
+}
+
+function downloadJiraCSV() {
+  if (!currentSessionId) return;
+  window.open(`/api/export/jira?session_id=${currentSessionId}`, "_blank");
+}
+
 function downloadPPTX() {
   if (!currentSessionId) return;
   window.open(`/api/export-pptx?session_id=${currentSessionId}`, "_blank");
@@ -857,6 +981,46 @@ function downloadHandoffJSON() {
   a.href = url;
   a.download = `handoff_${currentSessionId.substring(0, 8)}.json`;
   a.click();
+}
+
+// Revisions Modal & Snapshot Diff
+async function openRevisionsModal() {
+  try {
+    const res = await fetch(`/api/revisions?session_id=${currentSessionId}`);
+    if (res.ok) {
+      const data = await res.json();
+      renderRevisionsTable(data.revisions || []);
+    }
+  } catch (err) {
+    console.error("Failed to load revisions:", err);
+  }
+  document.getElementById("revisionsModal").classList.add("active");
+}
+
+function closeRevisionsModal() {
+  document.getElementById("revisionsModal").classList.remove("active");
+}
+
+function renderRevisionsTable(revisions) {
+  const tbody = document.getElementById("revisionsTableBody");
+  if (!tbody) return;
+
+  if (revisions.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 16px;">No revisions recorded yet. Complete discovery or adjust parameters to view snapshots.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = revisions.map(r => `
+    <tr>
+      <td><strong>#${r.revision_number}</strong></td>
+      <td style="font-size: 0.8rem; color: var(--text-muted);">${r.timestamp}</td>
+      <td style="color: var(--primary); font-weight: 600; font-size: 0.82rem;">${r.trigger_reason}</td>
+      <td>${r.total_duration_weeks.toFixed(1)} wks</td>
+      <td><strong>${r.total_person_days.toFixed(1)} d</strong></td>
+      <td style="color: var(--success); font-weight: 600;">${r.currency_symbol || "$"}${Math.round(r.total_labour_cost).toLocaleString()}</td>
+      <td style="color: var(--text-muted);">${r.currency_symbol || "$"}${Math.round(r.monthly_cloud_cost).toLocaleString()}/mo</td>
+    </tr>
+  `).join("");
 }
 
 // Modal Functions

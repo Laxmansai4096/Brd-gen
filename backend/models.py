@@ -185,6 +185,16 @@ class BRDDocument(BaseModel):
     sizing_metrics: SizingMetrics = SizingMetrics()
     sizing_bom: List[SizingBOM] = []
     
+    # Enterprise Expansions
+    currency_code: str = "USD"
+    currency_symbol: str = "$"
+    currency_exchange_rate: float = 1.0
+    total_labour_cost_converted: float = 0.0
+    role_rate_cards: List[Dict[str, Any]] = []
+    tco_projection: Dict[str, Any] = {}
+    ai_act_classification: Dict[str, Any] = {}
+    iso_42001_controls: List[Dict[str, Any]] = []
+    
     # Estimation & Resource Loading
     total_duration_weeks: float
     reference_duration_weeks: float
@@ -207,6 +217,24 @@ class BRDDocument(BaseModel):
     assumptions: List[AssumptionItem]
     assumption_gate_passed: bool = True
 
+class RevisionSnapshot(BaseModel):
+    revision_id: str
+    revision_number: int
+    timestamp: str
+    tier: str
+    duration_weeks: float
+    person_days: float
+    labour_cost_usd: float
+    summary_change: str
+    trigger_reason: Optional[str] = None
+    total_duration_weeks: Optional[float] = None
+    total_person_days: Optional[float] = None
+    total_labour_cost: Optional[float] = None
+    monthly_cloud_cost: Optional[float] = None
+    currency_code: str = "USD"
+    currency_symbol: str = "$"
+    brd_snapshot: Dict[str, Any]
+
 class ChatMessage(BaseModel):
     sender: str  # "agent", "user", "system"
     content: str
@@ -225,6 +253,7 @@ class ProjectSession(BaseModel):
     ambiguity_tracker: Dict[str, int] = {}
     clarification_state: Optional[Dict[str, Any]] = None
     uploaded_files: List[Dict[str, Any]] = []
+    revisions: List[RevisionSnapshot] = []
     messages: List[ChatMessage] = []
     brd: Optional[BRDDocument] = None
     handoff_dossier: Optional[Dict[str, Any]] = None

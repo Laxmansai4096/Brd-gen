@@ -217,10 +217,16 @@ def create_presentation_deck(brd: BRDDocument, output_path: str) -> str:
     add_header_footer(s4, brd, 4, TOTAL_SLIDES, is_dark=False)
     add_slide_title(s4, "Architectural Demarcation: AI vs. Non-AI Interventions", "Ensuring deterministic tasks are strictly handled by native cloud services, NOT LLMs")
     
-    ai_bullets = [f"{ai['capability']} ({ai['type']}): {ai['purpose']}" for ai in brd.ai_interventions]
+    ai_bullets = [
+        f"{ai.get('agent') or ai.get('capability', 'Agent')}: {ai.get('role') or ai.get('purpose', '')} [{ai.get('tech') or ai.get('type', 'LLM')}]"
+        for ai in brd.ai_interventions
+    ]
     add_card(s4, 0.8, 1.8, 5.6, 4.8, "Agentic AI Interventions (Reasoning / LLM)", ai_bullets)
     
-    non_ai_bullets = [f"{nai['capability']}: {nai['purpose']} [{nai['azure_service']}]" for nai in brd.non_ai_interventions]
+    non_ai_bullets = [
+        f"{nai.get('service') or nai.get('capability', 'Service')}: {nai.get('role') or nai.get('purpose', '')}"
+        for nai in brd.non_ai_interventions
+    ]
     add_card(s4, 6.8, 1.8, 5.7, 4.8, "Deterministic Non-AI Services (Zero Hallucination)", non_ai_bullets)
     
     set_presenter_notes(
@@ -361,16 +367,14 @@ def create_presentation_deck(brd: BRDDocument, output_path: str) -> str:
     add_header_footer(s8, brd, 8, TOTAL_SLIDES, is_dark=False)
     add_slide_title(s8, "Delivery Timeline & Milestone Schedule", f"{brd.total_duration_weeks:.0f}-Week Phased Execution Plan")
     
+    phases_to_show = brd.project_phases[:4]
     col_w = 2.8
     gap = 0.2
-    for p_idx, phase in enumerate(brd.project_phases):
+    for p_idx, phase in enumerate(phases_to_show):
         left_pos = 0.8 + (p_idx * (col_w + gap))
-        add_card(s8, left_pos, 1.8, col_w, 4.8, f"{phase.phase_name}\n({phase.weeks:.1f} Wks)", [
-            f"Key Focus: {phase.key_deliverables[0]}",
-            f"Deliverable: {phase.key_deliverables[1]}",
-            f"Validation: {phase.key_deliverables[2]}",
-            f"Staffing: {', '.join(phase.roles_involved[:2])}"
-        ])
+        d_items = [f"Focus: {d}" for d in phase.key_deliverables[:3]]
+        d_items.append(f"Staffing: {', '.join(phase.roles_involved[:2])}")
+        add_card(s8, left_pos, 1.8, col_w, 4.8, f"{phase.phase_name}\n({phase.weeks:.1f} Wks)", d_items)
         
     set_presenter_notes(
         s8,
@@ -388,7 +392,7 @@ def create_presentation_deck(brd: BRDDocument, output_path: str) -> str:
     add_header_footer(s9, brd, 9, TOTAL_SLIDES, is_dark=False)
     add_slide_title(s9, "Assumptions Ledger & Key External Dependencies", "Transparent documentation of standard baselines and ambiguity fallback defaults")
     
-    asm_bullets = [f"[{a.category}] {a.statement} (Impact: {a.impact})" for a in brd.assumptions[:5]]
+    asm_bullets = [f"[{a.category}] {a.statement} (Impact: {getattr(a, 'impact_if_wrong', 'N/A')})" for a in brd.assumptions[:5]]
     add_card(s9, 0.8, 1.8, 5.6, 4.8, "Key Project Assumptions & Defaults", asm_bullets)
     
     prereq_bullets = [

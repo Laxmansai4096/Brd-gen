@@ -2,7 +2,8 @@ import os
 import uuid
 import json
 import re
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from datetime import datetime
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel
@@ -152,9 +153,60 @@ async def chat_endpoint(payload: ChatInput):
         "messages": [m.model_dump() for m in session.messages]
     }
 
+from backend.models import (
+    ProjectSession, ChatMessage, AnswerItem, BRDDocument,
+    AssumptionItem, TaskEstimate, RoleEffort, ProjectPhase,
+    TechnicalComponent, SizingMetrics, SizingBOM, RevisionSnapshot
+)
+from backend.agent_discovery import (
+    STATIC_QUESTIONS, process_user_answer, get_current_question,
+    get_discovery_questions, compile_and_save_handoff_dossier,
+    auto_discover_from_document_text
+)
+from backend.agent_planner import generate_brd
+from backend.pptx_generator import create_presentation_deck
+from backend.file_processor import extract_text_from_file
+from backend.export_generator import (
+    generate_word_brd, generate_excel_financial_model, generate_jira_backlog_csv
+)
+
+def record_session_revision(session: ProjectSession, summary_change: str = "Plan Generated"):
+    if not session.brd:
+        return
+    rev_num = len(session.revisions) + 1
+    sym = session.brd.currency_symbol or "$"
+    rate = session.brd.currency_exchange_rate or 1.0
+    labour_cost = session.brd.total_labour_cost_converted or (session.brd.total_labour_cost_usd * rate)
+    monthly_cloud = (session.brd.sizing_metrics.total_monthly_cloud_cost_usd if session.brd.sizing_metrics else 645.0) * rate
+
+    snapshot = RevisionSnapshot(
+        revision_id=str(uuid.uuid4())[:8],
+        revision_number=rev_num,
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        tier=session.brd.delivery_tier,
+        duration_weeks=session.brd.total_duration_weeks,
+        person_days=session.brd.total_person_days,
+        labour_cost_usd=session.brd.total_labour_cost_usd,
+        summary_change=summary_change,
+        trigger_reason=summary_change,
+        total_duration_weeks=session.brd.total_duration_weeks,
+        total_person_days=session.brd.total_person_days,
+        total_labour_cost=labour_cost,
+        monthly_cloud_cost=monthly_cloud,
+        currency_code=session.brd.currency_code or "USD",
+        currency_symbol=sym,
+        brd_snapshot=session.brd.model_dump()
+    )
+    session.revisions.append(snapshot)
+
 @app.post("/api/upload")
-async def upload_file_endpoint(session_id: str = Form(...), file: UploadFile = File(...)):
-    session = get_or_create_session(session_id)
+async def upload_file_endpoint(
+    session_id: Optional[str] = Form(None),
+    session_id_query: Optional[str] = Query(None, alias="session_id"),
+    file: UploadFile = File(...)
+):
+    actual_session_id = session_id or session_id_query or str(uuid.uuid4())
+    session = get_or_create_session(actual_session_id)
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
     
@@ -164,20 +216,34 @@ async def upload_file_endpoint(session_id: str = Form(...), file: UploadFile = F
         f.write(content)
         
     extracted = extract_text_from_file(file_path, file.filename)
+    full_text = extracted.get("full_text", "")
     session.uploaded_files.append({
         "filename": file.filename,
         "char_count": extracted.get("char_count", 0),
         "preview": extracted.get("preview", ""),
-        "full_text": extracted.get("full_text", "")
+        "full_text": full_text
     })
     
-    preview_snippet = extracted.get("preview", "")[:250] + "..."
+    # Execute 0-Click Auto-Discovery from the ingested document
+    discovery_summary = auto_discover_from_document_text(full_text, file.filename, session)
+    
+    # Synthesize BRD and plan immediately
+    compile_and_save_handoff_dossier(session)
+    brd = generate_brd(session)
+    session.brd = brd
+    record_session_revision(session, f"0-Click Auto-Discovery from '{file.filename}'")
+    
+    preview_snippet = extracted.get("preview", "")[:200] + "..."
     session.messages.append(ChatMessage(
         sender="system",
         content=(
-            f"📎 **Attached Document Ingested:** `{file.filename}` ({extracted.get('char_count', 0):,} characters).\n"
-            f"**Context Extracted:**\n> {preview_snippet}\n\n"
-            f"This content is now available to Agent 1 and Agent 2 to enrich the requirements and BRD specifications."
+            f"⚡ **0-Click Document Auto-Discovery Succeeded!**\n"
+            f"Ingested `{file.filename}` ({extracted.get('char_count', 0):,} chars) with **{discovery_summary['confidence_score']}% Confidence**.\n\n"
+            f"• **Client / Project:** {discovery_summary['client_name']}\n"
+            f"• **Inferred Delivery Tier:** {discovery_summary['delivery_tier']}\n"
+            f"• **Target Cloud:** {discovery_summary['cloud_platform']} in {discovery_summary['geography']}\n"
+            f"• **Estimated Effort:** {brd.total_person_days:.1f} Person-Days (${brd.total_labour_cost_usd:,.2f}) across {brd.total_duration_weeks:.1f} Weeks\n\n"
+            f"The full BRD, 12-discipline resourcing, cloud BoM, and Day-Wise execution schedule have been populated. You can review or adjust any parameter in the right panel."
         ),
         timestamp="Just now"
     ))
@@ -185,6 +251,9 @@ async def upload_file_endpoint(session_id: str = Form(...), file: UploadFile = F
     return {
         "status": "success",
         "file": session.uploaded_files[-1],
+        "discovery_summary": discovery_summary,
+        "brd": brd.model_dump(),
+        "has_brd": True,
         "messages": [m.model_dump() for m in session.messages]
     }
 
@@ -211,11 +280,20 @@ def update_assumption_gate_endpoint(payload: AssumptionGateUpdate):
 
 class ReplanRequest(BaseModel):
     session_id: str
-    overrides: Dict[str, str]
+    overrides: Dict[str, str] = {}
+    currency_code: Optional[str] = None
 
 @app.post("/api/replan")
 async def replan_endpoint(payload: ReplanRequest):
     session = get_or_create_session(payload.session_id)
+    
+    if payload.currency_code:
+        session.answers["q_currency"] = AnswerItem(
+            question_id="q_currency",
+            question_title="Target Currency",
+            answer=payload.currency_code,
+            is_default=False
+        )
     
     for q_id, new_val in payload.overrides.items():
         if q_id in session.answers:
@@ -232,6 +310,8 @@ async def replan_endpoint(payload: ReplanRequest):
     brd = generate_brd(session)
     session.brd = brd
     compile_and_save_handoff_dossier(session)
+    trigger_text = f"Currency changed to {payload.currency_code}" if payload.currency_code and not payload.overrides else f"Re-planned with {len(payload.overrides)} parameter overrides"
+    record_session_revision(session, trigger_text)
     
     session.messages.append(ChatMessage(
         sender="agent",
@@ -250,6 +330,71 @@ async def replan_endpoint(payload: ReplanRequest):
         "handoff_data": session.handoff_dossier,
         "messages": [m.model_dump() for m in session.messages]
     }
+
+@app.get("/api/revisions")
+def get_revisions_endpoint(session_id: str):
+    session = get_or_create_session(session_id)
+    return {
+        "session_id": session.session_id,
+        "revisions": [r.model_dump() for r in session.revisions]
+    }
+
+@app.get("/api/export/word")
+def export_word_endpoint(session_id: str):
+    session = get_or_create_session(session_id)
+    if not session.brd:
+        raise HTTPException(status_code=400, detail="BRD has not been generated yet.")
+        
+    export_dir = "exports"
+    os.makedirs(export_dir, exist_ok=True)
+    safe_client = re.sub(r'[^\w\-]', '_', session.brd.client_name)[:30]
+    filename = f"BRD_{safe_client}_{session.session_id[:8]}.docx"
+    output_path = os.path.join(export_dir, filename)
+    
+    generate_word_brd(session.brd, output_path)
+    return FileResponse(
+        path=output_path,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename=filename
+    )
+
+@app.get("/api/export/excel")
+def export_excel_endpoint(session_id: str):
+    session = get_or_create_session(session_id)
+    if not session.brd:
+        raise HTTPException(status_code=400, detail="BRD has not been generated yet.")
+        
+    export_dir = "exports"
+    os.makedirs(export_dir, exist_ok=True)
+    safe_client = re.sub(r'[^\w\-]', '_', session.brd.client_name)[:30]
+    filename = f"Financial_Estimation_Model_{safe_client}_{session.session_id[:8]}.xlsx"
+    output_path = os.path.join(export_dir, filename)
+    
+    generate_excel_financial_model(session.brd, output_path)
+    return FileResponse(
+        path=output_path,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename=filename
+    )
+
+@app.get("/api/export/jira")
+def export_jira_endpoint(session_id: str):
+    session = get_or_create_session(session_id)
+    if not session.brd:
+        raise HTTPException(status_code=400, detail="BRD has not been generated yet.")
+        
+    export_dir = "exports"
+    os.makedirs(export_dir, exist_ok=True)
+    safe_client = re.sub(r'[^\w\-]', '_', session.brd.client_name)[:30]
+    filename = f"Jira_Backlog_{safe_client}_{session.session_id[:8]}.csv"
+    output_path = os.path.join(export_dir, filename)
+    
+    generate_jira_backlog_csv(session.brd, output_path)
+    return FileResponse(
+        path=output_path,
+        media_type="text/csv",
+        filename=filename
+    )
 
 @app.get("/api/export-pptx")
 def export_pptx_endpoint(session_id: str):

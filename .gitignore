@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 */node_modules/
 BRD/node_modules/
 __pycache__/
@@ -11,3 +11,10 @@ ENV/
 .idea/
 .vscode/
 *.log
+uploads/
+exports/*.docx
+exports/*.xlsx
+exports/*.csv
+exports/*.pptx
+test_features.py
+

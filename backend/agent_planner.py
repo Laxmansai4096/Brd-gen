@@ -1060,6 +1060,83 @@ def generate_brd(
     
     target_end_date_str = day_schedule[-1].date if day_schedule else "2026-12-18"
 
+    # 7. Enterprise Expansions: Currency, Role Rate Cards, AI Act, and 3-Year TCO
+    currency_code = get_str_ans("q_currency", "USD")
+    curr_info = {
+        "USD": {"symbol": "$", "rate": 1.0},
+        "EUR": {"symbol": "€", "rate": 0.92},
+        "GBP": {"symbol": "£", "rate": 0.78},
+        "INR": {"symbol": "₹", "rate": 83.5},
+        "AED": {"symbol": "AED ", "rate": 3.67},
+        "SGD": {"symbol": "S$", "rate": 1.35},
+        "AUD": {"symbol": "A$", "rate": 1.52}
+    }.get(currency_code, {"symbol": "$", "rate": 1.0})
+    
+    currency_rate = curr_info["rate"]
+    currency_symbol = curr_info["symbol"]
+    total_labour_converted = round(total_labour_cost * currency_rate, 2)
+    
+    role_rate_cards = [
+        {"role_code": "SA", "role": "Lead Solutions Architect", "seniority": "Principal", "hourly_rate_usd": 45.0, "hourly_rate_converted": round(45.0 * currency_rate, 2), "location": f"{geo_ans} / Onshore Lead"},
+        {"role_code": "MLE", "role": "Senior AI / Prompt Engineer", "seniority": "Senior Specialist", "hourly_rate_usd": 38.0, "hourly_rate_converted": round(38.0 * currency_rate, 2), "location": f"{geo_ans} Offshore Center"},
+        {"role_code": "DE", "role": "Data Ingestion & Vector Engineer", "seniority": "Senior", "hourly_rate_usd": 32.0, "hourly_rate_converted": round(32.0 * currency_rate, 2), "location": f"{geo_ans} Offshore Center"},
+        {"role_code": "FSE", "role": "Full-Stack Web & API Engineer", "seniority": "Mid-Senior", "hourly_rate_usd": 28.0, "hourly_rate_converted": round(28.0 * currency_rate, 2), "location": f"{geo_ans} Offshore Center"},
+        {"role_code": "SEC", "role": "Cloud Security Specialist", "seniority": "Senior", "hourly_rate_usd": 36.0, "hourly_rate_converted": round(36.0 * currency_rate, 2), "location": "Hybrid Oversight"},
+        {"role_code": "QA", "role": "QA & Eval Automation Engineer", "seniority": "Mid", "hourly_rate_usd": 22.0, "hourly_rate_converted": round(22.0 * currency_rate, 2), "location": f"{geo_ans} Offshore Center"},
+        {"role_code": "PM", "role": "Project Delivery Manager", "seniority": "Senior", "hourly_rate_usd": 35.0, "hourly_rate_converted": round(35.0 * currency_rate, 2), "location": "Hybrid Oversight"}
+    ]
+    
+    # EU AI Act & ISO 42001
+    is_high_risk = any(k in compliance_posture for k in ["BFSI", "Gov", "Health"])
+    ai_act_data = {
+        "risk_tier": "High-Risk AI System (Annex III EU AI Act)" if is_high_risk else ("Specific Transparency Risk (Article 50)" if domain == "customer_support" else "Minimal / Low Risk AI System"),
+        "framework": "EU AI Act (Regulation 2024/1689) & NIST AI RMF 1.0",
+        "justification": "Mandatory conformity assessment, strict audit logging, and human-in-the-loop fallback required for regulatory governance." if is_high_risk else "Assistive decision support with continuous grounding provenance and hallucination guardrails.",
+        "mandatory_obligations": [
+            "Continuous accuracy and bias monitoring across evaluation runs",
+            "100% human-in-the-loop oversight for high-impact decisions",
+            "Source attribution traceability with bounding box coordinate retention",
+            "Immutable audit logs retained for compliance audits"
+        ]
+    }
+    
+    iso_controls = [
+        {"control_id": "A.5.1", "category": "AI Policy", "control_name": "Responsible AI Directive", "status": "Implemented", "evidence": "Deterministic temperature limits (0.1), bounded prompt templates, and zero data retention agreements."},
+        {"control_id": "A.6.2", "category": "Risk Management", "control_name": "AI Impact & Failure Assessment", "status": "Implemented", "evidence": "Automated exception routing and fallback to human reviewer queue on low confidence."},
+        {"control_id": "A.7.3", "category": "Data Quality", "control_name": "Provenance & Coordinate Traceability", "status": "Implemented", "evidence": "100% clause bounding box extraction and verified citation linkage back to source PDF."},
+        {"control_id": "A.8.4", "category": "Verification", "control_name": "Golden Dataset Benchmark Eval", "status": "Implemented", "evidence": "Automated regression evaluation against golden QA dataset benchmark."}
+    ]
+    
+    # 3-Year TCO Projection
+    monthly_cloud = sizing_metrics.total_monthly_cloud_cost_usd
+    y1_labour = total_labour_cost
+    y1_cloud = monthly_cloud * 12
+    y1_tot = y1_labour + y1_cloud
+    
+    maint_factor = 0.18 if tier_name == "Production Grade" else 0.12
+    y2_labour = y1_labour * maint_factor
+    y2_cloud = y1_cloud * 1.10
+    y2_tot = y2_labour + y2_cloud
+    
+    y3_labour = y2_labour * 1.05
+    y3_cloud = y2_cloud * 1.10
+    y3_tot = y3_labour + y3_cloud
+    
+    tco_data = {
+        "year1_build_usd": round(y1_tot, 2),
+        "year1_labour_usd": round(y1_labour, 2),
+        "year1_cloud_usd": round(y1_cloud, 2),
+        "year2_run_usd": round(y2_tot, 2),
+        "year2_labour_usd": round(y2_labour, 2),
+        "year2_cloud_usd": round(y2_cloud, 2),
+        "year3_run_usd": round(y3_tot, 2),
+        "year3_labour_usd": round(y3_labour, 2),
+        "year3_cloud_usd": round(y3_cloud, 2),
+        "total_3year_tco_usd": round(y1_tot + y2_tot + y3_tot, 2),
+        "payg_advantage_pct": 46.5,
+        "finops_recommendation": "Pay-as-you-go serverless model delivers optimal cost-efficiency for current volume. Transition to Provisioned Throughput (PTU) when request volume exceeds 15,000/day."
+    }
+
     brd = BRDDocument(
         project_title=proj_title,
         client_name=client_name,
@@ -1080,10 +1157,19 @@ def generate_brd(
         backup_resources=backup_resources_list,
         delivery_model=f"Blended Delivery Model ({geo_ans} Regional Calendar & statutory holidays respected, {daily_hours}h daily working capacity, {buffer_pct}% standby buffer)",
         
+        currency_code=currency_code,
+        currency_symbol=currency_symbol,
+        currency_exchange_rate=currency_rate,
+        total_labour_cost_converted=total_labour_converted,
+        role_rate_cards=role_rate_cards,
+        tco_projection=tco_data,
+        ai_act_classification=ai_act_data,
+        iso_42001_controls=iso_controls,
+        
         executive_summary=(
             f"This Business Requirements Document (BRD) and Engineering Plan establishes the deterministic scope, "
             f"architecture, 12-discipline resource allocation, and cloud infrastructure Bill of Materials for **{proj_title}** "
-            f"({tier_name} Tier) for **{client_name}**. Operating on a blended rate of ${rate:.2f}/hour, this solution "
+            f"({tier_name} Tier) for **{client_name}**. Operating on a blended rate of ${rate:.2f}/hour ({currency_symbol}{rate*currency_rate:.2f}/hr {currency_code}), this solution "
             f"leverages {cloud_ans} in {geo_ans} across {int(scale_quantities['ENVS'])} environment(s) to deliver production-grade AI automation. "
             f"Project kick-off is scheduled for **{start_date_ans}** with targeted completion on **{target_end_date_str}**, incorporating {buffer_pct}% standby buffer resource protection."
         ),

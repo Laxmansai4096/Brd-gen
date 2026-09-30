@@ -23,6 +23,21 @@
     </div>
 
     <div class="header-actions">
+      <!-- Currency Switcher -->
+      <select id="globalCurrencySelect" class="form-control" style="width: 105px; padding: 4px 8px; font-size: 0.8rem; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); color: #fff;" onchange="changeGlobalCurrency(this.value)" title="Switch Display Currency & Rate Card">
+        <option value="USD">USD ($)</option>
+        <option value="EUR">EUR (€)</option>
+        <option value="GBP">GBP (£)</option>
+        <option value="INR">INR (₹)</option>
+        <option value="AED">AED (AED)</option>
+        <option value="SGD">SGD (S$)</option>
+        <option value="AUD">AUD (A$)</option>
+      </select>
+
+      <button class="btn-header" onclick="openRevisionsModal()" style="border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.1); color: #c084fc;" title="View Version Snapshots & Plan Diffs">
+        <span>🕒</span> Revisions
+      </button>
+
       <!-- Active AI Provider Badge -->
       <div class="badge-ai" id="activeProviderBadge" style="cursor: pointer;" onclick="openSettingsModal()"
         title="Click to Switch Cloud AI Provider & Enter API Keys">
@@ -40,7 +55,7 @@
       </button>
 
       <button class="btn-header" onclick="resetSession()" style="color: #f87171;">
-        <span>🔄</span> Reset Session
+        <span>🔄</span> Reset
       </button>
     </div>
   </header>
@@ -49,12 +64,19 @@
   <main class="workspace-container">
     <!-- LEFT PANEL: 50% Discovery Chatbot Area -->
     <section class="chat-panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <span>💬</span> Project Discovery Interview (Agent 1)
+      <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="panel-title" style="display: flex; align-items: center; gap: 8px;">
+          <span>💬</span> Discovery Interview
         </div>
-        <div class="progress-counter" id="progressCounter">
-          Question 1 of 10
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <!-- 0-Click Auto Discovery Upload Button -->
+          <button class="btn-header" onclick="document.getElementById('rfpAutoDiscoverInput').click()" style="background: var(--primary-gradient); color: #fff; font-size: 0.75rem; padding: 4px 10px; border: none; font-weight: 600;" title="Drop RFP / SOW document to auto-populate all 25 discovery parameters">
+            <input type="file" id="rfpAutoDiscoverInput" style="display: none;" accept=".pdf,.docx,.txt,.csv,.json,.doc" onchange="handleRfpAutoDiscovery(event)">
+            <span>⚡</span> 0-Click Auto-Discovery
+          </button>
+          <div class="progress-counter" id="progressCounter">
+            Question 1 of 25
+          </div>
         </div>
       </div>
 
@@ -117,13 +139,16 @@
           <span>🏗️</span> Tech Components (6)
         </button>
         <button class="tab-btn" onclick="switchTab('tab-sizing')">
-          <span>☁️</span> Sizing & BoM
+          <span>☁️</span> Sizing & 3-Yr TCO
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-governance')">
+          <span>🛡️</span> EU AI Act & ISO 42001
         </button>
         <button class="tab-btn" onclick="switchTab('tab-assumptions')">
           <span>⚙️</span> Assumptions Gate
         </button>
         <button class="tab-btn" onclick="switchTab('tab-export')">
-          <span>📥</span> Export & PPTX
+          <span>📥</span> Export Suite
         </button>
       </div>
 
@@ -395,13 +420,65 @@
           </div>
         </div>
 
-        <!-- TAB 5: Sizing & Cloud BoM -->
+        <!-- TAB 5: Sizing & Cloud BoM & 3-Year TCO -->
         <div id="tab-sizing" class="tab-pane" style="display: none;">
+          <!-- 3-Year TCO FinOps Strip -->
+          <div class="metrics-strip" style="margin-bottom: 16px;">
+            <div class="metric-card">
+              <span class="metric-label">Year 1 Total TCO (Build + Run)</span>
+              <span class="metric-val" id="tcoYear1" style="color: var(--primary);">$32,628</span>
+              <span class="metric-sub" id="tcoYear1Sub">Build Labour + Cloud Run</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Year 2 Total TCO</span>
+              <span class="metric-val" id="tcoYear2">$12,713</span>
+              <span class="metric-sub">Run + 15% L2 Support</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Year 3 Total TCO</span>
+              <span class="metric-val" id="tcoYear3">$13,678</span>
+              <span class="metric-sub">Run + 15% L2 Support</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">3-Year Cumulative TCO</span>
+              <span class="metric-val" id="tcoCumulative" style="color: var(--success); font-weight: 700;">$59,019</span>
+              <span class="metric-sub" id="tcoBreakEven">Break-Even @ Month 14</span>
+            </div>
+          </div>
+
           <div class="section-block">
             <div class="section-title">
               <span>Runtime Sizing Drivers</span>
             </div>
             <div id="sizingMetricsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            </div>
+          </div>
+
+          <!-- FinOps Cost Comparison (Pay-As-You-Go vs PTU) -->
+          <div class="section-block" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3);">
+            <div class="section-title">
+              <span>💳 FinOps Architecture: Pay-As-You-Go vs Provisioned Throughput (PTU)</span>
+              <span id="tcoStrategyBadge" class="badge-ai" style="font-size: 0.75rem;">Pay-As-You-Go Optimal</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div style="background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <h4 style="color: var(--primary); font-size: 0.88rem;">📈 Pay-As-You-Go (Consumption)</h4>
+                  <span id="tcoPaygMonthly" style="color: #fff; font-weight: 700; font-size: 0.95rem;">$645/mo</span>
+                </div>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">
+                  Billed per 1k input/output tokens & per-second compute. Best for dynamic loads, PoC, and MVP workloads under 2.5M tokens/day.
+                </p>
+              </div>
+              <div style="background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <h4 style="color: var(--warning); font-size: 0.88rem;">🏢 Provisioned Throughput (PTU / Committed)</h4>
+                  <span id="tcoPtuMonthly" style="color: #fff; font-weight: 700; font-size: 0.95rem;">$4,800/mo</span>
+                </div>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">
+                  Dedicated reserved GPU/TPU capacity with guaranteed sub-second latency SLA. Recommended for high-scale enterprise (>5M tokens/day).
+                </p>
+              </div>
             </div>
           </div>
 
@@ -417,11 +494,62 @@
                   <th>SKU / Service</th>
                   <th>Tier</th>
                   <th>Quantity</th>
-                  <th>Monthly USD</th>
+                  <th>Monthly Rate</th>
                   <th>Justification</th>
                 </tr>
               </thead>
               <tbody id="bomTableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB: EU AI Act & ISO 42001 Governance Matrix -->
+        <div id="tab-governance" class="tab-pane" style="display: none;">
+          <div class="section-block">
+            <div class="section-title">
+              <span>🛡️ EU AI Act Classification & Regulatory Compliance</span>
+              <span id="aiActRiskBadge" class="badge-ai" style="font-size: 0.82rem; background: rgba(56, 189, 248, 0.2); border: 1px solid var(--primary); color: #fff;">Specific Transparency Risk (Article 50)</span>
+            </div>
+            <div style="background: rgba(15, 23, 42, 0.7); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 16px;">
+              <h4 style="color: #fff; font-size: 0.95rem; margin-bottom: 6px;" id="aiActClassificationTitle">EU AI Act Assessment</h4>
+              <p style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;" id="aiActJustification">
+                Evaluating regulatory risk tier based on system capabilities, autonomy level, user personas, and data classification.
+              </p>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+                <div style="background: rgba(30, 41, 59, 0.5); padding: 10px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.2);">
+                  <span style="font-size: 0.76rem; color: var(--text-dim); display: block;">Mandatory Requirement</span>
+                  <strong style="color: #cbd5e1; font-size: 0.82rem;" id="aiActReq1">AI Content Watermarking & Notice</strong>
+                </div>
+                <div style="background: rgba(30, 41, 59, 0.5); padding: 10px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.2);">
+                  <span style="font-size: 0.76rem; color: var(--text-dim); display: block;">Human Oversight SLA</span>
+                  <strong style="color: #cbd5e1; font-size: 0.82rem;" id="aiActReq2">Human-in-the-Loop Review Controls</strong>
+                </div>
+                <div style="background: rgba(30, 41, 59, 0.5); padding: 10px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.2);">
+                  <span style="font-size: 0.76rem; color: var(--text-dim); display: block;">Auditability & Telemetry</span>
+                  <strong style="color: #cbd5e1; font-size: 0.82rem;" id="aiActReq3">Clause Coordinate Audit Trails</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <div class="section-title">
+              <span>ISO/IEC 42001:2023 Responsible AI Management System (AIMS) Controls</span>
+            </div>
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 12px;">
+              Enterprise governance controls applied across the AI lifecycle including risk management, data quality, bias mitigation, and human oversight.
+            </p>
+            <table class="custom-table" id="isoTable">
+              <thead>
+                <tr>
+                  <th style="width: 100px;">Control ID</th>
+                  <th style="width: 220px;">Control Domain</th>
+                  <th>Implemented Technical Control & Safeguard</th>
+                  <th style="width: 120px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="isoTableBody">
               </tbody>
             </table>
           </div>
@@ -457,45 +585,84 @@
           </div>
         </div>
 
-        <!-- TAB 7: Export & Delivery -->
+        <!-- TAB 7: Enterprise Export Suite -->
         <div id="tab-export" class="tab-pane" style="display: none;">
           <div class="section-block">
-            <h3 class="section-title">📦 Project Deliverables Export</h3>
-            <p style="font-size: 0.88rem; color: var(--text-muted);">
-              Export your finalized BRD document, professional 16:9 PowerPoint presentation deck, and requirements handoff JSON.
+            <h3 class="section-title">📦 Enterprise Multi-Format Export Suite</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
+              Export your finalized BRD document, financial estimation models, project presentation decks, and backlog user stories in enterprise-standard formats.
             </p>
 
-            <div class="export-grid">
+            <div class="export-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+              <!-- Word BRD -->
+              <div class="export-card">
+                <span class="export-icon">📝</span>
+                <h4 style="color: #fff;">Formal Word BRD (.docx)</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">
+                  Complete styled executive BRD with Table of Contents, 6 Components, 18 Phases, BoM, and Signature Sign-Off blocks.
+                </p>
+                <button class="btn-export" style="background: linear-gradient(135deg, #2b579a 0%, #1e3f73 100%); color: #fff;" onclick="downloadWordBRD()">
+                  <span>📥</span> Download Word BRD (.docx)
+                </button>
+              </div>
+
+              <!-- Excel Financial Model -->
+              <div class="export-card">
+                <span class="export-icon">📗</span>
+                <h4 style="color: #fff;">Excel Financial Model (.xlsx)</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">
+                  Multi-tab workbook containing 12-Role Loading Ledger, 18-Phase Estimator, 3-Yr TCO, and Cloud BoM with live formulas.
+                </p>
+                <button class="btn-export" style="background: linear-gradient(135deg, #217346 0%, #165231 100%); color: #fff;" onclick="downloadExcelModel()">
+                  <span>📥</span> Download Financial Model (.xlsx)
+                </button>
+              </div>
+
+              <!-- Jira / Azure DevOps CSV -->
+              <div class="export-card">
+                <span class="export-icon">📋</span>
+                <h4 style="color: #fff;">Jira / DevOps Backlog (.csv)</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">
+                  Ready-to-import backlog containing Epics, User Stories, Acceptance Criteria, Story Points, and Role Assignments.
+                </p>
+                <button class="btn-export" style="background: linear-gradient(135deg, #0052cc 0%, #0747a6 100%); color: #fff;" onclick="downloadJiraCSV()">
+                  <span>📥</span> Download Backlog CSV (.csv)
+                </button>
+              </div>
+
+              <!-- PowerPoint Presentation -->
               <div class="export-card">
                 <span class="export-icon">📊</span>
                 <h4 style="color: #fff;">Microsoft PowerPoint (.pptx)</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted);">
-                  16:9 presentation deck covering Problem, Demarcation, 12-Role Loading, 18-Phase Timeline, and Cloud BoM.
+                  16:9 executive presentation deck covering Problem, Demarcation, 12-Role Loading, 18-Phase Timeline, and Cloud BoM.
                 </p>
                 <button class="btn-export btn-export-pptx" onclick="downloadPPTX()">
                   <span>📥</span> Download Presentation (.pptx)
                 </button>
               </div>
 
+              <!-- Web / Print BRD -->
               <div class="export-card">
                 <span class="export-icon">📑</span>
-                <h4 style="color: #fff;">BRD Specification Document</h4>
+                <h4 style="color: #fff;">Printable Web View</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted);">
-                  Complete Business Requirements Document with 6 Technical Components, In/Out Scope, and Printable Layout.
+                  Clean high-contrast printable document layout with full technical specifications and phase timelines.
                 </p>
                 <button class="btn-export btn-export-brd" onclick="openBRDPreview()">
-                  <span>📄</span> View / Print Full BRD
+                  <span>📄</span> View / Print HTML
                 </button>
               </div>
 
+              <!-- Handoff JSON Dossier -->
               <div class="export-card">
-                <span class="export-icon">📋</span>
-                <h4 style="color: #fff;">Requirements Handoff JSON</h4>
+                <span class="export-icon">🗂️</span>
+                <h4 style="color: #fff;">Requirements Dossier (.json)</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted);">
                   Complete machine-readable JSON dossier mapping all client discovery inputs, holiday calendars, and parameters.
                 </p>
                 <button class="btn-export" style="background: rgba(56, 189, 248, 0.15); border: 1px solid var(--primary); color: #fff;" onclick="downloadHandoffJSON()">
-                  <span>📥</span> Download Handoff JSON
+                  <span>📥</span> Download JSON Dossier
                 </button>
               </div>
             </div>
@@ -504,6 +671,44 @@
       </div>
     </section>
   </main>
+
+  <!-- Revisions & Snapshot Diff Modal -->
+  <div class="modal-overlay" id="revisionsModal">
+    <div class="modal-box" style="max-width: 900px; max-height: 85vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+          <span>🕒</span> Plan Revision History & Parameter Diffs
+        </h3>
+        <button onclick="closeRevisionsModal()"
+          style="background: none; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer;">✕</button>
+      </div>
+      <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 14px;">
+        Track every adjustment and re-plan snapshot across discovery changes, admin overrides, and currency conversions.
+      </p>
+
+      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; max-height: 300px; overflow-y: auto;">
+        <table class="custom-table" id="revisionsTable">
+          <thead>
+            <tr>
+              <th>Rev #</th>
+              <th>Timestamp</th>
+              <th>Trigger Reason</th>
+              <th>Duration</th>
+              <th>Total Effort</th>
+              <th>Labour Cost</th>
+              <th>Cloud BoM</th>
+            </tr>
+          </thead>
+          <tbody id="revisionsTableBody">
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn-header" onclick="closeRevisionsModal()">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Multi-Cloud AI Settings Modal -->
   <div class="modal-overlay" id="settingsModal">

@@ -27,7 +27,13 @@ from app import app as fastapi_app
 
 
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+# Native Gradio application rendering the Workbench
+with gr.Blocks(title="AI BRD Generator & Workbench", fill_height=True) as demo:
+    gr.HTML(
+        """
+        <iframe src="/static/index.html" width="100%" height="950px" style="border:none; width:100%; min-height:92vh; border-radius:8px;"></iframe>
+        """
+    )
 
 # Mount static files directly on demo.app so /static/css and /static/js work directly
 demo.app.mount("/static", StaticFiles(directory="static"), name="static_root")
@@ -37,16 +43,9 @@ for route in fastapi_app.routes:
     if getattr(route, "path", "").startswith("/api"):
         demo.app.routes.append(route)
 
-# Native Gradio application rendering the Workbench
-with gr.Blocks(title="AI BRD Generator & Workbench", fill_height=True) as demo:
-    gr.HTML(
-        """
-        <iframe src="/static/index.html" width="100%" height="950px" style="border:none; width:100%; min-height:92vh; border-radius:8px;"></iframe>
-        """
-    )
-
 if __name__ == "__main__":
     demo.queue().launch(server_name="0.0.0.0", server_port=7860, show_api=False)
+
 
 
 

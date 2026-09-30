@@ -1,4 +1,3 @@
-# README.md for Hugging Face Space
 ---
 title: AI BRD Generator and Project Planner
 emoji: ⚡
@@ -10,6 +9,7 @@ app_file: app_hf.py
 pinned: false
 license: mit
 ---
+
 
 # AI BRD Generator & Project Planner MVP
 

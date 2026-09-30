@@ -24,7 +24,7 @@
 
     <div class="header-actions">
       <!-- Currency Switcher -->
-      <select id="globalCurrencySelect" class="form-control" style="width: 105px; padding: 4px 8px; font-size: 0.8rem; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); color: #fff;" onchange="changeGlobalCurrency(this.value)" title="Switch Display Currency & Rate Card">
+      <select id="globalCurrencySelect" class="form-control" style="width: 110px; padding: 5px 10px; font-size: 0.82rem; font-weight: 600;" onchange="changeGlobalCurrency(this.value)" title="Switch Display Currency & Rate Card">
         <option value="USD">USD ($)</option>
         <option value="EUR">EUR (€)</option>
         <option value="GBP">GBP (£)</option>
@@ -34,7 +34,7 @@
         <option value="AUD">AUD (A$)</option>
       </select>
 
-      <button class="btn-header" onclick="openRevisionsModal()" style="border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.1); color: #c084fc;" title="View Version Snapshots & Plan Diffs">
+      <button class="btn-header" onclick="openRevisionsModal()" title="View Version Snapshots & Plan Diffs">
         <span>🕒</span> Revisions
       </button>
 
@@ -46,15 +46,15 @@
         <span style="font-size: 0.75rem; margin-left: 4px;">⚙️</span>
       </div>
 
-      <button class="btn-header" onclick="openAdminModal()" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.1); color: var(--primary);">
+      <button class="btn-header" onclick="openAdminModal()">
         <span>🛡️</span> Admin Console
       </button>
 
       <button class="btn-header" onclick="openSettingsModal()">
-        <span>☁️</span> Switch Cloud AI
+        <span>☁️</span> Cloud AI
       </button>
 
-      <button class="btn-header" onclick="resetSession()" style="color: #f87171;">
+      <button class="btn-header" onclick="resetSession()" style="color: var(--danger); border-color: #fecaca;">
         <span>🔄</span> Reset
       </button>
     </div>
@@ -81,10 +81,10 @@
         <!-- Quick Workspace Action Buttons -->
         <div class="sidebar-actions">
           <button class="btn-sidebar-action primary" onclick="resetSession()">
-            <span>➕</span> New BRD Discovery Interview
+            <span>➕</span> New BRD Discovery
           </button>
           <button class="btn-sidebar-action secondary" onclick="document.getElementById('rfpAutoDiscoverInput').click()">
-            <span>⚡</span> 0-Click RFP Document Ingestion
+            <span>⚡</span> 0-Click RFP Ingestion
           </button>
         </div>
 
@@ -106,7 +106,7 @@
 
         <!-- Admin & Governance Shortcuts -->
         <div class="sidebar-section-header" style="margin-top: 4px;">
-          <span class="sidebar-section-title">🛡️ System & Admin Console</span>
+          <span class="sidebar-section-title">🛡️ System & Governance</span>
         </div>
 
         <div class="admin-nav-list">
@@ -114,13 +114,13 @@
             <span style="display: flex; align-items: center; gap: 8px;">
               <span>🛡️</span> Enterprise Admin Console
             </span>
-            <span style="font-size: 0.72rem; color: var(--primary);">9h / 7h / 8h</span>
+            <span style="font-size: 0.72rem; color: #93c5fd;">9h / 7h / 8h</span>
           </button>
           <button class="admin-nav-btn" onclick="openSettingsModal()">
             <span style="display: flex; align-items: center; gap: 8px;">
               <span>☁️</span> Multi-Cloud AI Settings
             </span>
-            <span style="font-size: 0.72rem; color: var(--text-dim);">Azure/AWS/GCP</span>
+            <span style="font-size: 0.72rem; color: var(--text-sidebar);">Azure/AWS/GCP</span>
           </button>
           <button class="admin-nav-btn" onclick="openRevisionsModal()">
             <span style="display: flex; align-items: center; gap: 8px;">
@@ -132,7 +132,7 @@
             <span style="display: flex; align-items: center; gap: 8px;">
               <span>✏️</span> Discovery Q&A Overrides
             </span>
-            <span style="font-size: 0.72rem; color: var(--text-muted);">6 Factors</span>
+            <span style="font-size: 0.72rem; color: var(--text-sidebar);">6 Factors</span>
           </button>
         </div>
       </div>
@@ -140,27 +140,31 @@
       <!-- Sidebar Footer -->
       <div class="sidebar-footer-widget">
         <span>💵 Rate: <strong>$30.00/hr</strong></span>
-        <span style="color: var(--success); display: flex; align-items: center; gap: 4px;">
-          <span class="dot-pulse" style="width: 6px; height: 6px;"></span> Admin Access
+        <span style="color: #4ade80; display: flex; align-items: center; gap: 4px; font-weight: 600;">
+          <span class="dot-pulse" style="width: 6px; height: 6px;"></span> Enterprise Admin
         </span>
       </div>
     </aside>
 
-    <!-- 2. CENTER PANEL: Discovery Chatbot Area -->
-    <section class="chat-panel">
-      <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <div class="panel-title" style="display: flex; align-items: center; gap: 8px;">
+    <!-- 2. CENTER PANEL: Discovery Chatbot Area (Spacious Layout) -->
+    <section class="chat-panel" id="chatPanel">
+      <div class="panel-header">
+        <div class="panel-title">
           <span>💬</span> Discovery Interview
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <!-- 0-Click Auto Discovery Upload Button -->
-          <button class="btn-header" onclick="document.getElementById('rfpAutoDiscoverInput').click()" style="background: var(--primary-gradient); color: #fff; font-size: 0.75rem; padding: 4px 10px; border: none; font-weight: 600;" title="Drop RFP / SOW document to auto-populate all 25 discovery parameters">
+          <button class="btn-header" onclick="document.getElementById('rfpAutoDiscoverInput').click()" style="background: var(--primary-soft-bg); color: var(--primary); font-size: 0.76rem; padding: 4px 10px; border: 1px solid rgba(72, 98, 247, 0.3); font-weight: 700;" title="Drop RFP / SOW document to auto-populate all 25 discovery parameters">
             <input type="file" id="rfpAutoDiscoverInput" style="display: none;" accept=".pdf,.docx,.txt,.csv,.json,.doc" onchange="handleRfpAutoDiscovery(event)">
             <span>⚡</span> 0-Click Auto-Discovery
           </button>
           <div class="progress-counter" id="progressCounter">
-            Question 1 of 25
+            Question 1 of 22
           </div>
+          <!-- Toggle Expand Chat Area Button -->
+          <button class="btn-header" id="btnToggleExpand" onclick="toggleChatExpand()" style="padding: 4px 10px; font-size: 0.76rem;" title="Toggle Full/Split Chat Width">
+            <span>⛶</span> Focus Chat
+          </button>
         </div>
       </div>
 

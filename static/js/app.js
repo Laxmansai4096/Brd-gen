@@ -1,6 +1,25 @@
 let currentSessionId = localStorage.getItem("brd_session_id") || "";
 let currentSessionData = null;
 
+let isChatExpanded = false;
+
+function toggleChatExpand() {
+  const chatPanel = document.getElementById("chatPanel");
+  const workbenchPanel = document.querySelector(".workbench-panel");
+  const btn = document.getElementById("btnToggleExpand");
+  
+  isChatExpanded = !isChatExpanded;
+  if (isChatExpanded) {
+    if (chatPanel) chatPanel.classList.add("expanded");
+    if (workbenchPanel) workbenchPanel.style.display = "none";
+    if (btn) btn.innerHTML = "<span>◫</span> Split View";
+  } else {
+    if (chatPanel) chatPanel.classList.remove("expanded");
+    if (workbenchPanel) workbenchPanel.style.display = "flex";
+    if (btn) btn.innerHTML = "<span>⛶</span> Focus Chat";
+  }
+}
+
 // Initialize app on load
 document.addEventListener("DOMContentLoaded", async () => {
   await loadSettings();

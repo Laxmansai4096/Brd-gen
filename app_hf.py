@@ -26,23 +26,24 @@ import gradio as gr
 from app import app as fastapi_app
 
 
-# Gradio block exposing the workbench
+# Native Gradio application rendering the Workbench
 with gr.Blocks(title="AI BRD Generator & Workbench", fill_height=True) as demo:
-    gr.HTML(
-        """
-        <style>
-          .gradio-container { padding: 0 !important; max-width: 100% !important; }
-        </style>
-        <iframe src="/static/index.html" width="100%" height="1000px" style="border:none; width:100%; min-height:95vh;"></iframe>
-        """
-    )
+    with gr.Row():
+        gr.Markdown("### ⚡ AI BRD Generator & Project Planner Workbench")
+    with gr.Row():
+        gr.HTML(
+            """
+            <iframe src="/static/index.html" width="100%" height="950px" style="border:none; width:100%; min-height:92vh; border-radius:8px;"></iframe>
+            """
+        )
 
-# Mount Gradio onto the existing FastAPI application
-app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
+# Mount FastAPI endpoints onto Gradio's internal ASGI router
+for route in fastapi_app.routes:
+    demo.app.routes.append(route)
 
-# Export demo for Hugging Face Spaces Gradio runner
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    demo.queue().launch(server_name="0.0.0.0", server_port=7860, show_api=False)
+
 
 
 

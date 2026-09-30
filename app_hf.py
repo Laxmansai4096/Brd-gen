@@ -43,8 +43,9 @@ for route in fastapi_app.routes:
     if getattr(route, "path", "").startswith("/api"):
         demo.app.routes.append(route)
 
-if __name__ == "__main__":
-    demo.queue().launch(server_name="0.0.0.0", server_port=7860, show_api=False)
+# Note: On Hugging Face Spaces with 'sdk: gradio', Hugging Face imports app_file (app_hf.py)
+# and calls launch() itself on port 7860. Do NOT call demo.launch() inside the module.
+
 
 
 

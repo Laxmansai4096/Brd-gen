@@ -381,6 +381,62 @@ def is_greeting_or_chit_chat(text: str) -> bool:
         return True
     return False
 
+VAGUE_PHRASES = [
+    "dont know", "don't know", "not sure", "maybe", "might be", "could be",
+    "unknown", "unsure", "not decided", "dunno", "something like", "probably",
+    "just a", "automate stuff", "help me decide", "i think", "sort of",
+    "no idea", "not clear", "haven't decided", "havent decided", "anything",
+    "random", "whatever", "any bot", "just chatbot", "some chatbot", "a chatbot"
+]
+
+def check_requires_follow_up(user_input: str, q: QuestionItem) -> Tuple[bool, str, List[Dict[str, str]]]:
+    """Checks if the user input is vague, ambiguous, or underspecified for a requirement question."""
+    text = user_input.strip().lower()
+    has_vague_marker = any(p in text for p in VAGUE_PHRASES)
+    
+    if q.id == "q_client":
+        if has_vague_marker or text in ["unknown", "na", "none", "tbd", "idk"]:
+            return True, "🏢 **Could you share the company / client name or working project title?** *(e.g., 'PVR INOX — Contract Intelligence' or 'Acme Corp — Customer AI')*", [
+                {"label": "Use Standard Working Title", "value": "Enterprise Client — AI Automation Platform"}
+            ]
+        return False, "", []
+        
+    if q.id == "q_problem":
+        # Check for vague phrasing or very brief problem statements
+        words = text.split()
+        is_too_brief = len(words) < 5 and not any(k in text for k in ["contract", "intelligence", "compliance", "procurement", "extraction", "customer support", "invoice", "triage", "search", "legal", "analysis"])
+        
+        if has_vague_marker or is_too_brief:
+            if any(w in text for w in ["bot", "chat", "assistant", "conversational", "llm", "ai"]):
+                options = [
+                    {"label": "Option A: Internal Knowledge & HR/IT Support Assistant", "value": "Build an Internal Enterprise Knowledge & Policy Q&A Assistant that indexes SharePoint/Blob PDF documents to answer employee questions and reduce HR/IT helpdesk ticket volume."},
+                    {"label": "Option B: Omnichannel Customer Support & Service Desk Automation", "value": "Build an Omnichannel Customer Support conversational agent to resolve tier-1 customer inquiries 24/7 with automated CRM and human escalation handoff."},
+                    {"label": "Option C: Intelligent Document Processing & Risk Analysis Agent", "value": "Build an automated Document Intelligence pipeline to extract clauses, score risks, and validate regulatory compliance across enterprise documents."}
+                ]
+                clarification_prompt = (
+                    "🔍 **I can help you define the exact scope for your AI Assistant / Chatbot!**\n\n"
+                    "To generate a realistic BRD, architecture, and resource plan, could you clarify:\n\n"
+                    "1️⃣ **Who will primarily interact with it?** *(e.g., internal employees, customer support agents, or external clients)*\n"
+                    "2️⃣ **What documents or systems will it connect to?** *(e.g., SharePoint PDFs, CRM, ERP, SQL Database)*\n"
+                    "3️⃣ **What is the primary business outcome?** *(e.g., deflecting tier-1 support tickets, accelerating document review, 24/7 self-service)*\n\n"
+                    "💡 *You can type your specific details or pick from one of the solution blueprints below:*"
+                )
+                return True, clarification_prompt, options
+            else:
+                options = [
+                    {"label": "Option A: Document Intelligence & Contract Extraction", "value": "Automate contract clause extraction, risk scoring, and compliance validation across enterprise document repositories."},
+                    {"label": "Option B: Enterprise Conversational Search & Knowledge Assistant", "value": "Provide 24/7 intelligent search and grounded conversational answers over enterprise documentation."},
+                    {"label": "Option C: Intelligent Workflow & Data Validation Automation", "value": "Automate repetitive business workflows and data validation pipelines across disparate enterprise core systems."}
+                ]
+                clarification_prompt = (
+                    f"🔍 **Let's flesh out the details for {q.title}!**\n\n"
+                    f"To plan the engineering effort accurately, what specific pain points, users, and business goals are you targeting?\n\n"
+                    f"*(Feel free to describe in detail, or select one of these common enterprise blueprints:)*"
+                )
+                return True, clarification_prompt, options
+
+    return False, "", []
+
 def check_answer_ambiguity(answer_text: str, q: QuestionItem) -> Tuple[bool, str, List[str]]:
     text = answer_text.strip().lower()
     if q.type == "number":
@@ -473,6 +529,96 @@ def process_user_answer(session: ProjectSession, user_input: str) -> Tuple[ChatM
             ),
             timestamp="Just now",
             question_context=q
+        )
+        return msg, False
+
+    # Handle active clarification state
+    if session.clarification_state and session.clarification_state.get("question_id") == q.id:
+        # Synthesize full detailed requirement from the user's clarification
+        initial_input = session.clarification_state.get("initial_input", "")
+        clarification_answer = user_input.strip()
+        
+        # Check if user selected one of our blueprint options
+        matched_blueprint = None
+        for bp_val in [
+            "Build an Internal Enterprise Knowledge & Policy Q&A Assistant that indexes SharePoint/Blob PDF documents to answer employee questions and reduce HR/IT helpdesk ticket volume.",
+            "Build an Omnichannel Customer Support conversational agent to resolve tier-1 customer inquiries 24/7 with automated CRM and human escalation handoff.",
+            "Build an automated Document Intelligence pipeline to extract clauses, score risks, and validate regulatory compliance across enterprise documents.",
+            "Automate contract clause extraction, risk scoring, and compliance validation across enterprise document repositories.",
+            "Provide 24/7 intelligent search and grounded conversational answers over enterprise documentation.",
+            "Automate repetitive business workflows and data validation pipelines across disparate enterprise core systems."
+        ]:
+            if clarification_answer.lower() in bp_val.lower() or bp_val.lower() in clarification_answer.lower():
+                matched_blueprint = bp_val
+                break
+                
+        if matched_blueprint:
+            final_synthesized_requirement = matched_blueprint
+        else:
+            if "option a" in clarification_answer.lower():
+                final_synthesized_requirement = "Build an Internal Enterprise Knowledge & Policy Q&A Assistant that indexes SharePoint/Blob PDF documents to answer employee questions and reduce HR/IT helpdesk ticket volume."
+            elif "option b" in clarification_answer.lower():
+                final_synthesized_requirement = "Build an Omnichannel Customer Support conversational agent to resolve tier-1 customer inquiries 24/7 with automated CRM and human escalation handoff."
+            elif "option c" in clarification_answer.lower():
+                final_synthesized_requirement = "Build an automated Document Intelligence pipeline to extract clauses, score risks, and validate regulatory compliance across enterprise documents."
+            else:
+                # Custom detailed answer given
+                if len(clarification_answer.split()) >= 6:
+                    final_synthesized_requirement = f"Enterprise AI Solution: {clarification_answer}"
+                else:
+                    final_synthesized_requirement = f"Enterprise AI Solution targeting {clarification_answer}, automating key business interactions and integrating with enterprise knowledge sources."
+
+        # Clear clarification state and save final answer
+        session.clarification_state = None
+        session.answers[q.id] = AnswerItem(
+            question_id=q.id,
+            question_title=q.title,
+            answer=final_synthesized_requirement,
+            is_default=False,
+            ambiguity_count=0,
+            hitl_confirmed=True,
+            notes=f"Synthesized from user input '{initial_input}' and clarification '{clarification_answer}'."
+        )
+        session.current_question_index += 1
+        next_q = get_current_question(session)
+        
+        if next_q:
+            content = (
+                f"✅ **Recorded for {q.title}:**\n> *\"{final_synthesized_requirement}\"*\n\n"
+                f"---\n\n"
+                f"### 📋 Question {session.current_question_index + 1} of {len(STATIC_QUESTIONS)}: **{next_q.title}**\n\n"
+                f"**{next_q.prompt}**\n\n"
+                f"*(Example: {next_q.help_text})*"
+            )
+            msg = ChatMessage(
+                sender="agent",
+                content=content,
+                timestamp="Just now",
+                question_context=next_q
+            )
+            return msg, False
+        else:
+            msg = ChatMessage(
+                sender="agent",
+                content="🎯 **Discovery Complete!** Synthesizing BRD & Project Plan...",
+                timestamp="Just now"
+            )
+            return msg, True
+
+    # Check if this initial answer needs follow-up clarification
+    needs_follow_up, follow_up_prompt, follow_up_options = check_requires_follow_up(user_input, q)
+    if needs_follow_up:
+        session.clarification_state = {
+            "question_id": q.id,
+            "initial_input": user_input,
+            "step": 1
+        }
+        msg = ChatMessage(
+            sender="agent",
+            content=follow_up_prompt,
+            timestamp="Just now",
+            question_context=q,
+            hitl_options=follow_up_options
         )
         return msg, False
 

@@ -223,6 +223,7 @@ class ProjectSession(BaseModel):
     current_question_index: int = 0
     answers: Dict[str, AnswerItem] = {}
     ambiguity_tracker: Dict[str, int] = {}
+    clarification_state: Optional[Dict[str, Any]] = None
     uploaded_files: List[Dict[str, Any]] = []
     messages: List[ChatMessage] = []
     brd: Optional[BRDDocument] = None

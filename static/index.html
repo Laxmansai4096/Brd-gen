@@ -87,7 +87,7 @@
             placeholder="Enter number..." onkeydown="handleNumberInputKeyDown(event)">
             
           <!-- Dropdown Select -->
-          <select class="chat-input toolbar-dropdown" id="chatDropdownSelect" style="display: none;">
+          <select class="chat-input toolbar-dropdown" id="chatDropdownSelect" style="display: none;" onkeydown="handleDropdownKeyDown(event)">
           </select>
           
           <button class="btn-send" onclick="sendUserMessage()" title="Send Answer">

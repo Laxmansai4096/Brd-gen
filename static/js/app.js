@@ -149,18 +149,7 @@ function renderQuickSuggestions() {
       });
       dropdownSelect.focus();
     }
-    
-    // Also render clickable pill buttons in the quickSuggestions container
-    curQ.options.forEach((opt) => {
-      const chip = document.createElement("button");
-      chip.className = "suggestion-chip";
-      chip.style.cssText = "margin: 3px 4px; padding: 6px 12px; font-size: 0.82rem; border-radius: 16px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #fff; cursor: pointer; text-align: left;";
-      chip.innerHTML = `<strong>${opt.value}</strong>: <span style="color: var(--text-muted); font-size: 0.76rem;">${opt.label}</span>`;
-      chip.onclick = () => {
-        sendMessageWithText(opt.value);
-      };
-      container.appendChild(chip);
-    });
+    // Redundant dynamic chips removed per user request
     
   } else if (curQ.type === "number") {
     // Show dedicated number input in the input bar
@@ -173,17 +162,6 @@ function renderQuickSuggestions() {
       numInput.focus();
     }
     
-    if (curQ.default_value) {
-      const chip = document.createElement("button");
-      chip.className = "suggestion-chip";
-      chip.style.cssText = "margin: 3px 4px; padding: 6px 12px; font-size: 0.82rem; border-radius: 16px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #fff; cursor: pointer;";
-      chip.innerHTML = `💡 <strong>Use Default Baseline:</strong> ${curQ.default_value}`;
-      chip.onclick = () => {
-        sendMessageWithText(curQ.default_value);
-      };
-      container.appendChild(chip);
-    }
-    
   } else if (curQ.type === "date") {
     // Show date input picker
     if (numInput) numInput.style.display = "none";
@@ -193,18 +171,6 @@ function renderQuickSuggestions() {
       textInput.type = "date";
       textInput.value = curQ.default_value || "2026-10-05";
       textInput.focus();
-    }
-
-    if (curQ.default_value) {
-      const chip = document.createElement("button");
-      chip.className = "suggestion-chip";
-      chip.style.cssText = "margin: 3px 4px; padding: 6px 12px; font-size: 0.82rem; border-radius: 16px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #fff; cursor: pointer;";
-      chip.innerHTML = `📅 <strong>Start Kick-Off:</strong> ${curQ.default_value}`;
-      chip.onclick = () => {
-        if (textInput) textInput.value = curQ.default_value;
-        sendUserMessage();
-      };
-      container.appendChild(chip);
     }
     
   } else {
@@ -218,18 +184,22 @@ function renderQuickSuggestions() {
       textInput.placeholder = `Type your answer for ${curQ.title}...`;
       textInput.focus();
     }
-    
-    if (curQ.default_value) {
+  }
+
+  // Check if the latest message from agent has interactive follow-up / blueprint options
+  const msgs = currentSessionData.messages || [];
+  const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
+  if (lastMsg && lastMsg.hitl_options && lastMsg.hitl_options.length > 0) {
+    lastMsg.hitl_options.forEach((opt) => {
       const chip = document.createElement("button");
       chip.className = "suggestion-chip";
-      chip.style.cssText = "margin: 3px 4px; padding: 6px 12px; font-size: 0.82rem; border-radius: 16px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #fff; cursor: pointer;";
-      chip.innerHTML = `💡 <strong>Use Standard Baseline:</strong> "${curQ.default_value}"`;
+      chip.style.cssText = "margin: 4px 6px; padding: 8px 14px; font-size: 0.82rem; border-radius: 12px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #fff; cursor: pointer; text-align: left; display: block; width: 100%;";
+      chip.innerHTML = `<strong>${opt.label}</strong><br><span style="font-size: 0.76rem; color: var(--text-muted);">${opt.value}</span>`;
       chip.onclick = () => {
-        if (textInput) textInput.value = curQ.default_value;
-        sendUserMessage();
+        sendMessageWithText(opt.value);
       };
       container.appendChild(chip);
-    }
+    });
   }
 }
 
@@ -239,6 +209,13 @@ function updateProgressCounter() {
   const cur = (currentSessionData.current_question_index || 0) + 1;
   const total = currentSessionData.total_questions || 22;
   el.textContent = cur <= total ? `Question ${cur} of ${total}` : `Discovery Complete (${total}/${total})`;
+}
+
+function handleDropdownKeyDown(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendUserMessage();
+  }
 }
 
 function handleInputKeyDown(e) {

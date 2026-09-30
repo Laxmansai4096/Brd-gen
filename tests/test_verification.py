@@ -102,7 +102,46 @@ def test_full_pipeline():
         assert exp_res.status_code == 200, f"{exp_name} export failed with status {exp_res.status_code}"
         print(f"7. Export {exp_name} OK! ({len(exp_res.content)} bytes)")
 
-    print("\nALL 7 TESTS PASSED ACCORDING TO reference.txt SPECIFICATION!")
+    # 8. Test In-Line Canonical Requirement Edit & MoSCoW Priority with Immediate Ledger Tracking
+    edit_res = client.post('/api/canonical-requirements/update', json={
+        'session_id': session_id,
+        'requirement_id': 'FR-001',
+        'field': 'priority',
+        'new_value': 'COULD'
+    })
+    assert edit_res.status_code == 200, f"Req update failed: {edit_res.text}"
+    edit_data = edit_res.json()
+    assert edit_data['updated_requirement']['priority'] == 'COULD'
+    assert edit_data['ledger_entry']['calculation_type'] == 'MOSCOW_PRIORITY_UPDATE'
+    print(f"8. Canonical Requirement MoSCoW update verified! Ledger ID: {edit_data['ledger_entry']['calculation_id']}")
+
+    edit_res2 = client.post('/api/canonical-requirements/update', json={
+        'session_id': session_id,
+        'requirement_id': 'FR-001',
+        'field': 'statement',
+        'new_value': 'Enterprise real-time contract intake and automated field extraction pipeline.'
+    })
+    assert edit_res2.status_code == 200
+    edit_data2 = edit_res2.json()
+    assert edit_data2['updated_requirement']['statement'] == 'Enterprise real-time contract intake and automated field extraction pipeline.'
+    assert edit_data2['ledger_entry']['calculation_type'] == 'REQUIREMENT_MUTATION'
+    print(f"   Canonical Requirement statement edit verified! Ledger ID: {edit_data2['ledger_entry']['calculation_id']}")
+
+    # 9. Test Commit Simulation to Baseline
+    commit_res = client.post('/api/impact-analysis/commit', json={
+        'session_id': session_id,
+        'parameter_changed': 'users',
+        'new_value': '500'
+    })
+    assert commit_res.status_code == 200, f"Commit scenario failed: {commit_res.text}"
+    commit_data = commit_res.json()
+    assert commit_data['status'] == 'success'
+    ledger_entries = commit_data['calculation_ledger']
+    scenario_entry = next((e for e in ledger_entries if e['calculation_type'] == 'SCENARIO_COMMIT'), None)
+    assert scenario_entry is not None, "SCENARIO_COMMIT ledger entry not found"
+    print(f"9. Commit Simulation to Baseline verified! New person days: {commit_data['brd']['total_person_days']} | Ledger entry: {scenario_entry['calculation_id']}")
+
+    print("\nALL 9 TESTS PASSED ACCORDING TO reference.txt SPECIFICATION!")
 
 if __name__ == '__main__':
     test_full_pipeline()

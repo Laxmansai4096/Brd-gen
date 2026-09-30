@@ -110,6 +110,16 @@ class ImpactAnalysisResult(BaseModel):
     delta_days: float = 0.0
     delta_cost_usd: float = 0.0
     delta_fte: float = 0.0
+    base_duration_weeks: float = 0.0
+    base_person_days: float = 0.0
+    base_cost_usd: float = 0.0
+    base_fte: float = 0.0
+    base_monthly_cloud_usd: float = 0.0
+    sim_duration_weeks: float = 0.0
+    sim_person_days: float = 0.0
+    sim_cost_usd: float = 0.0
+    sim_fte: float = 0.0
+    sim_monthly_cloud_usd: float = 0.0
 
 # --- Section 51: 4 HITL Approval Gates ---
 class HITLGates(BaseModel):

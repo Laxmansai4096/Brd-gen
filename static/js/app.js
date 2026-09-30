@@ -489,22 +489,26 @@ function renderBRDWorkbench(brd) {
   const feasCard = document.getElementById("feasibilityCard");
   if (feasCard && feas) {
     feasCard.innerHTML = `
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
-        <div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Reference Duration</div>
-          <div style="font-size: 1.1rem; font-weight: 700; color: #fff;">${feas.reference_duration_weeks.toFixed(1)} Weeks (${feas.working_days} working days)</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
+        <div class="feas-tile">
+          <div class="feas-tile-label">Reference Duration</div>
+          <div class="feas-tile-val" style="color: #0f172a;">${feas.reference_duration_weeks.toFixed(1)} Weeks</div>
+          <div class="feas-tile-sub">${feas.working_days} working days</div>
         </div>
-        <div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Resolved Duration</div>
-          <div style="font-size: 1.1rem; font-weight: 700; color: ${feas.schedule_stretched ? '#f87171' : 'var(--success)'};">${feas.resolved_duration_weeks.toFixed(1)} Weeks</div>
+        <div class="feas-tile">
+          <div class="feas-tile-label">Resolved Duration</div>
+          <div class="feas-tile-val" style="color: ${feas.schedule_stretched ? '#dc2626' : '#16a34a'};">${feas.resolved_duration_weeks.toFixed(1)} Weeks</div>
+          <div class="feas-tile-sub">${feas.schedule_stretched ? '⚠️ Schedule Stretched' : '✅ Feasible Schedule'}</div>
         </div>
-        <div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Peak Role FTE</div>
-          <div style="font-size: 1.1rem; font-weight: 700; color: #fff;">${feas.peak_fte_observed.toFixed(2)} / ${feas.max_fte_limit.toFixed(0)} max</div>
+        <div class="feas-tile">
+          <div class="feas-tile-label">Peak Role FTE</div>
+          <div class="feas-tile-val" style="color: #2563eb;">${feas.peak_fte_observed.toFixed(2)} FTE</div>
+          <div class="feas-tile-sub">Limit: ${feas.max_fte_limit.toFixed(0)} FTE peak capacity</div>
         </div>
-        <div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Binding Constraint</div>
-          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">${feas.binding_constraint}</div>
+        <div class="feas-tile">
+          <div class="feas-tile-label">Binding Constraint</div>
+          <div class="feas-tile-val" style="color: #7c3aed; font-size: 0.95rem;">${escapeHtml(feas.binding_constraint)}</div>
+          <div class="feas-tile-sub">Resource loading ceiling</div>
         </div>
       </div>
     `;
@@ -512,37 +516,80 @@ function renderBRDWorkbench(brd) {
 
   const phasesList = document.getElementById("phasesList");
   if (phasesList) {
-    phasesList.innerHTML = (brd.project_phases || []).map(p => `
-      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-        <div>
-          <div style="font-weight: 600; color: #fff; font-size: 0.9rem;">${p.phase_name}</div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
-            Deliverables: ${p.key_deliverables.join(" • ")}
+    const stageColors = {
+      P01: { border: "#6366f1", bg: "rgba(99, 102, 241, 0.12)", text: "#4f46e5", label: "Foundation & Framing" },
+      P02: { border: "#6366f1", bg: "rgba(99, 102, 241, 0.12)", text: "#4f46e5", label: "Requirements & MoSCoW" },
+      P03: { border: "#3b82f6", bg: "rgba(59, 130, 246, 0.12)", text: "#2563eb", label: "Data Ingestion & Profiling" },
+      P04: { border: "#3b82f6", bg: "rgba(59, 130, 246, 0.12)", text: "#2563eb", label: "Architecture Specification" },
+      P05: { border: "#0284c7", bg: "rgba(2, 132, 199, 0.12)", text: "#0284c7", label: "Cloud Landing Zone" },
+      P06: { border: "#0284c7", bg: "rgba(2, 132, 199, 0.12)", text: "#0284c7", label: "Pipeline & Indexing" },
+      P07: { border: "#0d9488", bg: "rgba(13, 148, 136, 0.12)", text: "#0d9488", label: "Vector Search & Retrieval" },
+      P08: { border: "#0d9488", bg: "rgba(13, 148, 136, 0.12)", text: "#0d9488", label: "Model Reasoning & Orchestration" },
+      P09: { border: "#0891b2", bg: "rgba(8, 145, 178, 0.12)", text: "#0891b2", label: "Backend API & Services" },
+      P10: { border: "#0891b2", bg: "rgba(8, 145, 178, 0.12)", text: "#0891b2", label: "Frontend & Persona UX" },
+      P11: { border: "#8b5cf6", bg: "rgba(139, 92, 246, 0.12)", text: "#7c3aed", label: "Enterprise SSO & Security" },
+      P12: { border: "#8b5cf6", bg: "rgba(139, 92, 246, 0.12)", text: "#7c3aed", label: "Responsible AI & Compliance" },
+      P13: { border: "#d97706", bg: "rgba(217, 119, 6, 0.12)", text: "#b45309", label: "Observability & Telemetry" },
+      P14: { border: "#d97706", bg: "rgba(217, 119, 6, 0.12)", text: "#b45309", label: "CI/CD & DevOps Automation" },
+      P15: { border: "#e11d48", bg: "rgba(225, 29, 72, 0.12)", text: "#be123c", label: "Performance & Stress Testing" },
+      P16: { border: "#e11d48", bg: "rgba(225, 29, 72, 0.12)", text: "#be123c", label: "Security & Penetration Audit" },
+      P17: { border: "#16a34a", bg: "rgba(22, 163, 74, 0.12)", text: "#15803d", label: "Business UAT & Pilot" },
+      P18: { border: "#16a34a", bg: "rgba(22, 163, 74, 0.12)", text: "#15803d", label: "Production Go-Live & Handover" }
+    };
+
+    phasesList.innerHTML = (brd.project_phases || []).map(p => {
+      const codeMatch = p.phase_name.match(/^P\d+/);
+      const code = codeMatch ? codeMatch[0] : "PHASE";
+      const meta = stageColors[code] || { border: "#4862f7", bg: "rgba(72, 98, 247, 0.1)", text: "#3b51d6", label: "Delivery Phase" };
+      const delivs = (p.key_deliverables || []).map(d => `<span class="deliverable-tag">${escapeHtml(d)}</span>`).join("");
+
+      return `
+        <div class="phase-roadmap-card" style="border-left: 4px solid ${meta.border};">
+          <div style="flex: 1; min-width: 260px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+              <span class="phase-code-pill" style="background: ${meta.bg}; color: ${meta.text}; border: 1px solid ${meta.border}44;">${code}</span>
+              <span style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">${escapeHtml(p.phase_name.replace(/^P\d+:\s*/, ''))}</span>
+              <span style="font-size: 0.72rem; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 10px; font-weight: 600;">${meta.label}</span>
+            </div>
+            <div class="deliverables-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+              ${delivs}
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 140px; text-align: right;">
+            <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 700; font-size: 0.95rem; padding: 4px 10px; border-radius: 8px;">
+              ${p.weeks.toFixed(1)} wks
+            </span>
+            <span style="font-size: 0.78rem; color: #64748b; font-weight: 600; margin-top: 4px;">
+              ${p.effort_days.toFixed(1)} Person-Days
+            </span>
           </div>
         </div>
-        <div style="text-align: right;">
-          <span style="font-weight: 700; color: var(--primary); font-size: 0.95rem;">${p.weeks.toFixed(1)} wks</span>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">${p.effort_days.toFixed(1)} Person-Days</div>
-        </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
   }
 
   // Tab 4: Technical Components (6)
   const compList = document.getElementById("componentsList");
   if (compList) {
     compList.innerHTML = (brd.technical_components || []).map(c => `
-      <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <h4 style="color: var(--primary); font-size: 0.95rem;">${c.id}: ${c.name}</h4>
-          <span class="badge-ai" style="font-size: 0.75rem;">${c.technology_choice}</span>
+      <div class="tech-component-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+          <div>
+            <span class="badge-ai" style="padding: 2px 8px; font-size: 0.72rem; margin-right: 6px;">${c.id}</span>
+            <strong style="color: #0f172a; font-size: 1rem;">${escapeHtml(c.name)}</strong>
+          </div>
+          <span style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; font-weight: 600; padding: 4px 10px; border-radius: 8px; font-size: 0.78rem;">
+            ${escapeHtml(c.technology_choice)}
+          </span>
         </div>
-        <p style="font-size: 0.84rem; color: #cbd5e1; margin-bottom: 10px;"><strong>Purpose:</strong> ${c.purpose}</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8rem; color: var(--text-muted);">
-          <div><strong>Key Decisions:</strong> ${c.key_design_decisions}</div>
-          <div><strong>Interfaces:</strong> ${c.interfaces_in_out}</div>
-          <div><strong>Scalability & Limits:</strong> ${c.scalability_performance}</div>
-          <div><strong>Security & Guardrails:</strong> ${c.security_rai_controls}</div>
+        <p style="font-size: 0.86rem; color: #334155; margin-bottom: 14px; line-height: 1.5;">
+          <strong>Purpose:</strong> ${escapeHtml(c.purpose)}
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.82rem; color: #475569; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <div><strong style="color: #0f172a;">Key Decisions:</strong> ${escapeHtml(c.key_design_decisions)}</div>
+          <div><strong style="color: #0f172a;">Interfaces:</strong> <code>${escapeHtml(c.interfaces_in_out)}</code></div>
+          <div><strong style="color: #0f172a;">Scalability & Limits:</strong> ${escapeHtml(c.scalability_performance)}</div>
+          <div><strong style="color: #0f172a;">Security & Guardrails:</strong> ${escapeHtml(c.security_rai_controls)}</div>
         </div>
       </div>
     `).join("");
@@ -731,11 +778,11 @@ function filterDayWiseSchedule(filterType) {
       hoursText = "0h";
       taskText = `<span style="color: #f59e0b; font-style: italic;">Statutory Holiday observed — Non-working calendar day</span>`;
     } else if (!d.is_working_day) {
-      statusBadge = `<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; font-size: 0.72rem;">Weekend Off</span>`;
-      rowBg = "background: rgba(15, 23, 42, 0.4); opacity: 0.8;";
+      statusBadge = `<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #64748b; font-size: 0.72rem;">Weekend Off</span>`;
+      rowBg = "background: #f8fafc;";
       roleText = "N/A";
       hoursText = "0h";
-      taskText = `<span style="color: var(--text-dim); font-style: italic;">Non-working weekend period</span>`;
+      taskText = `<span style="color: #64748b; font-style: italic;">Non-working weekend period</span>`;
     } else {
       const taskList = d.tasks_allocated || [];
       if (taskList.length > 0) {
@@ -1247,25 +1294,46 @@ async function saveSettingsFromModal() {
   }
 }
 
+// Helper: Escape HTML strings for safe inline attribute insertion
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+// Toast notification helper
+function showToast(message, type = "info") {
+  const container = document.getElementById("customToastContainer");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `custom-toast toast-${type}`;
+  const icon = type === "success" ? "✅" : (type === "warning" ? "⚠️" : "ℹ️");
+  toast.innerHTML = `<span style="font-size: 1.1rem;">${icon}</span> <span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(10px)";
+    setTimeout(() => toast.remove(), 350);
+  }, 3500);
+}
+
+// Canonical Model Filter States
+let activeCanonicalMoSCoWFilter = "ALL";
+let activeCanonicalSearchQuery = "";
+
 // Canonical Model Rendering
 function renderCanonicalModel(brd) {
   if (!brd) return;
 
-  // 17 Canonical Requirements Table
-  const reqTbody = document.getElementById("canonicalReqsTableBody");
-  if (reqTbody && brd.canonical_requirements) {
-    reqTbody.innerHTML = brd.canonical_requirements.map(r => `
-      <tr>
-        <td><strong>${r.id}</strong></td>
-        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${r.category}</span></td>
-        <td><span class="badge ${r.priority === 'High' ? 'badge-warning' : 'badge-info'}" style="font-size: 0.72rem;">${r.priority || 'Medium'}</span></td>
-        <td><span class="badge badge-success" style="font-size: 0.72rem;">${r.status || 'Active'}</span></td>
-        <td><span style="font-size: 0.78rem; color: #94a3b8;">${r.actor || 'System'}</span></td>
-        <td style="font-weight: 500; color: #f1f5f9; font-size: 0.82rem;">${r.statement || r.description || r.title}</td>
-        <td style="font-size: 0.8rem; color: var(--primary);">${r.acceptance_criteria || ''}</td>
-      </tr>
-    `).join("");
-  }
+  // Update MoSCoW distribution stats
+  updateMoSCoWStats(brd.canonical_requirements || []);
+
+  // Render 17 Canonical Requirements In-line Editable Table
+  renderCanonicalTableRows();
 
   // Capability Catalog
   const capTbody = document.getElementById("capabilitiesTableBody");
@@ -1310,6 +1378,236 @@ function renderCanonicalModel(brd) {
   if (brd.hitl_gates) {
     renderHITLGates(brd.hitl_gates);
   }
+}
+
+// MoSCoW Statistics Update
+function updateMoSCoWStats(reqs) {
+  let mustCount = 0, shouldCount = 0, couldCount = 0, wontCount = 0;
+  reqs.forEach(r => {
+    const p = (r.priority || "").toUpperCase();
+    if (p === "MUST") mustCount++;
+    else if (p === "SHOULD") shouldCount++;
+    else if (p === "COULD") couldCount++;
+    else if (p === "WONT" || p === "WON'T") wontCount++;
+    else shouldCount++; // fallback
+  });
+
+  const elAll = document.getElementById("countAllReqs");
+  const elMust = document.getElementById("countMustReqs");
+  const elShould = document.getElementById("countShouldReqs");
+  const elCould = document.getElementById("countCouldReqs");
+  const elWont = document.getElementById("countWontReqs");
+
+  if (elAll) elAll.textContent = reqs.length;
+  if (elMust) elMust.textContent = mustCount;
+  if (elShould) elShould.textContent = shouldCount;
+  if (elCould) elCould.textContent = couldCount;
+  if (elWont) elWont.textContent = wontCount;
+}
+
+// Filter Requirements by MoSCoW Priority
+function filterCanonicalReqs(filter) {
+  activeCanonicalMoSCoWFilter = filter;
+  ["moscowChipAll", "moscowChipMust", "moscowChipShould", "moscowChipCould", "moscowChipWont"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("active-filter");
+  });
+  const activeChipId = filter === "ALL" ? "moscowChipAll" :
+                       filter === "MUST" ? "moscowChipMust" :
+                       filter === "SHOULD" ? "moscowChipShould" :
+                       filter === "COULD" ? "moscowChipCould" : "moscowChipWont";
+  const activeChip = document.getElementById(activeChipId);
+  if (activeChip) activeChip.classList.add("active-filter");
+  renderCanonicalTableRows();
+}
+
+// Filter Requirements by Search Input
+function onSearchCanonicalReqs(query) {
+  activeCanonicalSearchQuery = (query || "").toLowerCase().trim();
+  renderCanonicalTableRows();
+}
+
+// Render In-Line Editable Canonical Table Rows
+function renderCanonicalTableRows() {
+  const reqTbody = document.getElementById("canonicalReqsTableBody");
+  if (!reqTbody || !currentSessionData || !currentSessionData.brd) return;
+
+  const reqs = currentSessionData.brd.canonical_requirements || [];
+  const query = activeCanonicalSearchQuery;
+  const filter = activeCanonicalMoSCoWFilter;
+
+  const filtered = reqs.filter(r => {
+    const p = (r.priority || "SHOULD").toUpperCase();
+    if (filter !== "ALL" && p !== filter) return false;
+    if (query) {
+      const id = (r.requirement_id || r.id || "").toLowerCase();
+      const type = (r.type || r.category || "").toLowerCase();
+      const stmt = (r.statement || r.description || "").toLowerCase();
+      const actor = (r.actor || "").toLowerCase();
+      const criteria = Array.isArray(r.acceptance_criteria) ? r.acceptance_criteria.join(" ").toLowerCase() : (r.acceptance_criteria || "").toLowerCase();
+      if (!id.includes(query) && !type.includes(query) && !stmt.includes(query) && !actor.includes(query) && !criteria.includes(query)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    reqTbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">No requirements match current filter criteria.</td></tr>`;
+    return;
+  }
+
+  const categoryOptions = [
+    "FUNCTIONAL", "NON_FUNCTIONAL", "BUSINESS", "TECHNICAL", "DATA", "INTEGRATION",
+    "SECURITY", "COMPLIANCE", "AI", "RESPONSIBLE_AI", "OPERATIONAL", "DEPLOYMENT",
+    "REPORTING", "UX", "AVAILABILITY", "PERFORMANCE", "DR"
+  ];
+
+  const statusOptions = [
+    "CLIENT_CONFIRMED", "PROJECT_OVERRIDE", "DEFAULT", "PENDING_CONFIRMATION", "RESOLVED", "REJECTED"
+  ];
+
+  reqTbody.innerHTML = filtered.map(r => {
+    const reqId = r.requirement_id || r.id;
+    const curPriority = (r.priority || "SHOULD").toUpperCase();
+    const curType = (r.type || r.category || "FUNCTIONAL").toUpperCase();
+    const curStatus = (r.status || "CLIENT_CONFIRMED").toUpperCase();
+    const curActor = r.actor || "System";
+    const curStatement = r.statement || r.description || r.title || "";
+    const curCriteria = Array.isArray(r.acceptance_criteria) ? r.acceptance_criteria.join("\n") : (r.acceptance_criteria || "");
+
+    const mClass = curPriority === "MUST" ? "must" :
+                   curPriority === "SHOULD" ? "should" :
+                   curPriority === "COULD" ? "could" : "wont";
+
+    return `
+      <tr id="row-req-${reqId}">
+        <td><strong style="color: var(--primary);">${reqId}</strong></td>
+        <td>
+          <select class="category-select" data-req-id="${reqId}" onchange="updateCanonicalRequirement('${reqId}', 'type', this.value, this)">
+            ${categoryOptions.map(cat => `<option value="${cat}" ${curType === cat ? 'selected' : ''}>${cat}</option>`).join("")}
+          </select>
+        </td>
+        <td>
+          <select class="moscow-select ${mClass}" data-req-id="${reqId}" onchange="updateCanonicalRequirement('${reqId}', 'priority', this.value, this)">
+            <option value="MUST" ${curPriority === 'MUST' ? 'selected' : ''}>🔴 MUST</option>
+            <option value="SHOULD" ${curPriority === 'SHOULD' ? 'selected' : ''}>🟡 SHOULD</option>
+            <option value="COULD" ${curPriority === 'COULD' ? 'selected' : ''}>🔵 COULD</option>
+            <option value="WONT" ${curPriority === 'WONT' ? 'selected' : ''}>⚪ WONT</option>
+          </select>
+        </td>
+        <td>
+          <select class="status-select" data-req-id="${reqId}" onchange="updateCanonicalRequirement('${reqId}', 'status', this.value, this)">
+            ${statusOptions.map(st => `<option value="${st}" ${curStatus === st ? 'selected' : ''}>${st}</option>`).join("")}
+          </select>
+        </td>
+        <td>
+          <input type="text" class="inline-cell-input" value="${escapeHtml(curActor)}" data-prev="${escapeHtml(curActor)}" 
+                 onblur="handleCellBlur(this, '${reqId}', 'actor')" 
+                 onkeydown="if(event.key==='Enter') this.blur()">
+        </td>
+        <td>
+          <textarea class="inline-cell-textarea" rows="2" data-prev="${escapeHtml(curStatement)}" 
+                    onblur="handleCellBlur(this, '${reqId}', 'statement')"
+                    onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); this.blur(); }">${escapeHtml(curStatement)}</textarea>
+        </td>
+        <td>
+          <textarea class="inline-cell-textarea" rows="2" placeholder="Acceptance criteria..." data-prev="${escapeHtml(curCriteria)}" 
+                    onblur="handleCellBlur(this, '${reqId}', 'acceptance_criteria')">${escapeHtml(curCriteria)}</textarea>
+        </td>
+        <td style="text-align: center;">
+          <button class="btn-filter" style="padding: 4px 8px; font-size: 0.72rem;" title="Inspect in Calculation Ledger" onclick="jumpToLedgerForReq('${reqId}')">📑</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// In-Line Cell Blur Handler
+function handleCellBlur(inputEl, reqId, field) {
+  const newVal = inputEl.value.trim();
+  const prevVal = inputEl.getAttribute("data-prev") || "";
+  if (newVal !== prevVal) {
+    inputEl.setAttribute("data-prev", newVal);
+    updateCanonicalRequirement(reqId, field, newVal, inputEl);
+  }
+}
+
+// Update Canonical Requirement with Immediate Ledger Tracking
+async function updateCanonicalRequirement(reqId, field, newValue, triggerEl) {
+  if (!currentSessionId) return;
+
+  try {
+    const res = await fetch("/api/canonical-requirements/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        requirement_id: reqId,
+        field: field,
+        new_value: newValue
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      
+      // Update local session data
+      if (currentSessionData && currentSessionData.brd) {
+        // Update requirement in array
+        const reqs = currentSessionData.brd.canonical_requirements || [];
+        const idx = reqs.findIndex(r => (r.requirement_id || r.id) === reqId);
+        if (idx !== -1 && data.updated_requirement) {
+          reqs[idx] = data.updated_requirement;
+        }
+        
+        // Update calculation ledger
+        if (data.calculation_ledger) {
+          currentSessionData.brd.calculation_ledger = data.calculation_ledger;
+          renderCalculationLedger(currentSessionData.brd, data.ledger_entry ? data.ledger_entry.calculation_id : null);
+        }
+
+        // Update MoSCoW distribution stats
+        updateMoSCoWStats(reqs);
+      }
+
+      // Visual feedback on changed element
+      if (triggerEl) {
+        triggerEl.classList.add("cell-saved-pulse");
+        setTimeout(() => triggerEl.classList.remove("cell-saved-pulse"), 1600);
+        if (field === "priority") {
+          triggerEl.className = `moscow-select ${newValue.toLowerCase()}`;
+        }
+      }
+
+      const ledgerId = data.ledger_entry ? data.ledger_entry.calculation_id : "LEDGER";
+      showToast(`Requirement <strong>${reqId}</strong> (${field}) updated & audited in ledger <strong>${ledgerId}</strong>`, "success");
+    } else {
+      showToast(`Failed to update ${reqId}`, "warning");
+    }
+  } catch (err) {
+    console.error("Canonical req update failed:", err);
+    showToast(`Network error updating ${reqId}`, "warning");
+  }
+}
+
+// Jump to Calculation Ledger and Highlight Row
+function jumpToLedgerForReq(reqId) {
+  const impactTabBtn = document.querySelector(`[onclick*="tab-impact"]`);
+  if (impactTabBtn) impactTabBtn.click();
+  setTimeout(() => {
+    const tbody = document.getElementById("calcLedgerTableBody");
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll("tr");
+    for (const r of rows) {
+      if (r.textContent.includes(reqId)) {
+        r.scrollIntoView({ behavior: "smooth", block: "center" });
+        r.classList.add("ledger-row-new");
+        setTimeout(() => r.classList.remove("ledger-row-new"), 3000);
+        break;
+      }
+    }
+  }, 200);
 }
 
 // 4 HITL Gates Rendering & Approval
@@ -1371,6 +1669,7 @@ async function approveHITLGate(gateId) {
           currentSessionData.brd.hitl_gates = data.hitl_gates;
         }
         renderHITLGates(data.hitl_gates);
+        showToast(`Gate ${gateId.toUpperCase()} signed off!`, "success");
       }
     }
   } catch (err) {
@@ -1378,24 +1677,39 @@ async function approveHITLGate(gateId) {
   }
 }
 
-// Calculation Ledger Rendering
-function renderCalculationLedger(brd) {
+// Calculation Ledger Rendering with Highlight Support
+function renderCalculationLedger(brd, highlightCalcId = null) {
   const tbody = document.getElementById("calcLedgerTableBody");
   if (!tbody || !brd || !brd.calculation_ledger) return;
 
-  tbody.innerHTML = brd.calculation_ledger.map(item => {
+  tbody.innerHTML = brd.calculation_ledger.slice().reverse().map(item => {
+    const calcId = item.calculation_id || item.step_id;
+    const isNew = highlightCalcId && (calcId === highlightCalcId);
     const resSummary = typeof item.result === "object" ? JSON.stringify(item.result) : (item.result || item.output_value || "");
+    const isScenarioCommit = (item.calculation_type === "SCENARIO_COMMIT");
+    const isReqEdit = (item.calculation_type === "MOSCOW_PRIORITY_UPDATE" || item.calculation_type === "REQUIREMENT_MUTATION");
+
+    let badgeClass = "badge-ai";
+    if (isScenarioCommit) badgeClass = "badge-success";
+    else if (isReqEdit) badgeClass = "badge-warning";
+
     return `
-      <tr>
-        <td><strong>${item.calculation_id || item.step_id}</strong></td>
-        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${item.calculation_type || item.component_or_multiplier}</span></td>
-        <td style="font-family: monospace; font-size: 0.78rem; color: var(--primary);">${item.formula || item.formula_applied}</td>
-        <td style="font-weight: 600; color: var(--success); font-size: 0.82rem;">${resSummary}</td>
+      <tr class="${isNew ? 'ledger-row-new' : ''}">
+        <td><strong>${calcId}</strong></td>
+        <td><span class="${badgeClass}" style="padding: 2px 6px; font-size: 0.72rem;">${item.calculation_type || item.component_or_multiplier}</span></td>
+        <td style="font-family: monospace; font-size: 0.78rem; color: var(--primary);">${escapeHtml(item.formula || item.formula_applied)}</td>
+        <td style="font-weight: 600; color: var(--success); font-size: 0.82rem;">${escapeHtml(resSummary)}</td>
         <td style="font-size: 0.76rem; color: #94a3b8;">${item.timestamp || ""}</td>
       </tr>
     `;
   }).join("");
 }
+
+// Global Cached Simulation State for Side-by-Side Diff & Commit
+let lastSimulatedParam = null;
+let lastSimulatedOldVal = null;
+let lastSimulatedNewVal = null;
+let lastSimulatedResult = null;
 
 // Impact Analysis Parameter Handler
 function onImpactParamChange() {
@@ -1452,13 +1766,19 @@ async function runInteractiveImpactAnalysis() {
     });
     if (res.ok) {
       const result = await res.json();
+      lastSimulatedParam = param;
+      lastSimulatedOldVal = oldVal;
+      lastSimulatedNewVal = newVal;
+      lastSimulatedResult = result;
       renderImpactAnalysisResults(result);
     }
   } catch (err) {
     console.error("Impact analysis failed:", err);
+    showToast("Impact analysis calculation error", "warning");
   }
 }
 
+// Render Side-by-Side Scenario Diff Results
 function renderImpactAnalysisResults(result) {
   if (!result) return;
   const container = document.getElementById("impactResultsContainer");
@@ -1466,45 +1786,214 @@ function renderImpactAnalysisResults(result) {
 
   const sym = (currentSessionData && currentSessionData.brd) ? (currentSessionData.brd.currency_symbol || "$") : "$";
 
+  // Subtitle
+  const subEl = document.getElementById("diffSubtitle");
+  if (subEl) {
+    subEl.textContent = `Parameter: ${result.parameter_changed.toUpperCase()} (${result.old_value} ➔ ${result.new_value}) | Evaluated across 18 WBS Phases`;
+  }
+
+  // Left Card: Current Baseline
+  const cardBaseParam = document.getElementById("cardBaseParam");
+  if (cardBaseParam) cardBaseParam.textContent = String(result.old_value);
+  const cardBaseDuration = document.getElementById("cardBaseDuration");
+  if (cardBaseDuration) cardBaseDuration.textContent = `${result.base_duration_weeks.toFixed(1)} wks`;
+  const cardBaseDays = document.getElementById("cardBaseDays");
+  if (cardBaseDays) cardBaseDays.textContent = `${result.base_person_days.toFixed(1)} d`;
+  const cardBaseCost = document.getElementById("cardBaseCost");
+  if (cardBaseCost) cardBaseCost.textContent = `${sym}${Math.round(result.base_cost_usd).toLocaleString()}`;
+  const cardBaseFTE = document.getElementById("cardBaseFTE");
+  if (cardBaseFTE) cardBaseFTE.textContent = `${result.base_fte.toFixed(2)} FTE`;
+  const cardBaseCloud = document.getElementById("cardBaseCloud");
+  if (cardBaseCloud) cardBaseCloud.textContent = `${sym}${Math.round(result.base_monthly_cloud_usd).toLocaleString()}/mo`;
+
+  // Right Card: Simulated Target
+  const cardSimParam = document.getElementById("cardSimParam");
+  if (cardSimParam) cardSimParam.textContent = String(result.new_value);
+  const cardSimDuration = document.getElementById("cardSimDuration");
+  if (cardSimDuration) cardSimDuration.textContent = `${result.sim_duration_weeks.toFixed(1)} wks`;
+  const cardSimDays = document.getElementById("cardSimDays");
+  if (cardSimDays) cardSimDays.textContent = `${result.sim_person_days.toFixed(1)} d`;
+  const cardSimCost = document.getElementById("cardSimCost");
+  if (cardSimCost) cardSimCost.textContent = `${sym}${Math.round(result.sim_cost_usd).toLocaleString()}`;
+  const cardSimFTE = document.getElementById("cardSimFTE");
+  if (cardSimFTE) cardSimFTE.textContent = `${result.sim_fte.toFixed(2)} FTE`;
+  const cardSimCloud = document.getElementById("cardSimCloud");
+  if (cardSimCloud) cardSimCloud.textContent = `${sym}${Math.round(result.sim_monthly_cloud_usd).toLocaleString()}/mo`;
+
+  // Comparative Diff Table Body
+  const diffTbody = document.getElementById("scenarioDiffTableBody");
+  if (diffTbody) {
+    const deltaDaysSign = result.delta_days >= 0 ? "+" : "";
+    const deltaDaysPct = result.base_person_days > 0 ? ((result.delta_days / result.base_person_days) * 100).toFixed(1) : "0.0";
+    const deltaDaysClass = result.delta_days > 0 ? "positive-effort" : (result.delta_days < 0 ? "negative-effort" : "neutral");
+
+    const deltaCostSign = result.delta_cost_usd >= 0 ? "+" : "";
+    const deltaCostPct = result.base_cost_usd > 0 ? ((result.delta_cost_usd / result.base_cost_usd) * 100).toFixed(1) : "0.0";
+    const deltaCostClass = result.delta_cost_usd > 0 ? "positive-effort" : (result.delta_cost_usd < 0 ? "negative-effort" : "neutral");
+
+    const deltaDuration = result.sim_duration_weeks - result.base_duration_weeks;
+    const deltaDurationSign = deltaDuration >= 0 ? "+" : "";
+    const deltaDurationClass = deltaDuration > 0 ? "positive-effort" : (deltaDuration < 0 ? "negative-effort" : "neutral");
+
+    const deltaFte = result.sim_fte - result.base_fte;
+    const deltaFteSign = deltaFte >= 0 ? "+" : "";
+    const deltaFteClass = deltaFte > 0 ? "positive-effort" : (deltaFte < 0 ? "negative-effort" : "neutral");
+
+    const deltaCloud = result.sim_monthly_cloud_usd - result.base_monthly_cloud_usd;
+    const deltaCloudSign = deltaCloud >= 0 ? "+" : "";
+    const deltaCloudClass = deltaCloud > 0 ? "positive-effort" : (deltaCloud < 0 ? "negative-effort" : "neutral");
+
+    diffTbody.innerHTML = `
+      <tr>
+        <td><strong>Tested Parameter</strong></td>
+        <td><code>${escapeHtml(String(result.old_value))}</code></td>
+        <td><code>${escapeHtml(String(result.new_value))}</code></td>
+        <td><span class="diff-pill neutral">Active Simulation</span></td>
+        <td style="color: #64748b; font-size: 0.8rem;">Independent driver variable adjusted in impact engine</td>
+      </tr>
+      <tr>
+        <td><strong>Project Duration</strong></td>
+        <td>${result.base_duration_weeks.toFixed(1)} weeks</td>
+        <td>${result.sim_duration_weeks.toFixed(1)} weeks</td>
+        <td><span class="diff-pill ${deltaDurationClass}">${deltaDurationSign}${deltaDuration.toFixed(1)} wks</span></td>
+        <td style="color: #64748b; font-size: 0.8rem;">${deltaDuration !== 0 ? 'Calendar schedule duration shifted' : 'Fixed timeline duration maintained'}</td>
+      </tr>
+      <tr>
+        <td><strong>Total Engineering Effort</strong></td>
+        <td>${result.base_person_days.toFixed(1)} days</td>
+        <td>${result.sim_person_days.toFixed(1)} days</td>
+        <td><span class="diff-pill ${deltaDaysClass}">${deltaDaysSign}${result.delta_days.toFixed(1)} d (${deltaDaysSign}${deltaDaysPct}%)</span></td>
+        <td style="color: #64748b; font-size: 0.8rem;">Task loading recalculated deterministically across 18 WBS phases</td>
+      </tr>
+      <tr>
+        <td><strong>Labour Budget Cost</strong></td>
+        <td>${sym}${Math.round(result.base_cost_usd).toLocaleString()}</td>
+        <td>${sym}${Math.round(result.sim_cost_usd).toLocaleString()}</td>
+        <td><span class="diff-pill ${deltaCostClass}">${deltaCostSign}${sym}${Math.round(result.delta_cost_usd).toLocaleString()} (${deltaCostSign}${deltaCostPct}%)</span></td>
+        <td style="color: #64748b; font-size: 0.8rem;">12-role blended engineering rate applied to incremental person-hours</td>
+      </tr>
+      <tr>
+        <td><strong>Staffing Team Loading</strong></td>
+        <td>${result.base_fte.toFixed(2)} FTE</td>
+        <td>${result.sim_fte.toFixed(2)} FTE</td>
+        <td><span class="diff-pill ${deltaFteClass}">${deltaFteSign}${deltaFte.toFixed(2)} FTE</span></td>
+        <td style="color: #64748b; font-size: 0.8rem;">Average weekly team concurrency required to achieve schedule target</td>
+      </tr>
+      <tr>
+        <td><strong>Monthly Cloud Infrastructure</strong></td>
+        <td>${sym}${Math.round(result.base_monthly_cloud_usd).toLocaleString()}/mo</td>
+        <td>${sym}${Math.round(result.sim_monthly_cloud_usd).toLocaleString()}/mo</td>
+        <td><span class="diff-pill ${deltaCloudClass}">${deltaCloudSign}${sym}${Math.round(deltaCloud).toLocaleString()}/mo</span></td>
+        <td style="color: #64748b; font-size: 0.8rem;">App Services, Vector Search, and compute tier sizing scale</td>
+      </tr>
+    `;
+  }
+
+  // Narrative explanation
   const narrEl = document.getElementById("impactNarrative");
-  if (narrEl) {
-    narrEl.textContent = result.narrative_explanation || "";
-  }
+  if (narrEl) narrEl.textContent = result.narrative_explanation || "";
 
-  const deltaDaysEl = document.getElementById("impactDeltaDays");
-  if (deltaDaysEl) {
-    const sign = result.delta_days >= 0 ? "+" : "";
-    deltaDaysEl.textContent = `${sign}${result.delta_days.toFixed(1)} d`;
-    deltaDaysEl.style.color = result.delta_days > 0 ? "#f87171" : "var(--success)";
-  }
-
-  const deltaCostEl = document.getElementById("impactDeltaCost");
-  if (deltaCostEl) {
-    const sign = result.delta_cost_usd >= 0 ? "+" : "";
-    deltaCostEl.textContent = `${sign}${sym}${Math.round(result.delta_cost_usd).toLocaleString()}`;
-    deltaCostEl.style.color = result.delta_cost_usd > 0 ? "#f87171" : "var(--success)";
-  }
-
-  const deltaFteEl = document.getElementById("impactDeltaFTE");
-  if (deltaFteEl) {
-    const sign = result.delta_fte >= 0 ? "+" : "";
-    deltaFteEl.textContent = `${sign}${result.delta_fte.toFixed(2)} FTE`;
-  }
-
+  // Affected / Protected Scope breakdown
   const detailsEl = document.getElementById("impactAffectedDetails");
   if (detailsEl) {
     let affectedHtml = "";
     if (result.affected_dimensions && Object.keys(result.affected_dimensions).length > 0) {
-      affectedHtml += "<strong>Affected Dimensions:</strong><ul style='margin: 4px 0 8px 18px;'>";
+      affectedHtml += "<strong>Impacted Architectural Dimensions:</strong><ul style='margin: 4px 0 8px 18px;'>";
       for (const [dim, val] of Object.entries(result.affected_dimensions)) {
-        affectedHtml += `<li><strong>${dim}</strong>: ${typeof val === 'object' ? JSON.stringify(val) : val}</li>`;
+        affectedHtml += `<li><strong>${escapeHtml(dim)}</strong>: ${typeof val === 'object' ? escapeHtml(JSON.stringify(val)) : escapeHtml(val)}</li>`;
       }
       affectedHtml += "</ul>";
     }
     if (result.unaffected_dimensions && result.unaffected_dimensions.length > 0) {
-      affectedHtml += `<strong>Unaffected Dimensions (Protected Scope):</strong> <code>${result.unaffected_dimensions.join(', ')}</code>`;
+      affectedHtml += `<div style="margin-top: 8px;"><strong>Protected Scope (Unaffected):</strong> <code style="color: #10b981;">${escapeHtml(result.unaffected_dimensions.join(', '))}</code></div>`;
     }
     detailsEl.innerHTML = affectedHtml;
+  }
+
+  // Reset commit buttons state
+  document.querySelectorAll(".btn-commit-baseline").forEach(btn => {
+    btn.disabled = false;
+    btn.innerHTML = `<span>⚡</span> Commit Simulation to Baseline`;
+  });
+}
+
+// Single Action: Commit Simulation Directly to Baseline
+async function commitSimulationToBaseline() {
+  if (!currentSessionId) return;
+
+  if (!lastSimulatedParam || lastSimulatedNewVal === null) {
+    showToast("Please calculate an impact simulation first before committing.", "warning");
+    return;
+  }
+
+  const commitBtns = document.querySelectorAll(".btn-commit-baseline");
+  commitBtns.forEach(btn => {
+    btn.disabled = true;
+    btn.innerHTML = `<span>⏳</span> Committing Simulation to Baseline...`;
+  });
+
+  try {
+    const res = await fetch("/api/impact-analysis/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        parameter_changed: lastSimulatedParam,
+        new_value: lastSimulatedNewVal
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      currentSessionData.brd = data.brd;
+
+      // Re-render complete workbench (all 18 phases, metrics, financials, canonical reqs)
+      renderBRDWorkbench(currentSessionData.brd);
+
+      // Synchronize input fields
+      const oldValInput = document.getElementById("impactOldVal");
+      const newValInput = document.getElementById("impactNewVal");
+      if (oldValInput) oldValInput.value = lastSimulatedNewVal;
+      if (newValInput && lastSimulatedParam === "users") {
+        newValInput.value = Math.round(Number(lastSimulatedNewVal) * 2.5);
+      }
+
+      // Update diff subtitle to show active baseline committed
+      const subEl = document.getElementById("diffSubtitle");
+      if (subEl) {
+        subEl.textContent = `✅ Successfully Committed to Baseline: ${lastSimulatedParam.toUpperCase()} = ${lastSimulatedNewVal} (Active Baseline Synchronized)`;
+      }
+
+      // Update commit buttons
+      commitBtns.forEach(btn => {
+        btn.disabled = false;
+        btn.innerHTML = `<span>✅</span> Simulation Committed to Baseline`;
+        btn.style.background = "linear-gradient(135deg, #059669 0%, #047857 100%)";
+      });
+
+      // Find the SCENARIO_COMMIT ledger entry
+      const ledgerEntries = data.calculation_ledger || [];
+      const commitEntry = ledgerEntries.slice().reverse().find(e => e.calculation_type === "SCENARIO_COMMIT");
+      const commitLedgerId = commitEntry ? commitEntry.calculation_id : "CALC-SCENARIO";
+
+      showToast(`⚡ Simulation committed to baseline! All 18 phases updated & logged to Calculation Ledger (<strong>${commitLedgerId}</strong>).`, "success");
+
+      // Re-render Calculation Ledger and scroll to the new entry
+      renderCalculationLedger(currentSessionData.brd, commitLedgerId);
+    } else {
+      commitBtns.forEach(btn => {
+        btn.disabled = false;
+        btn.innerHTML = `<span>⚡</span> Commit Simulation to Baseline`;
+      });
+      showToast("Error committing simulation to baseline.", "warning");
+    }
+  } catch (err) {
+    console.error("Failed to commit simulation:", err);
+    commitBtns.forEach(btn => {
+      btn.disabled = false;
+      btn.innerHTML = `<span>⚡</span> Commit Simulation to Baseline`;
+    });
+    showToast("Network error while committing simulation.", "warning");
   }
 }
 

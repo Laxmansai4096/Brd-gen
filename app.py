@@ -12,7 +12,8 @@ from typing import Optional, Dict, Any, List
 from backend.models import (
     ProjectSession, ChatMessage, AnswerItem, BRDDocument,
     AssumptionItem, TaskEstimate, RoleEffort, ProjectPhase,
-    TechnicalComponent, SizingMetrics, SizingBOM, HITLGates
+    TechnicalComponent, SizingMetrics, SizingBOM, HITLGates,
+    CalculationLedgerItem
 )
 from backend.agent_discovery import (
     STATIC_QUESTIONS, process_user_answer, get_current_question,
@@ -26,7 +27,7 @@ from backend.export_generator import (
     generate_excel_financial_model, generate_jira_backlog_csv
 )
 from backend.llm_gateway import LLMGateway
-from backend.impact_engine import calculate_change_impact
+from backend.impact_engine import calculate_change_impact, commit_change_impact
 from backend.config import get_settings, update_settings, AISettings
 from backend.admin_store import (
     get_admin_defaults, save_admin_defaults,
@@ -80,6 +81,10 @@ def get_or_create_session(session_id: Optional[str] = None) -> ProjectSession:
 @app.get("/")
 def read_root():
     return FileResponse("static/index.html")
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "AI-BRD-Generator", "timestamp": datetime.now().isoformat()}
 
 @app.get("/api/session")
 def get_session_endpoint(session_id: Optional[str] = None):
@@ -670,6 +675,117 @@ def impact_analysis_endpoint(payload: ImpactRequest):
         new_value=payload.new_value
     )
     return res.model_dump()
+
+class CommitImpactRequest(BaseModel):
+    session_id: str
+    parameter_changed: str
+    new_value: Any
+
+@app.post("/api/impact-analysis/commit")
+def commit_impact_endpoint(payload: CommitImpactRequest):
+    session = get_or_create_session(payload.session_id)
+    if not session.brd:
+        session.brd = generate_brd(session)
+    updated_brd = commit_change_impact(
+        session=session,
+        parameter_changed=payload.parameter_changed,
+        new_value=payload.new_value
+    )
+    return {
+        "status": "success",
+        "message": f"Simulation committed to baseline for {payload.parameter_changed} = {payload.new_value}",
+        "brd": updated_brd.model_dump(),
+        "calculation_ledger": [item.model_dump() for item in updated_brd.calculation_ledger]
+    }
+
+class UpdateCanonicalReqPayload(BaseModel):
+    session_id: str
+    requirement_id: str
+    field: str
+    new_value: Any
+
+@app.post("/api/canonical-requirements/update")
+def update_canonical_requirement_endpoint(payload: UpdateCanonicalReqPayload):
+    session = get_or_create_session(payload.session_id)
+    if not session.brd:
+        session.brd = generate_brd(session)
+
+    req_id = payload.requirement_id.strip()
+    target_req = None
+    for r in session.brd.canonical_requirements:
+        if r.requirement_id == req_id:
+            target_req = r
+            break
+            
+    if not target_req:
+        raise HTTPException(status_code=404, detail=f"Canonical requirement {req_id} not found")
+
+    old_val = getattr(target_req, payload.field, None)
+    clean_val = payload.new_value
+
+    if payload.field == "priority":
+        # Normalize MoSCoW
+        clean_val = str(payload.new_value).upper().strip()
+        if clean_val not in ["MUST", "SHOULD", "COULD", "WONT"]:
+            if "MUST" in clean_val: clean_val = "MUST"
+            elif "SHOULD" in clean_val: clean_val = "SHOULD"
+            elif "COULD" in clean_val: clean_val = "COULD"
+            elif "WONT" in clean_val or "WON'T" in clean_val: clean_val = "WONT"
+            else: clean_val = "SHOULD"
+        target_req.priority = clean_val
+        if target_req.status in ["DEFAULT", "CLIENT_CONFIRMED"]:
+            target_req.status = "PROJECT_OVERRIDE"
+    elif payload.field == "type":
+        target_req.type = str(clean_val).upper().strip()
+    elif payload.field == "status":
+        target_req.status = str(clean_val).upper().strip()
+    elif payload.field == "actor":
+        target_req.actor = str(clean_val).strip()
+    elif payload.field == "statement":
+        target_req.statement = str(clean_val).strip()
+        if target_req.status in ["DEFAULT", "CLIENT_CONFIRMED"]:
+            target_req.status = "PROJECT_OVERRIDE"
+    elif payload.field == "acceptance_criteria":
+        if isinstance(clean_val, list):
+            target_req.acceptance_criteria = [str(x).strip() for x in clean_val if str(x).strip()]
+        else:
+            lines = [line.strip().lstrip("-*• ") for line in str(clean_val).split("\n") if line.strip()]
+            target_req.acceptance_criteria = lines
+    else:
+        setattr(target_req, payload.field, clean_val)
+
+    # Immediate Calculation Ledger Tracking per Section 54
+    is_moscow = (payload.field.lower() in ("priority", "moscow"))
+    calc_id = f"CALC-REQ-{len(session.brd.calculation_ledger) + 1:03d}"
+    ledger_entry = CalculationLedgerItem(
+        calculation_id=calc_id,
+        calculation_type="MOSCOW_PRIORITY_UPDATE" if is_moscow else "REQUIREMENT_MUTATION",
+        inputs={
+            "requirement_id": req_id,
+            "field": payload.field,
+            "old_value": str(old_val),
+            "new_value": str(clean_val)
+        },
+        formula=f"Direct cell edit: {req_id}.{payload.field} changed from '{old_val}' to '{clean_val}'",
+        result={
+            "requirement_id": req_id,
+            "field": payload.field,
+            "previous_value": str(old_val),
+            "current_value": str(clean_val),
+            "scope_impact": f"MoSCoW priority shifted to {clean_val}" if is_moscow else f"Field {payload.field} updated in canonical model"
+        },
+        engine_version="1.0.0",
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+    session.brd.calculation_ledger.append(ledger_entry)
+
+    return {
+        "status": "success",
+        "message": f"Updated {req_id}.{payload.field} to {clean_val}",
+        "updated_requirement": target_req.model_dump(),
+        "ledger_entry": ledger_entry.model_dump(),
+        "calculation_ledger": [item.model_dump() for item in session.brd.calculation_ledger]
+    }
 
 class GateApprovalPayload(BaseModel):
     session_id: str

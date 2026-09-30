@@ -130,9 +130,17 @@ def calculate_change_impact(
             f"yielding a total budget change of ${delta_cost:,.2f}."
         )
 
-    else:
-        affected["Scope Parameter"] = f"{parameter_changed} updated from {old_value} to {new_value}"
-        narrative = f"Project parameter {parameter_changed} modified from '{old_value}' to '{new_value}'."
+    base_duration = current_brd.total_duration_weeks
+    base_days = current_brd.total_person_days
+    base_cost = current_brd.total_labour_cost_usd
+    base_fte = round(base_days / max(base_duration * 5.0, 1.0), 2)
+    base_cloud = current_brd.sizing_metrics.total_monthly_cloud_cost_usd if current_brd.sizing_metrics else 645.0
+
+    sim_duration = float(str(new_value).split()[0]) if ("duration" in param or "week" in param) else base_duration
+    sim_days = round(max(5.0, base_days + delta_days), 1)
+    sim_cost = round(max(100.0, base_cost + delta_cost), 2)
+    sim_fte = round(max(0.2, base_fte + delta_fte), 2)
+    sim_cloud = new_cloud if ("user" in param or "traffic" in param) and "new_cloud" in locals() else base_cloud
 
     return ImpactAnalysisResult(
         parameter_changed=parameter_changed,
@@ -143,5 +151,114 @@ def calculate_change_impact(
         narrative_explanation=narrative,
         delta_days=delta_days,
         delta_cost_usd=delta_cost,
-        delta_fte=delta_fte
+        delta_fte=delta_fte,
+        base_duration_weeks=base_duration,
+        base_person_days=base_days,
+        base_cost_usd=base_cost,
+        base_fte=base_fte,
+        base_monthly_cloud_usd=base_cloud,
+        sim_duration_weeks=sim_duration,
+        sim_person_days=sim_days,
+        sim_cost_usd=sim_cost,
+        sim_fte=sim_fte,
+        sim_monthly_cloud_usd=sim_cloud
     )
+
+def commit_change_impact(
+    session: ProjectSession,
+    parameter_changed: str,
+    new_value: Any
+) -> BRDDocument:
+    """
+    Applies the simulated change directly to the active session baseline,
+    re-runs the deterministic planner, logs an audit entry to the calculation ledger,
+    and records a revision snapshot.
+    """
+    from backend.agent_discovery import AnswerItem
+    from backend.agent_planner import generate_brd
+    from backend.models import CalculationLedgerItem
+    from datetime import datetime
+
+    param = parameter_changed.lower().strip()
+    
+    if "user" in param or "traffic" in param or "request" in param:
+        session.answers["q_users"] = AnswerItem(
+            question_id="q_users",
+            question_title="Concurrent Users & Scale",
+            answer=str(new_value),
+            is_default=False
+        )
+    elif "tier" in param:
+        session.answers["q_tier"] = AnswerItem(
+            question_id="q_tier",
+            question_title="Delivery Tier",
+            answer=str(new_value),
+            is_default=False
+        )
+    elif "duration" in param or "week" in param:
+        session.answers["q_timeline"] = AnswerItem(
+            question_id="q_timeline",
+            question_title="Target Duration",
+            answer=str(new_value),
+            is_default=False
+        )
+    elif "rate" in param or "hourly" in param:
+        try:
+            r = float(str(new_value).replace("$", "").replace("£", "").split("/")[0])
+            session.answers["q_rate"] = AnswerItem(
+                question_id="q_rate",
+                question_title="Blended Hourly Rate",
+                answer=str(r),
+                is_default=False
+            )
+            if session.brd:
+                session.brd.blended_hourly_rate = r
+        except Exception:
+            pass
+
+    # Preserve existing custom canonical requirements and prior calculation ledger entries
+    prior_reqs = session.brd.canonical_requirements if session.brd else []
+    prior_ledger = session.brd.calculation_ledger if session.brd else []
+
+    # Regenerate BRD deterministically
+    brd = generate_brd(session)
+
+    # Merge preserved custom canonical requirements
+    if prior_reqs:
+        prior_map = {r.requirement_id: r for r in prior_reqs}
+        merged_reqs = []
+        for r in brd.canonical_requirements:
+            if r.requirement_id in prior_map:
+                merged_reqs.append(prior_map[r.requirement_id])
+            else:
+                merged_reqs.append(r)
+        brd.canonical_requirements = merged_reqs
+
+    # Keep existing ledger items that are not in new brd
+    existing_ids = {item.calculation_id for item in brd.calculation_ledger}
+    for item in prior_ledger:
+        if item.calculation_id not in existing_ids:
+            brd.calculation_ledger.append(item)
+
+    # Append ledger audit trail
+    calc_id = f"CALC-SCENARIO-{len(brd.calculation_ledger) + 1:03d}"
+    ledger_entry = CalculationLedgerItem(
+        calculation_id=calc_id,
+        calculation_type="SCENARIO_COMMIT",
+        inputs={"parameter": parameter_changed, "committed_value": str(new_value)},
+        formula=f"Committed simulation scenario for {parameter_changed} = {new_value}",
+        result={
+            "parameter_committed": parameter_changed,
+            "new_value": str(new_value),
+            "new_person_days": brd.total_person_days,
+            "new_labour_cost": brd.total_labour_cost_usd,
+            "new_duration_weeks": brd.total_duration_weeks,
+            "new_monthly_cloud_usd": brd.sizing_metrics.total_monthly_cloud_cost_usd if brd.sizing_metrics else 645.0
+        },
+        engine_version="1.0.0",
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+    brd.calculation_ledger.append(ledger_entry)
+    session.brd = brd
+
+    return brd

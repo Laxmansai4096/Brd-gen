@@ -1,0 +1,1966 @@
+Below is the consolidated specification, including the reusable data model, configuration values, formulas, rules, workflow, agents, deterministic engines, validations, and document generation model.
+
+1. BRD Generator Accelerator — Product Definition
+
+The accelerator should accept:
+
+Client information
+Business problem
+Objectives
+Requirements
+Users/personas
+Functional capabilities
+Non-functional requirements
+Data characteristics
+Integrations
+Technology constraints
+Security/compliance constraints
+Delivery tier
+Geography
+Existing solution, where applicable
+Resource/location information
+Commercial/rate information
+Project-specific overrides
+
+and produce:
+
+Clarified requirements
+Approved solution definition
+Architecture
+Data flow
+Scope
+Functional/non-functional requirements
+WBS
+Resource plan
+Effort estimate
+Calendar-aware schedule
+Cost estimate
+Risks/dependencies/assumptions
+Traceability
+Approved BRD
+DOCX
+PDF
+PPTX
+
+The fundamental relationship is:
+
+Client Input
+    ↓
+Requirements
+    ↓
+Capabilities
+    ↓
+Solution
+    ↓
+Architecture
+    ↓
+Applicable Work
+    ↓
+Effort
+    ↓
+Resources
+    ↓
+Calendar
+    ↓
+Schedule
+    ↓
+Cost
+    ↓
+Approved BRD
+2. Core Architecture
+                         ┌─────────────────────┐
+                         │   Client / User     │
+                         └──────────┬──────────┘
+                                    ↓
+                         ┌─────────────────────┐
+                         │   Project Intake    │
+                         └──────────┬──────────┘
+                                    ↓
+                         ┌─────────────────────┐
+                         │ Requirements Agent  │
+                         └──────────┬──────────┘
+                                    ↓
+                    ┌───────────────────────────────┐
+                    │ Context / Default Resolution │
+                    └───────────────┬───────────────┘
+                                    ↓
+                         ┌─────────────────────┐
+                         │ Dynamic Question    │
+                         │ Engine               │
+                         └──────────┬──────────┘
+                                    ↓
+                              HITL Approval
+                                    ↓
+                    ┌───────────────────────────────┐
+                    │ Canonical Project Model       │
+                    └───────────────┬───────────────┘
+                                    ↓
+             ┌──────────────────────┼─────────────────────┐
+             ↓                      ↓                     ↓
+      Solution Agent         Capability Engine      Rules Engine
+             ↓                      ↓                     ↓
+      Architecture            WBS Applicability       Defaults
+             ↓                      ↓                     ↓
+             └──────────────────────┼─────────────────────┘
+                                    ↓
+                         Deterministic Estimation
+                                    ↓
+                ┌───────────────────┼──────────────────┐
+                ↓                   ↓                  ↓
+          Resource Engine     Calendar Engine     Cost Engine
+                ↓                   ↓                  ↓
+                └───────────────────┼──────────────────┘
+                                    ↓
+                             Schedule Engine
+                                    ↓
+                           Feasibility Engine
+                                    ↓
+                              Impact Analysis
+                                    ↓
+                               HITL Review
+                                    ↓
+                         Approved BRD Version
+                                    ↓
+                         ┌──────────┼───────────┐
+                         ↓          ↓           ↓
+                       DOCX       PDF         PPTX
+3. Agent vs Deterministic Engine
+
+This separation is critical.
+
+LLM/Agent responsibilities
+
+LLMs may:
+
+understand natural language
+extract requirements
+classify requirements
+identify missing information
+ask questions
+interpret business language
+identify likely capabilities
+propose architecture
+propose tasks
+explain calculations
+generate narrative
+summarize risks
+generate BRD prose
+Python/rules engine responsibilities
+
+Code must perform:
+
+arithmetic
+scaling
+multipliers
+effort
+resource allocation
+capacity
+scheduling
+holiday handling
+working hours
+utilization
+efficiency
+cost
+feasibility
+dependency calculation
+transition uplift
+validation
+version comparison
+impact calculation
+
+No LLM arithmetic.
+
+4. Canonical Project Model
+
+Everything ultimately goes into one versioned project model.
+
+{
+  "project": {
+    "id": "PROJECT-001",
+    "name": "",
+    "client": "",
+    "industry": "",
+    "domain": ""
+  },
+
+  "delivery": {
+    "tier": "",
+    "category": "",
+    "source_tier": null,
+    "target_tier": null
+  },
+
+  "business": {
+    "problem": "",
+    "objectives": [],
+    "outcomes": [],
+    "success_criteria": []
+  },
+
+  "stakeholders": [],
+  "personas": [],
+
+  "requirements": [],
+  "functional_capabilities": [],
+  "business_rules": [],
+  "non_functional_requirements": [],
+
+  "data": {},
+  "integrations": [],
+  "technology": {},
+  "architecture": {},
+  "data_flows": [],
+
+  "security": {},
+  "compliance": {},
+  "responsible_ai": {},
+
+  "scope": {
+    "in_scope": [],
+    "out_of_scope": [],
+    "future_scope": []
+  },
+
+  "decisions": [],
+  "assumptions": [],
+  "constraints": [],
+  "dependencies": [],
+  "risks": [],
+
+  "wbs": [],
+  "resources": [],
+  "calendar": {},
+  "schedule": {},
+
+  "estimate": {},
+  "cost": {},
+
+  "acceptance": {},
+  "approvals": {},
+
+  "traceability": {}
+}
+
+This is the single source of truth.
+
+5. Project Delivery Tiers
+
+Use the 11-tier model.
+
+#	Tier	Category
+1	PoC	Initial
+2	Pilot	Initial
+3	MVP	Initial
+4	Production Grade	Initial
+5	PoC → Pilot	Transition
+6	PoC → MVP	Transition
+7	PoC → Production Grade	Transition
+8	Pilot → MVP	Transition
+9	Pilot → Production Grade	Transition
+10	MVP → Production Grade	Transition
+11	Incremental Production Grade	Delta/Ongoing
+Base headline weights
+
+These should remain reporting/reference weights, not universal multipliers.
+
+Tier	Weight
+PoC	0.289
+Pilot	0.525
+MVP	0.778
+Production Grade	1.000
+PoC → Pilot	0.320
+PoC → MVP	0.612
+PoC → Production	0.867
+Pilot → MVP	0.342
+Pilot → Production	0.597
+MVP → Production	0.305
+Incremental Production	0.300
+6. Delivery Tier Definitions
+PoC
+
+Purpose:
+
+Determine technical/business feasibility.
+
+Typical characteristics:
+
+limited functionality
+happy path
+representative/synthetic data
+demo interface
+limited NFRs
+limited security
+no production SLA
+limited operations
+no full HA/DR
+throwaway or limited-reuse implementation
+Pilot
+
+Purpose:
+
+Limited live trial with controlled users.
+
+Requires:
+
+real users
+real data
+basic authentication
+basic monitoring
+limited NFRs
+controlled environment
+operational feedback
+refactoring expected before scale
+MVP
+
+Purpose:
+
+Smallest releasable product.
+
+Requires:
+
+real users
+core security
+automated deployment
+core testing
+basic operational readiness
+Responsible AI where AI exists
+runbooks
+limited HA/DR
+documented technical debt
+Production Grade
+
+Requires:
+
+complete functional scope
+NFRs
+security
+Responsible AI
+HA/DR
+performance/load testing
+CI/CD
+IaC
+observability
+cost governance
+UAT
+formal cutover
+hypercare
+operational handover
+Incremental Production Grade
+
+Only incremental change:
+
+Existing Production
+        ↓
+New Requirement
+        ↓
+Impact Analysis
+        ↓
+Affected Components
+        ↓
+Incremental WBS
+        ↓
+Regression
+        ↓
+Control Re-certification
+        ↓
+Release
+
+Do not re-estimate unaffected existing platform capabilities.
+
+7. Delivery-Tier Capability Matrix
+
+The accelerator should maintain a machine-readable profile.
+
+Example:
+
+{
+  "tier": "MVP",
+  "functional_scope": "LIMITED_RELEASABLE",
+  "nfr": "CORE",
+  "security": "CORE",
+  "rai": "REQUIRED",
+  "testing": "CORE",
+  "deployment": "AUTOMATED",
+  "ha_dr": "LIMITED",
+  "observability": "CORE",
+  "documentation": "RUNBOOKS"
+}
+
+Production:
+
+{
+  "tier": "PRODUCTION_GRADE",
+  "functional_scope": "FULL",
+  "nfr": "STRICT",
+  "security": "COMPREHENSIVE",
+  "rai": "COMPREHENSIVE",
+  "testing": "FULL",
+  "deployment": "CI_CD_IAC",
+  "ha_dr": "REQUIRED",
+  "observability": "FULL",
+  "documentation": "OPERATIONAL_HANDOVER"
+}
+8. Requirements Engine
+
+Requirements should be classified into:
+
+Functional
+Non-functional
+Business
+Technical
+Data
+Integration
+Security
+Compliance
+AI
+Responsible AI
+Operational
+Deployment
+Reporting
+UX
+Availability
+Performance
+DR
+Audit
+
+Each requirement should contain:
+
+{
+  "requirement_id": "FR-001",
+  "type": "FUNCTIONAL",
+  "statement": "",
+  "actor": "",
+  "capability": "",
+  "priority": "MUST",
+  "source": "CLIENT",
+  "status": "CLIENT_CONFIRMED",
+  "acceptance_criteria": [],
+  "dependencies": [],
+  "impacts": []
+}
+9. Requirement Status Model
+
+Use:
+
+CLIENT_PROVIDED
+CLIENT_CONFIRMED
+DEFAULT
+PROJECT_OVERRIDE
+INFERRED
+PENDING_CONFIRMATION
+CONFLICT
+SCOPE_CONSTRAINT
+DEPENDENCY
+RESOLVED
+REJECTED
+
+This replaces the vague concept of an "assumption gate."
+
+10. Dynamic Question Engine
+
+Questions should not be static.
+
+Each question needs:
+
+{
+  "question_id": "Q001",
+  "category": "KEY_DECISION",
+  "question": "",
+  "priority": "BLOCKER",
+  "ask_when": [],
+  "dependencies": [],
+  "resolves": [],
+  "stakeholder": "",
+  "why_it_matters": "",
+  "default_resolution": {},
+  "downstream_impacts": []
+}
+
+Example:
+
+If multi-cloud = false
+    ↓
+Do not ask cross-cloud networking questions.
+
+If on-prem = false
+    ↓
+Do not ask on-prem architecture questions.
+
+If AI = false
+    ↓
+Do not ask model/RAG/fine-tuning questions.
+
+If production = false
+    ↓
+Do not ask full HA/DR/SLA questions unless otherwise required.
+11. Default Resolution Engine
+
+Hierarchy:
+
+Client Override
+      ↓
+Project Configuration
+      ↓
+Company Configuration
+      ↓
+Resource / Location Configuration
+      ↓
+Regional Default
+      ↓
+Global Default
+
+Example:
+
+{
+  "working_hours": {
+    "value": 9,
+    "source": "PROJECT_OVERRIDE",
+    "master_default": 8
+  }
+}
+
+The accelerator must show the source.
+
+Never silently invent a value.
+
+12. Capability Engine
+
+Create a reusable capability catalog.
+
+Example:
+
+Business
+ ├── Workflow
+ ├── Approval
+ ├── Reporting
+ ├── Search
+ └── Dashboard
+
+Application
+ ├── Web
+ ├── Mobile
+ ├── API
+ ├── Backend
+ ├── Authentication
+ └── Authorization
+
+Data
+ ├── Ingestion
+ ├── Transformation
+ ├── Data Quality
+ ├── Data Lake
+ ├── Data Warehouse
+ └── Master Data
+
+AI
+ ├── Classification
+ ├── Extraction
+ ├── RAG
+ ├── Agent
+ ├── Prompt Engineering
+ ├── Fine Tuning
+ ├── Evaluation
+ └── Guardrails
+
+Platform
+ ├── Cloud
+ ├── Networking
+ ├── CI/CD
+ ├── IaC
+ ├── Monitoring
+ └── DR
+
+Capabilities drive:
+
+BRD sections
+architecture
+WBS
+resources
+estimates
+questions
+NFRs
+13. Scope Engine
+
+Every capability must be:
+
+IN_SCOPE
+OUT_OF_SCOPE
+FUTURE
+CONDITIONAL
+
+Out-of-scope capabilities should not enter the WBS.
+
+Do not give them 0.5 effort.
+
+Suppress them entirely.
+
+14. Architecture Engine
+
+Architecture should be structured, not just prose.
+
+{
+  "components": [
+    {
+      "id": "COMP-001",
+      "name": "",
+      "type": "",
+      "technology": "",
+      "responsibility": "",
+      "environment": [],
+      "security": {},
+      "dependencies": []
+    }
+  ]
+}
+
+Architecture sections:
+
+Context
+Logical architecture
+Physical/deployment architecture
+Component architecture
+Data architecture
+Integration architecture
+Security architecture
+Operational architecture
+Environment architecture
+Disaster recovery
+Technology stack
+15. Data Flow Engine
+
+Represent every important flow as structured data.
+
+{
+  "flow_id": "DF-001",
+  "source": "",
+  "target": "",
+  "data_objects": [],
+  "protocol": "",
+  "frequency": "",
+  "volume": {},
+  "security": {},
+  "transformation": [],
+  "failure_handling": ""
+}
+
+Generic flow:
+
+Source
+ ↓
+Ingestion
+ ↓
+Processing
+ ↓
+Transformation
+ ↓
+Storage
+ ↓
+Business/AI Processing
+ ↓
+Output
+ ↓
+Human/System
+
+This same model can generate:
+
+BRD data-flow narrative
+architecture diagram
+integration requirements
+security requirements
+estimates
+testing requirements.
+16. Scale Drivers
+
+Use the following generic drivers.
+
+Driver	Baseline	Elasticity
+Use cases	1	0.70
+Integrations	2	0.65
+Data sources	2	0.60
+Personas	2	0.45
+Channels	1	0.60
+Environments	3	0.40
+Languages	1	0.50
+Components	6	0.55
+Documents	50,000	0.30
+
+Scale factor floor:
+
+0.50
+
+Formula:
+
+$$ ScaleFactor = MAX(Floor,\;1 + Elasticity \times (\frac{Current}{Baseline}-1)) $$
+
+Example:
+
+Baseline personas = 2
+Current personas = 4
+Elasticity = 0.45
+
+$$ 1+0.45(4/2-1) $$ $$ =1+0.45 $$ $$ =1.45 $$
+17. Important Scale Rule
+
+Do not multiply every task by every scale factor.
+
+Each task declares its relevant driver.
+
+Example:
+
+API Integration Design
+→ INTEGRATIONS
+
+UX Journey Design
+→ PERSONAS + CHANNELS
+
+Data Pipeline
+→ DATA_SOURCES + DOCUMENTS
+
+Deployment
+→ ENVIRONMENTS
+18. Technical Complexity
+Complexity	Multiplier
+Low	0.85
+Medium	1.00
+High	1.25
+Very High	1.50
+
+Formula:
+
+$$ Effort_{complexity}=BaseEffort \times ComplexityFactor $$
+19. Compliance Multiplier
+
+Only apply to tasks flagged COMP.
+
+Compliance	Factor
+None	1.00
+Internal Policy Only	1.05
+Regulated Moderate	1.15
+Regulated High	1.30
+$$ Effort_{compliance}=Effort \times ComplianceFactor $$
+20. Security Multiplier
+
+Security multiplier is also task-specific.
+
+Tasks carry:
+
+SEC = TRUE/FALSE
+
+and security profile resolves the applicable factor.
+
+Do not apply security uplift to every task.
+
+21. HA/DR
+
+HA/DR should primarily affect infrastructure footprint/cost.
+
+HA/DR	Footprint
+Single instance	1.00
+Zone redundant	1.35
+Active/Passive regions	1.60
+Active/Active regions	2.00
+
+Do not automatically multiply engineering effort.
+
+22. Phase Rigour Library
+
+Core phases:
+
+ID	Phase	PoC	Pilot	MVP	Production	Base Days
+P01	Mobilisation & Discovery	1.00	1.00	1.00	1.00	13
+P02	Requirements & Use Cases	.40	.65	.85	1.00	22
+P03	Data Discovery/Preparation	.30	.60	.80	1.00	27
+P04	Solution Architecture	.35	.60	.80	1.00	23
+P05	Environment/Foundation	.25	.50	.75	1.00	20
+P06	Data Pipeline/Chunking	.40	.65	.85*	1.00	33
+P07	Retrieval/Index	.50	.70	.85	1.00	17
+P08	Model/Prompt	.55	.75	.90	1.00	35
+P09	Fine-tuning	.20	.40	.70	1.00	16
+P10	Application/API/Integration	.25	.50	.75	1.00	39
+P11	Evaluation	.25	.50	.80	1.00	22
+P12	Responsible AI/Safety	.10	.35	.70	1.00	31
+P13	MLOps/LLMOps/IaC	.05	.30	.70	1.00	24
+P14	Observability/FinOps	.10	.35	.70	1.00	19
+P15	Testing	.15	.40	.75	1.00	33
+P16	Deployment/Cutover	.05	.30	.65	1.00	18
+P17	Documentation/Training	.15	.40	.70	1.00	16
+P18	PM/Governance	.35	.55	.75	1.00	21
+
+* The source workbook extraction showed an anomalous MVP value of 5.85 for P06. Treat that as an extraction/data-quality error and require validation rather than accepting 5.85 as a production rule.
+
+Formula:
+
+$$ PhaseEffort = BaseDays \times PhaseRigour $$
+
+Example:
+
+P02:
+
+$$ 22 \times 0.85 = 18.7 $$
+
+for MVP.
+
+23. Task Library
+
+Tasks are the actual estimating units.
+
+Each task needs:
+
+{
+  "task_id": "T001",
+  "phase_id": "P01",
+  "task": "",
+  "deliverable": "",
+  "primary_role": "PM",
+  "support_roles": [],
+  "scale_drivers": [],
+  "flags": [],
+  "base_days": 2,
+  "applicability": {}
+}
+
+Examples:
+
+Discovery
+Requirements
+NFR definition
+Architecture
+Security architecture
+Data discovery
+Data engineering
+RAG
+Model selection
+Prompt engineering
+Application development
+API integration
+Testing
+Responsible AI
+CI/CD
+Infrastructure
+Observability
+Deployment
+Training
+Project management
+24. Task Applicability
+
+A task is selected by:
+
+Task Library
++
+Delivery Tier
++
+Capabilities
++
+Solution
++
+Scope
++
+Security
++
+Compliance
++
+Architecture
++
+Scale
+
+Result:
+
+APPLICABLE
+NOT_APPLICABLE
+CONDITIONAL
+
+Only applicable tasks enter estimation.
+
+25. Task Effort Formula
+
+A robust base formula is:
+
+$$ E_{task} = BaseDays \times PhaseRigour \times ScaleFactor \times ComplexityFactor \times ComplianceFactor \times SecurityFactor \times OtherApplicableFactors $$
+
+But only applicable factors are applied.
+
+For example:
+
+Task:
+API integration
+
+Base = 6 days
+Phase = 0.75
+Integration scale = 1.30
+Complexity = 1.25
+Compliance = 1.00
+Security = 1.10
+$$ 6 \times .75 \times 1.30 \times 1.25 \times 1.10 $$
+
+= calculated deterministic effort.
+
+26. Role Library
+
+Generic role catalog:
+
+Role	Purpose
+PM	Delivery/governance
+BA	Requirements
+SA	Architecture
+AIE	AI/ML
+DE	Data
+MLO	MLOps
+SWE	Software
+UX	UX/UI
+QA	Testing
+SEC	Security
+SRE	Platform/reliability
+RAI	Responsible AI/compliance
+
+Reference library effort:
+
+Role	Days
+PM	10.5
+BA	10.0
+SA	9.5
+AIE	30.3
+DE	14.0
+MLO	5.1
+SWE	7.1
+UX	3.9
+QA	2.9
+SEC	4.3
+SRE	4.6
+RAI	1.5
+
+These are library/reference values, not fixed allocations.
+
+27. Role Assignment
+
+The LLM can identify disciplines.
+
+The deterministic engine assigns the task's primary role.
+
+Example:
+
+{
+  "task": "Threat modelling",
+  "primary_role": "SEC",
+  "support_roles": ["SA", "SRE"]
+}
+
+Support effort should be included according to a defined rule rather than double-counted.
+
+28. Person-Day Conversion
+
+If estimation unit is Person-Days:
+
+$$ PersonDays = \frac{Hours}{HoursPerPersonDay} $$
+
+Master configuration example:
+
+Hours/person-day = 9
+Working days/week = 5
+29. Productive Capacity
+
+If:
+
+working hours/day = 9
+utilisation = 80%
+efficiency = 90%
+
+then:
+
+$$ EffectiveHours/day = 9 \times .80 \times .90 $$ $$ =6.48 $$
+
+If utilisation and efficiency are stored separately, preserve both.
+
+30. Resource Availability
+
+For resource \(r\) on day \(d\):
+
+$$ Capacity_{r,d} = WorkingHours_{r,d} \times Utilisation_r \times Efficiency_r $$
+
+Then subtract:
+
+holidays
+leave
+office shutdown
+unavailable periods.
+31. Calendar Engine
+
+Calendar hierarchy:
+
+Resource calendar
+ ↓
+Office/site
+ ↓
+City
+ ↓
+State/province
+ ↓
+Country
+ ↓
+Global
+
+Two modes:
+
+ENUMERATED
+ALLOWANCE_FALLBACK
+
+Fallback example:
+
+Holiday allowance = 12 days/year
+
+Important:
+
+Reference holiday lists are not actual scheduling calendars.
+
+Actual dates must come from approved calendars.
+
+32. Schedule Formula
+
+For a task requiring \(E\) person-days and assigned capacity \(C_d\) per day:
+
+$$ Duration = \min d $$
+
+such that:
+
+$$ \sum_{i=1}^{d} Capacity_i \ge E $$
+
+while respecting:
+
+dependencies
+holidays
+leave
+working hours
+resource capacity
+max FTE
+ramp rate
+phase overlap.
+33. Parallelism
+
+If a task requires 20 person-days:
+
+With 1 FTE:
+
+$$ 20 / 1 = 20 days $$
+
+With 2 FTE:
+
+$$ 20 / 2 = 10 days $$
+
+But the scheduler must not assume infinite parallelism.
+
+Use:
+
+max FTE per role
+max ramp per week
+min FTE granularity
+task dependencies
+phase overlap
+34. Feasibility Rules
+
+Master configuration:
+
+Max FTE per role = 20
+Max team ramp/week = 80
+Phase overlap fraction = 0.50
+Minimum FTE granularity = 0.25
+
+Example:
+
+Required AI engineers:
+
+6.25 FTE
+
+Available maximum:
+
+4 FTE
+
+The engine must not silently reduce the estimate.
+
+Instead:
+
+FEASIBILITY WARNING
+
+Required peak FTE: 6.25
+Available: 4.00
+
+Result:
+Schedule must be extended.
+35. Ramp Constraint
+
+If:
+
+Previous week = 2 people
+Maximum ramp = 3 people/week
+Required = 7 people
+
+Allowed next week:
+
+$$ 2 + 3 = 5 $$
+
+Therefore 7 cannot be loaded immediately.
+
+The scheduler spreads the work.
+
+36. Phase Overlap
+
+If:
+
+Phase duration = 10 weeks
+Overlap fraction = 0.50
+
+The next phase may start after approximately:
+
+$$ 10 \times (1-.50)=5 $$
+
+weeks of elapsed phase time, subject to dependency rules.
+
+This should be a configurable scheduling rule, not an arbitrary LLM decision.
+
+37. Reference Duration
+
+Reference duration is not the final schedule.
+
+Example:
+
+Reference duration = 30 working days
+
+The scheduler attempts to fit work into that window.
+
+If capacity is insufficient:
+
+Reference duration = 30
+Calculated feasible duration = 38
+
+Then:
+
+Schedule = 38 working days
+
+and report:
+
++8 days due to capacity constraint
+38. Cost Engine
+
+Labor cost:
+
+$$ LaborCost_r = Hours_r \times Rate_r $$
+
+or, if using person-days:
+
+$$ LaborCost_r = PersonDays_r \times DayRate_r $$
+
+Total labor:
+
+$$ TotalLabor = \sum_r LaborCost_r $$
+
+Additional costs:
+
+$$ TotalCost = Labor + Cloud + Licenses + Tools + Infrastructure + Travel + OtherApprovedCosts $$
+39. PM / Governance Overhead
+
+Current configuration:
+
+PM/governance overhead = 12%
+
+This must have clear semantics.
+
+If applied as an explicit overhead:
+
+$$ GovernanceCost = BaseDeliveryCost \times 12\% $$
+
+However, because PM is already a role in the task library, the accelerator must avoid double counting.
+
+Recommended rule:
+
+Choose one authoritative PM mechanism per calculation version.
+
+Either:
+
+PM task effort
+
+or:
+
+PM/governance percentage
+
+but do not silently apply both.
+
+40. Leave and Buffer
+
+Current workbook configuration:
+
+Leave + buffer = 0%
+Contingency = 10%
+
+Separate these concepts.
+
+Recommended:
+
+$$ PlanningEffort = BaseEffort + LeaveBuffer $$
+
+Then:
+
+$$ ContingencyEffort = PlanningEffort \times Contingency\% $$
+
+and:
+
+$$ FinalEstimate = PlanningEffort + ContingencyEffort $$
+
+The exact application should be configurable.
+
+41. Transition Estimation
+
+For transition tiers:
+
+Existing solution
+        +
+Target tier requirements
+        ↓
+Gap analysis
+        ↓
+Reusable capability
+        ↓
+Transition work
+        ↓
+Rework uplift
+        ↓
+Mobilisation floor
+
+Rework uplift:
+
+1.15
+
+Mobilisation floor:
+
+0.05
+
+Formula concept:
+
+$$ TransitionEffort = GapEffort \times ReworkUplift $$
+
+Then:
+
+$$ FinalTransitionEffort = MAX(TransitionEffort,\ MobilisationFloor) $$
+
+The exact unit for the 0.05 floor must be explicitly configured — e.g. percentage of a defined target effort or normalized base — rather than hard-coded ambiguously.
+
+42. Incremental Production Formula
+
+Do not use a blind 30% multiplier.
+
+Use:
+
+Existing production baseline
+        ↓
+Changed requirement
+        ↓
+Component impact analysis
+        ↓
+Affected tasks
+        ↓
+Incremental effort
+        +
+Mandatory regression
+        +
+Affected control recertification
+        +
+Release management
+
+The 0.30 incremental scope share can remain as a fallback/reference policy.
+
+43. Sizing Drivers
+
+The accelerator should support:
+
+Users
+named users
+concurrent users
+Traffic
+requests/day
+peak RPS
+AI
+prompt tokens
+completion tokens
+RAG
+top-k
+tokens/chunk
+documents
+chunks/document
+raw corpus
+embedding dimensions
+Application
+CPU ms/request
+Data
+retention
+Availability
+HA/DR tier
+Capacity
+non-production factor
+growth factor
+
+These must feed the appropriate engine, not become generic effort multipliers.
+
+44. RAG Sizing
+
+Vector count:
+
+$$ VectorCount = Documents \times ChunksPerDocument $$
+
+Storage approximation:
+
+$$ EmbeddingStorage = VectorCount \times Dimensions \times BytesPerDimension $$
+
+plus index/storage overhead.
+
+Retrieved context:
+
+$$ RetrievedTokens = TopK \times TokensPerChunk $$
+
+Total model input:
+
+$$ InputTokens = PromptTokens + RetrievedTokens $$
+
+LLM consumption:
+
+$$ TotalTokens = InputTokens + CompletionTokens $$
+
+These values feed:
+
+capacity
+model usage
+cloud cost
+performance
+architecture
+
+not generic development effort.
+
+45. Growth Planning
+
+If annual growth factor:
+
+1.30
+
+then:
+
+$$ FutureVolume = CurrentVolume \times 1.30 $$
+
+For three years:
+
+$$ FutureVolume = CurrentVolume \times 1.30^3 $$
+
+Use this for capacity planning, not automatic project effort.
+
+46. BRD Traceability Model
+
+Every BRD item should have:
+
+source
+↓
+requirement
+↓
+capability
+↓
+architecture
+↓
+task
+↓
+resource
+↓
+estimate
+↓
+schedule
+
+Example:
+
+{
+  "trace_id": "TR-001",
+  "requirement_id": "FR-001",
+  "capability_id": "CAP-004",
+  "component_id": "COMP-003",
+  "task_ids": ["T044", "T045"],
+  "estimate_id": "EST-022",
+  "schedule_items": ["SCH-012"],
+  "brd_sections": ["4.2", "7.3"]
+}
+47. BRD Content Model
+
+The BRD should be generated from structured content:
+
+1. Document Control
+2. Executive Summary
+3. Business Context
+4. Problem Statement
+5. Objectives
+6. Scope
+7. Stakeholders
+8. Personas
+9. Functional Requirements
+10. Non-Functional Requirements
+11. Business Rules
+12. Data Requirements
+13. Integration Requirements
+14. Security Requirements
+15. Compliance Requirements
+16. AI Requirements
+17. Responsible AI
+18. Solution Overview
+19. Architecture
+20. Data Flow
+21. Technology Stack
+22. Environment Strategy
+23. Deployment
+24. Operations
+25. Testing
+26. Acceptance Criteria
+27. Risks
+28. Assumptions
+29. Constraints
+30. Dependencies
+31. WBS
+32. Resource Plan
+33. Schedule
+34. Cost
+35. Traceability
+36. Future Roadmap
+37. Approvals
+
+Sections should be conditional.
+
+48. BRD Narrative Rules
+
+The BRD writer must only use:
+
+Approved requirements
++
+Approved decisions
++
+Approved architecture
++
+Approved scope
++
+Calculation outputs
++
+Approved risks
++
+Approved assumptions/defaults
+
+If information is unavailable:
+
+Not specified — To be confirmed.
+
+No invented:
+
+technologies
+dates
+resources
+costs
+performance numbers
+security controls
+business rules.
+49. Versioning
+
+Use immutable project versions:
+
+Project
+ ├── v1
+ ├── v2
+ ├── v3
+ └── v4
+
+Each version contains:
+
+Requirements
+Solution
+Architecture
+WBS
+Estimate
+Resources
+Schedule
+Cost
+Approvals
+BRD
+
+Approved versions cannot be modified.
+
+A change creates:
+
+v1 → change request → impact analysis → v2
+50. Impact Analysis
+
+If a user changes:
+
+Users:
+20,000 → 50,000
+
+the system should determine:
+
+Affected:
+Capacity
+Architecture
+Infrastructure
+Performance
+Testing
+Cloud cost
+Schedule
+
+Not affected:
+
+Unrelated requirements
+Unrelated documentation
+Unrelated business processes
+
+Display:
+
+CHANGE IMPACT
+
+Users
+20,000 → 50,000
+
+Architecture:
+Affected
+
+Resources:
++0.5 FTE
+
+Schedule:
++3 days
+
+Cost:
++$8,420
+
+Testing:
+Load testing scope increased
+
+Numbers must be calculated, never generated by the LLM.
+
+51. HITL Gates
+
+Recommended four gates.
+
+Gate 1 — Requirements
+
+Approve:
+
+requirements
+defaults
+constraints
+decisions
+unresolved blockers
+Gate 2 — Solution
+
+Approve:
+
+scope
+capabilities
+architecture
+technology
+data flow
+security
+Gate 3 — Estimate
+
+Approve:
+
+WBS
+resources
+effort
+schedule
+cost
+feasibility
+Gate 4 — BRD
+
+Approve:
+
+final BRD content
+version
+export.
+52. History and Document Generation
+
+Once approved:
+
+Canonical BRD v1.0
+       ↓
+ ┌─────┼──────┐
+ ↓     ↓      ↓
+DOCX  PDF    PPTX
+
+Do not regenerate the project when a user asks for another format.
+
+The same approved content is rendered.
+
+53. Storage Model
+
+Logical storage:
+
+/projects
+/project_versions
+/requirements
+/questions
+/decisions
+/capabilities
+/architecture
+/data_flows
+/wbs
+/tasks
+/resources
+/calendars
+/schedules
+/estimates
+/calculations
+/approvals
+/brd_versions
+/documents
+/audit
+
+Database:
+
+PostgreSQL
+
+Object storage:
+
+Azure Blob / AWS S3 / GCS
+54. Calculation Ledger
+
+Every calculation must produce:
+
+{
+  "calculation_id": "CALC-001",
+  "calculation_type": "TASK_EFFORT",
+  "inputs": {},
+  "formula": "",
+  "result": {},
+  "engine_version": "1.0.0",
+  "timestamp": ""
+}
+
+This gives complete auditability.
+
+55. Master Configuration
+
+The accelerator should have:
+
+MASTER CONFIGURATION
+
+Delivery tiers
+Phase profiles
+Task library
+Role library
+Scale drivers
+Complexity factors
+Security profiles
+Compliance profiles
+Calendar rules
+Scheduling rules
+Resource rules
+Cost rules
+BRD templates
+Validation rules
+
+Users cannot change master rules.
+
+56. Project Configuration
+
+Per-project:
+
+Client
+Project
+Delivery tier
+Geography
+Working hours
+Working calendar
+Scale drivers
+Technology constraints
+Security
+Compliance
+Resources
+Rates
+Start date
+Project overrides
+57. Runtime State
+
+Keep separate from configuration.
+
+{
+  "environment": "VALIDATED",
+  "requirements": "APPROVED",
+  "solution": "APPROVED",
+  "estimate": "BUILT",
+  "schedule": "GENERATED",
+  "feasibility": "PASSED",
+  "brd": "APPROVED"
+}
+
+This separation is important because Excel currently mixes:
+
+configuration
+inputs
+computed values
+runtime state.
+
+The product should not.
+
+58. LLM Gateway
+
+Support:
+
+Azure
+Google
+AWS
+
+Architecture:
+
+Accelerator
+   ↓
+LLM Gateway
+   ↓
+Provider Adapter
+   ├── Azure
+   ├── Vertex AI
+   └── Bedrock
+
+Provider configuration:
+
+Provider
+Model
+Endpoint
+Region
+Authentication
+Context window
+Structured output
+Tool calling
+Streaming
+Vision
+Embedding
+Pricing
+
+Credentials remain server-side.
+
+59. Real-Time Processing
+
+Use:
+
+WebSocket / SSE
+
+Events:
+
+RequirementUpdated
+QuestionGenerated
+DefaultResolved
+ImpactAnalysisStarted
+SolutionUpdated
+ArchitectureUpdated
+EstimateStarted
+EstimateCompleted
+ScheduleStarted
+ScheduleCompleted
+FeasibilityWarning
+HITLRequired
+BRDVersionCreated
+DocumentExportCompleted
+60. Recommended Database Domains
+Identity
+tenants
+users
+roles
+permissions
+Projects
+projects
+project_versions
+project_events
+Requirements
+requirements
+requirement_categories
+questions
+answers
+conversations
+dependencies
+Rules
+defaults
+default_versions
+context_rules
+delivery_tier_rules
+tier_capabilities
+phase_profiles
+task_library
+role_library
+security_profiles
+nfr_profiles
+testing_profiles
+Calendar
+holiday_documents
+holidays
+calendars
+working_calendars
+leave
+location_hierarchy
+Estimation
+wbs
+tasks
+task_dependencies
+estimate_items
+calculation_runs
+calculation_results
+calculation_ledger
+Resources
+resources
+skills
+resource_skills
+availability
+assignments
+rate_cards
+rates
+Scheduling
+schedules
+task_schedule
+capacity_calculations
+HITL
+approval_gates
+approval_actions
+change_requests
+change_impacts
+Documents
+brd_versions
+documents
+document_exports
+document_templates
+AI
+llm_providers
+llm_connections
+model_registry
+agent_runs
+agent_messages
+token_usage
+Audit
+audit_logs
+version_diffs
+61. Complete End-to-End Workflow
+1. Create Project
+       ↓
+2. Enter Client / Business Context
+       ↓
+3. Select Delivery Tier
+       ↓
+4. Requirements Chat / Document Upload
+       ↓
+5. Requirements Agent
+       ↓
+6. Context Resolution
+       ↓
+7. Dynamic Questions
+       ↓
+8. Client Answers
+       ↓
+9. Canonical Requirements
+       ↓
+10. Requirements Validation
+       ↓
+11. HITL Requirements Approval
+       ↓
+12. Capability Identification
+       ↓
+13. Solution Design
+       ↓
+14. Architecture
+       ↓
+15. Data Flow
+       ↓
+16. Security / Compliance
+       ↓
+17. Solution Validation
+       ↓
+18. HITL Solution Approval
+       ↓
+19. Task Applicability
+       ↓
+20. WBS
+       ↓
+21. Deterministic Effort
+       ↓
+22. Resource Allocation
+       ↓
+23. Calendar Resolution
+       ↓
+24. Scheduling
+       ↓
+25. Cost
+       ↓
+26. Feasibility
+       ↓
+27. Estimate HITL
+       ↓
+28. Change / Impact Loop
+       ↓
+29. Final Approval
+       ↓
+30. Create BRD Version
+       ↓
+31. Save History
+       ↓
+32. Render DOCX/PDF/PPTX
+62. What the final accelerator should NOT do
+
+Do not build:
+
+One PVR-specific BRD generator
+
+Do not build:
+
+11 agents for 11 delivery tiers
+
+Do not build:
+
+LLM calculates project effort
+
+Do not build:
+
+LLM calculates cost
+
+Do not build:
+
+Static questionnaire
+
+Do not build:
+
+Fixed BRD with every possible section
+
+Do not build:
+
+Generated document as source of truth
+
+Do not use:
+
+Generic multiplier × entire project
+
+for every scale driver.
+
+63. The final product definition
+
+The accelerator is essentially five systems combined:
+
+┌──────────────────────────────────────────┐
+│ 1. REQUIREMENTS INTELLIGENCE             │
+│    Understand → Clarify → Resolve        │
+└──────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│ 2. SOLUTION INTELLIGENCE                 │
+│    Capability → Solution → Architecture  │
+└──────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│ 3. DELIVERY ESTIMATION ENGINE            │
+│    WBS → Effort → Resources → Schedule   │
+│    → Cost → Feasibility                  │
+└──────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│ 4. GOVERNANCE / HITL                     │
+│    Review → Change → Impact → Approve    │
+└──────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│ 5. BRD DOCUMENT ENGINE                   │
+│    Canonical model → DOCX/PDF/PPTX       │
+└──────────────────────────────────────────┘
+
+The most important architectural principle is:
+
+The accelerator does not generate a BRD first and then estimate the project. It builds an approved, structured project model first; the BRD, WBS, estimate, schedule, cost, architecture and presentations are different views of that same model.
+
+That makes the solution reusable across clients, industries, technologies and delivery tiers, while the reference project is simply one regression/golden test case for proving that the generic accelerator can reproduce the required level of BRD detail.

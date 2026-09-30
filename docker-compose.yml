@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  brd-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: brd-generator:latest
+    container_name: brd_studio_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - WEB_CONCURRENCY=4
+      # Optional: pass your API keys here or via .env file
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-}
+    volumes:
+      - brd_exports:/app/exports
+      - brd_admin_data:/app/admin_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  brd_exports:
+    driver: local
+  brd_admin_data:
+    driver: local

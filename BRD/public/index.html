@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BRD Accelerator</title>
+<style>
+body{font:15px/1.5 system-ui,sans-serif;margin:0;background:#f5f6f8;color:#1c2330}
+header{background:#1f3a5f;color:#fff;padding:12px 24px;display:flex;gap:16px;align-items:center}
+header b{font-size:18px;margin-right:auto}header button{background:none;border:0;color:#cfe0f5;cursor:pointer;font-size:15px;padding:6px 10px}
+header button.on{color:#fff;border-bottom:2px solid #fff}
+main{max-width:1000px;margin:20px auto;padding:0 16px}.card{background:#fff;border-radius:8px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px #0002}
+input,textarea,select{width:100%;box-sizing:border-box;padding:8px;border:1px solid #c5ccd6;border-radius:6px;font:inherit;margin:4px 0 10px}
+textarea{min-height:70px}button.p{background:#1f3a5f;color:#fff;border:0;padding:9px 18px;border-radius:6px;cursor:pointer}
+button.p:disabled{opacity:.5}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid #dde2ea;padding:5px 8px;text-align:left}th{background:#eef1f6}
+.bar{height:8px;background:#e3e8ef;border-radius:4px}.bar i{display:block;height:8px;background:#2e8b57;border-radius:4px}
+.tag{font-size:11px;padding:1px 6px;border-radius:9px;background:#e3e8ef}.tag.default{background:#ffe9b8}.tag.client{background:#cdeedc}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.hide{display:none}.err{color:#b00020}
+pre{background:#f0f2f6;padding:10px;overflow:auto;font-size:12px}
+</style></head><body>
+<header><b>BRD Accelerator</b><button id="t1" class="on" onclick="tab(1)">Client</button><button id="t2" onclick="tab(2)">Admin defaults</button></header>
+<main>
+<div id="v1">
+ <div class="card" id="start"><h3>1. Project brief</h3>
+  <input id="name" placeholder="Project name"><input id="client" placeholder="Client / account">
+  <textarea id="desc" placeholder="Describe the project in business terms"></textarea>
+  <button class="p" onclick="startS()">Start discovery</button></div>
+ <div class="card hide" id="qa"><h3>2. Discovery questions <small id="round"></small></h3><div id="cov"></div><div id="qs"></div>
+  <button class="p" onclick="send()">Submit answers</button></div>
+ <div id="out" class="hide">
+  <div class="card"><h3>Agent hand-off (Agent 1 → Agent 2)</h3><details><summary>View JSON</summary><pre id="hand"></pre></details></div>
+  <div class="card"><h3>BRD <button class="p" style="float:right" onclick="dl()">Download .md</button></h3><div id="brd"></div></div>
+  <div class="card"><h3>Estimate &amp; plan</h3><div id="est"></div></div>
+  <div class="card"><h3>Assumptions — review</h3><div id="asm"></div></div>
+  <div class="card"><h3>Not happy? Change defaults / give feedback</h3>
+   <div class="grid"><label>Geography<select id="o_geo"></select></label><label>Start date<input type="date" id="o_start"></label>
+   <label>Utilisation (0-1)<input id="o_util"></label><label>Contingency %<input id="o_cont"></label><label>Leave days/yr<input id="o_leave"></label></div>
+   <textarea id="fb" placeholder="e.g. Timeline too long, assume team of 6, skip UAT environment..."></textarea>
+   <button class="p" onclick="regen()">Regenerate BRD (Agent 2)</button></div>
+ </div>
+ <p id="msg" class="err"></p>
+</div>
+<div id="v2" class="hide"><div class="card"><h3>Admin — planning defaults</h3>
+ <input id="key" type="password" placeholder="Admin password (ADMIN_PASSWORD in .env)">
+ <p>Edit holidays per geography, rates, utilisation, leave, contingency, start date.</p>
+ <textarea id="defs" style="min-height:420px;font-family:monospace;font-size:12px"></textarea>
+ <button class="p" onclick="saveD()">Save defaults</button> <span id="amsg"></span></div></div>
+</main>
+<script>
+let S=null;const $=id=>document.getElementById(id);
+const api=async(u,m='GET',b,h={})=>{const r=await fetch(u,{method:m,headers:{'Content-Type':'application/json',...h},body:b&&JSON.stringify(b)});const j=await r.json();if(!r.ok)throw Error(j.error||r.status);return j};
+const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const md=t=>esc(t).replace(/^### (.*)$/gm,'<h5>$1</h5>').replace(/^## (.*)$/gm,'<h4>$1</h4>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^[-*] (.*)$/gm,'<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/g,m=>'<ul>'+m+'</ul>').replace(/\n{2,}/g,'<br><br>');
+function tab(n){$('v1').classList.toggle('hide',n!=1);$('v2').classList.toggle('hide',n!=2);$('t1').classList.toggle('on',n==1);$('t2').classList.toggle('on',n==2);if(n==2)loadD()}
+const busy=(b)=>document.querySelectorAll('button.p').forEach(x=>x.disabled=b);
+async function run(f){$('msg').textContent='';busy(true);try{await f()}catch(e){$('msg').textContent=e.message}busy(false)}
+const startS=()=>run(async()=>{S=await api('/api/sessions','POST',{name:$('name').value,client:$('client').value,description:$('desc').value});render()});
+const send=()=>run(async()=>{const answers={};S.questions.forEach(q=>answers[q.id]=$('a_'+q.id).value);S=await api('/api/sessions/'+S.id+'/answers','POST',{answers});render()});
+function collect(){const d=[...document.querySelectorAll('[data-a]')].map(e=>({id:e.dataset.a,decision:e.querySelector('select').value,text:e.querySelector('input').value}));return d}
+const regen=()=>run(async()=>{const o={geography:$('o_geo').value,startDate:$('o_start').value,utilisation:+$('o_util').value,contingencyPct:+$('o_cont').value,leaveDaysPerYear:+$('o_leave').value};
+ S=await api('/api/sessions/'+S.id+'/regenerate','POST',{feedback:$('fb').value,overrides:o,assumptionDecisions:collect()});$('fb').value='';render()});
+async function render(){
+ $('start').classList.add('hide');
+ $('cov').innerHTML=Object.entries(S.coverage||{}).map(([k,v])=>`<small>${k} ${v}%</small><div class="bar"><i style="width:${v}%"></i></div>`).join('');
+ const asking=S.status==='asking';$('qa').classList.toggle('hide',!asking);$('out').classList.toggle('hide',asking);
+ $('round').textContent=`(round ${S.round}) ${S.note||''}`;
+ $('qs').innerHTML=(S.questions||[]).map(q=>`<label><b>${q.id}</b> <span class="tag">${q.topic}</span> ${esc(q.text)}<textarea id="a_${q.id}"></textarea></label>`).join('');
+ if(asking)return;
+ $('hand').textContent=JSON.stringify(S.handoff,null,2);
+ $('brd').innerHTML=S.brd.sections.map(s=>`<h3>${esc(s.title)}</h3>${md(s.content)}`).join('')+'<h3>Risks</h3><table><tr><th>Risk</th><th>Mitigation</th></tr>'+S.brd.risks.map(r=>`<tr><td>${esc(r.risk)}</td><td>${esc(r.mitigation)}</td></tr>`).join('')+'</table>'+(S.brd.changeLog?`<p><i>Change log: ${esc(S.brd.changeLog)}</i></p>`:'');
+ const e=S.estimate;
+ $('est').innerHTML=`<p><b>${e.totalEffortDays}</b> person-days (incl. contingency) · finish <b>${e.endDate}</b> · cost <b>${e.cost.toLocaleString()} ${e.currency}</b> · availability ${e.availability} · v${S.versions}</p><table><tr><th>Phase</th><th>Team</th><th>Effort (d)</th><th>Working days</th><th>Start</th><th>End</th></tr>${e.phases.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.teamSize}</td><td>${p.effortDays}</td><td>${p.workingDays}</td><td>${p.start}</td><td>${p.end}</td></tr>`).join('')}</table><p><small>Holidays excluded: ${e.holidaysUsed.map(h=>h.date+' '+h.name).join('; ')||'none'}</small></p><details><summary>Tasks</summary><table><tr><th>ID</th><th>Phase</th><th>Task</th><th>Role</th><th>Days</th></tr>${S.brd.tasks.map(t=>`<tr><td>${t.id}</td><td>${esc(t.phase)}</td><td>${esc(t.task)}</td><td>${esc(t.role)}</td><td>${t.days}</td></tr>`).join('')}</table></details>`;
+ $('asm').innerHTML=S.brd.assumptions.map(a=>`<div data-a="${a.id}"><span class="tag ${a.source}">${a.source}</span> <small>${a.id} ${esc(a.ref)}</small><div class="grid" style="grid-template-columns:130px 1fr"><select><option>Approve</option><option>Edit</option><option>Reject</option></select><input value="${esc(a.text)}"></div></div>`).join('');
+ const d=await api('/api/defaults');$('o_geo').innerHTML=Object.keys(d.geographies).map(g=>`<option ${g==S.effective.geography?'selected':''}>${g}</option>`).join('');
+ $('o_start').value=S.effective.startDate;$('o_util').value=S.effective.utilisation;$('o_cont').value=S.effective.contingencyPct;$('o_leave').value=S.effective.leaveDaysPerYear;
+}
+function dl(){const t=S.brd.sections.map(s=>`# ${s.title}\n\n${s.content}\n`).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t]));a.download='BRD.md';a.click()}
+async function loadD(){$('defs').value=JSON.stringify(await api('/api/defaults'),null,2)}
+async function saveD(){try{await api('/api/defaults','PUT',JSON.parse($('defs').value),{'x-admin-key':$('key').value});$('amsg').textContent='Saved ✓'}catch(e){$('amsg').textContent=e.message}}
+</script></body></html>

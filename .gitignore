@@ -1,0 +1,13 @@
+﻿node_modules/
+*/node_modules/
+BRD/node_modules/
+__pycache__/
+*.py[cod]
+*.class
+*.env
+.venv/
+venv/
+ENV/
+.idea/
+.vscode/
+*.log

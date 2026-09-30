@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI BRD & Project Plan Generator | Multi-Cloud AI Accelerator</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Global Top Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <span>⚡</span> BRD Studio <span class="brand-badge">PRO</span>
+      </div>
+      <span class="brand-divider">/</span>
+      <span class="client-tag" id="headerClientTag">PVR INOX — Contract Intelligence Platform</span>
+    </div>
+
+    <div class="header-actions">
+      <!-- Active AI Provider Badge -->
+      <div class="badge-ai" id="activeProviderBadge" style="cursor: pointer;" onclick="openSettingsModal()"
+        title="Click to Switch Cloud AI Provider & Enter API Keys">
+        <span class="dot-pulse"></span>
+        <span id="activeProviderText">AI: Google Studio (Gemini 2.5)</span>
+        <span style="font-size: 0.75rem; margin-left: 4px;">⚙️</span>
+      </div>
+
+      <button class="btn-header" onclick="openAdminModal()" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.1); color: var(--primary);">
+        <span>🛡️</span> Admin Console
+      </button>
+
+      <button class="btn-header" onclick="openSettingsModal()">
+        <span>☁️</span> Switch Cloud AI
+      </button>
+
+      <button class="btn-header" onclick="resetSession()" style="color: #f87171;">
+        <span>🔄</span> Reset Session
+      </button>
+    </div>
+  </header>
+
+  <!-- 50/50 Split Screen Workspace -->
+  <main class="workspace-container">
+    <!-- LEFT PANEL: 50% Discovery Chatbot Area -->
+    <section class="chat-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>💬</span> Project Discovery Interview (Agent 1)
+        </div>
+        <div class="progress-counter" id="progressCounter">
+          Question 1 of 10
+        </div>
+      </div>
+
+      <!-- Chat Stream -->
+      <div class="chat-history" id="chatHistory">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <!-- Chat Controls & File Attachment Area -->
+      <div class="chat-controls">
+        <!-- Quick Suggestions / Option Chips -->
+        <div class="quick-suggestions" id="quickSuggestions">
+          <!-- Dynamically populated per question -->
+        </div>
+
+        <!-- Dynamic Input Row (adapts to text, dropdown, or number) -->
+        <div class="input-row" id="chatInputRow">
+          <label class="btn-attach" title="Attach Document (PDF, TXT, CSV, DOCX)">
+            📎
+            <input type="file" id="fileInput" onchange="handleFileUpload(event)" style="display: none;"
+              accept=".pdf,.txt,.csv,.json,.doc,.docx">
+          </label>
+          
+          <!-- Text Input -->
+          <input type="text" class="chat-input" id="chatInput"
+            placeholder="Type your answer or pick from options above..." onkeydown="handleInputKeyDown(event)">
+            
+          <!-- Number Input -->
+          <input type="number" class="chat-input" id="chatNumberInput" style="display: none;"
+            placeholder="Enter number..." onkeydown="handleNumberInputKeyDown(event)">
+            
+          <!-- Dropdown Select -->
+          <select class="chat-input toolbar-dropdown" id="chatDropdownSelect" style="display: none;">
+          </select>
+          
+          <button class="btn-send" onclick="sendUserMessage()" title="Send Answer">
+            ➤
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: 50% Project Cockpit & BRD Workbench -->
+    <section class="workbench-panel">
+      <!-- Tabs -->
+      <div class="workbench-tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-brd')">
+          <span>📄</span> BRD Document
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-roles')">
+          <span>👥</span> 12 Disciplines & Tasks
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-phases')">
+          <span>📊</span> 18-Phase Roadmap
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-daywise')">
+          <span>📅</span> Day-Wise Plan
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-components')">
+          <span>🏗️</span> Tech Components (6)
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-sizing')">
+          <span>☁️</span> Sizing & BoM
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-assumptions')">
+          <span>⚙️</span> Assumptions Gate
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-export')">
+          <span>📥</span> Export & PPTX
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="tab-content-area" id="tabContentArea">
+        <!-- Top Metrics Strip -->
+        <div class="metrics-strip">
+          <div class="metric-card">
+            <span class="metric-label">Delivery Tier</span>
+            <span class="metric-val" id="metricTier">PoC</span>
+            <span class="metric-sub" id="metricDuration">6.0 wks (Headline: 0.289)</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Total Engineering</span>
+            <span class="metric-val" id="metricDays">103.7 d</span>
+            <span class="metric-sub" id="metricHours">829.6 Hours</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Total Labour Cost</span>
+            <span class="metric-val" id="metricCost" style="color: var(--success);">$24,888</span>
+            <span class="metric-sub">@ $30.00 / Hour Blended</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Cloud Infra BoM</span>
+            <span class="metric-val" id="metricCloudCost">$645/mo</span>
+            <span class="metric-sub">Azure S0 / PayG Sizing</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Assumption Gate</span>
+            <span class="metric-val" id="metricGateStatus" style="color: var(--success); font-size: 1.05rem;">PASSED</span>
+            <span class="metric-sub">7 Approved / 0 Blocked</span>
+          </div>
+        </div>
+
+        <!-- TAB 1: BRD Document -->
+        <div id="tab-brd" class="tab-pane active">
+          <!-- Client Approval & Decision Banner -->
+          <div class="section-block" id="brdApprovalBanner" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%); border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span style="font-size: 1.2rem;">🌟</span>
+                  <h4 style="color: #fff; font-size: 1.05rem; font-weight: 700;">Client Plan Review & Decision</h4>
+                  <span class="badge badge-success" id="clientApprovalStatusBadge" style="font-size: 0.75rem;">Plan Synthesized</span>
+                </div>
+                <p style="font-size: 0.84rem; color: var(--text-muted); margin: 0;">
+                  Satisfied with the generated Business Requirements Document and Day-Wise Schedule? Proceed to lock & export, or modify any discovery response or default setting.
+                </p>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-select-confirm" onclick="openEditResponsesModal()" style="background: rgba(148, 163, 184, 0.15); border: 1px solid var(--border-color); color: #fff;">
+                  <span>✏️</span> Review / Modify Q&A Responses
+                </button>
+                <button class="btn-select-confirm" onclick="approveAndLockPlan()" style="background: var(--primary-gradient); box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);">
+                  <span>✅</span> Approve & Proceed Forward
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <div class="section-title">
+              <span id="brdTitle">PVR INOX — Contract Intelligence & Risk Visibility Platform</span>
+              <span class="brand-badge" id="brdBadgeTier">PoC TIER (Base)</span>
+            </div>
+            <p id="brdExecSummary"
+              style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
+              Complete the discovery interview on the left to synthesize the full executive BRD.
+            </p>
+          </div>
+
+          <div class="section-block">
+            <h3 class="section-title">🎯 Business Problem & Key Impacts</h3>
+            <p id="brdProblemText" style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 12px;"></p>
+            <ul id="brdImpactsList"
+              style="padding-left: 20px; font-size: 0.88rem; color: var(--text-muted); line-height: 1.8;">
+            </ul>
+          </div>
+
+          <div class="section-block">
+            <h3 class="section-title">⚡ Solution Narrative (Six Sentences)</h3>
+            <div id="brdSixSentences" style="background: rgba(15, 23, 42, 0.7); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.86rem; color: #cbd5e1; line-height: 1.6;">
+            </div>
+          </div>
+
+          <div class="section-block">
+            <h3 class="section-title">⚖️ Scope Demarcation: In-Scope vs. Explicitly Out-of-Scope</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div style="background: rgba(15, 23, 42, 0.7); padding: 14px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                <h4 style="color: var(--success); font-size: 0.9rem; margin-bottom: 8px;">✅ In-Scope Deliverables</h4>
+                <ul id="brdInScopeList" style="padding-left: 18px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;"></ul>
+              </div>
+              <div style="background: rgba(15, 23, 42, 0.7); padding: 14px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
+                <h4 style="color: #f87171; font-size: 0.9rem; margin-bottom: 8px;">❌ Explicitly Out-of-Scope</h4>
+                <ul id="brdOutScopeList" style="padding-left: 18px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;"></ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <h3 class="section-title">🔄 Multi-Pass Data Flow (Clause Coordinate Traceability)</h3>
+            <pre id="brdDataFlow"
+              style="background: #0f172a; padding: 14px; border-radius: 8px; font-size: 0.82rem; color: #94a3b8; white-space: pre-wrap; line-height: 1.6;">
+            </pre>
+          </div>
+        </div>
+
+        <!-- TAB 2: 12 Disciplines & Tasks -->
+        <div id="tab-roles" class="tab-pane" style="display: none;">
+          <div class="section-block">
+            <div class="section-title">
+              <span>12-Discipline Resource Loading Plan</span>
+              <span style="font-size: 0.82rem; color: var(--primary); font-weight: normal;">Standardized $30.00/Hour Blended Rate</span>
+            </div>
+            <table class="custom-table" id="rolesTable">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Discipline Role</th>
+                  <th>Standing Responsibilities</th>
+                  <th>Days</th>
+                  <th>Hours</th>
+                  <th>Cost ($30/hr)</th>
+                  <th>Active FTE</th>
+                  <th>Buffer FTE</th>
+                  <th>Total Staffed</th>
+                </tr>
+              </thead>
+              <tbody id="rolesTableBody">
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Standby Buffer Resources Section -->
+          <div class="section-block" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 14px;">
+            <div class="section-title" style="margin-bottom: 8px;">
+              <span style="color: var(--primary);">🛡️ Standby / Shadow Engineering Buffer Staffing</span>
+              <span id="standbyBufferBadge" class="badge-ai" style="font-size: 0.75rem;">15% Contingency Buffer</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+              To prevent project schedule slippage from leaves, illness, and unexpected technical hurdles, shadow engineers are kept unassigned to critical path tasks and on hot standby.
+            </p>
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Shadow Role</th>
+                  <th>Seniority</th>
+                  <th>Location</th>
+                  <th>Buffer Allocation</th>
+                  <th>Standby Coverage & Escalation Purpose</th>
+                </tr>
+              </thead>
+              <tbody id="backupResourcesTableBody">
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section-block">
+            <div class="section-title">
+              <span>Deterministic Task Estimation Ledger (18 Phases)</span>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Effort = Base × Phase Factor × Scale Factor × Uplift × Complexity</span>
+            </div>
+            <div style="max-height: 380px; overflow-y: auto;">
+              <table class="custom-table" id="tasksTable">
+                <thead>
+                  <tr>
+                    <th>Phase</th>
+                    <th>Task Name</th>
+                    <th>Role</th>
+                    <th>Base d</th>
+                    <th>Phase F</th>
+                    <th>Scale F</th>
+                    <th>Uplift</th>
+                    <th>Effort (d)</th>
+                  </tr>
+                </thead>
+                <tbody id="tasksTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: 18-Phase Roadmap & Feasibility -->
+        <div id="tab-phases" class="tab-pane" style="display: none;">
+          <div class="section-block">
+            <div class="section-title">
+              <span>Schedule Feasibility & Team Ramp Analysis</span>
+            </div>
+            <div id="feasibilityCard" style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <div class="section-block">
+            <h3 class="section-title">📅 18-Phase Project Roadmap & Sprints</h3>
+            <div id="phasesList" style="display: flex; flex-direction: column; gap: 10px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Day-Wise Execution Schedule Plan -->
+        <div id="tab-daywise" class="tab-pane" style="display: none;">
+          <!-- Day-Wise Summary Strip -->
+          <div class="metrics-strip" style="margin-bottom: 16px;">
+            <div class="metric-card">
+              <span class="metric-label">Total Calendar Days</span>
+              <span class="metric-val" id="daywiseTotalCalDays">0 d</span>
+              <span class="metric-sub" id="daywiseDateRange">Start to Completion</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Working Days Allocated</span>
+              <span class="metric-val" id="daywiseWorkingDays" style="color: var(--primary);">0 d</span>
+              <span class="metric-sub" id="daywiseWorkingHoursDay">@ 9.0 hrs/day (India)</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Statutory Holidays</span>
+              <span class="metric-val" id="daywiseHolidaysCount" style="color: var(--warning);">0 d</span>
+              <span class="metric-sub" id="daywiseLocationName">Statutory Calendar</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Weekend Non-Working</span>
+              <span class="metric-val" id="daywiseWeekendCount" style="color: var(--text-muted);">0 d</span>
+              <span class="metric-sub">Saturdays & Sundays</span>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+              <div class="section-title" style="margin-bottom: 0;">
+                <span>📅 Day-Wise Master Execution Plan</span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-header active" id="btnFilterAllDays" onclick="filterDayWiseSchedule('all')">All Days</button>
+                <button class="btn-header" id="btnFilterWorkDays" onclick="filterDayWiseSchedule('working')">Working Days Only</button>
+                <button class="btn-header" id="btnFilterHolidays" onclick="filterDayWiseSchedule('off')">Holidays & Weekends</button>
+              </div>
+            </div>
+
+            <table class="custom-table" id="dayWiseTable">
+              <thead>
+                <tr>
+                  <th style="width: 70px;">Day #</th>
+                  <th style="width: 140px;">Calendar Date</th>
+                  <th style="width: 180px;">Phase / Milestone</th>
+                  <th>Day-Wise Expected Tasks & Deliverables</th>
+                  <th style="width: 140px;">Assigned Role</th>
+                  <th style="width: 80px;">Hours</th>
+                  <th style="width: 120px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="dayWiseTableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 4: Technical Components (6) -->
+        <div id="tab-components" class="tab-pane" style="display: none;">
+          <div class="section-block">
+            <div class="section-title">
+              <span>Solution Technical Components (6-Component Decomposition)</span>
+            </div>
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 14px;">
+              Component decomposition detailing purpose, technology choice, key design decisions, interfaces in/out, data classification, scalability limits, security/RAI controls, failure modes, and dependencies.
+            </p>
+            <div id="componentsList" style="display: flex; flex-direction: column; gap: 14px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: Sizing & Cloud BoM -->
+        <div id="tab-sizing" class="tab-pane" style="display: none;">
+          <div class="section-block">
+            <div class="section-title">
+              <span>Runtime Sizing Drivers</span>
+            </div>
+            <div id="sizingMetricsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            </div>
+          </div>
+
+          <div class="section-block">
+            <div class="section-title">
+              <span>Cloud Infrastructure Bill of Materials (BoM)</span>
+              <span id="bomTotalBanner" style="font-size: 0.85rem; color: var(--success); font-weight: 600;">$645.00 / month</span>
+            </div>
+            <table class="custom-table" id="bomTable">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>SKU / Service</th>
+                  <th>Tier</th>
+                  <th>Quantity</th>
+                  <th>Monthly USD</th>
+                  <th>Justification</th>
+                </tr>
+              </thead>
+              <tbody id="bomTableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 6: Assumptions Gate -->
+        <div id="tab-assumptions" class="tab-pane" style="display: none;">
+          <div class="section-block">
+            <div class="section-title">
+              <span>Assumptions Approval Gate</span>
+              <button class="btn-replan" onclick="triggerReplan()">
+                <span>🔄</span> Re-Calculate Plan
+              </button>
+            </div>
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 14px;">
+              Every assumption must be marked <strong>Approve</strong> for the gate to pass. If you mark <strong>Correct</strong> or <strong>Reject</strong>, enter a reason and click <strong>'Re-Calculate Plan'</strong> to adjust estimates.
+            </p>
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>AID</th>
+                  <th>Category</th>
+                  <th>Statement</th>
+                  <th>Impact if Wrong</th>
+                  <th>Owner</th>
+                  <th>Status (Yours)</th>
+                  <th>Reason if Correct/Reject</th>
+                </tr>
+              </thead>
+              <tbody id="assumptionsTableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 7: Export & Delivery -->
+        <div id="tab-export" class="tab-pane" style="display: none;">
+          <div class="section-block">
+            <h3 class="section-title">📦 Project Deliverables Export</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">
+              Export your finalized BRD document, professional 16:9 PowerPoint presentation deck, and requirements handoff JSON.
+            </p>
+
+            <div class="export-grid">
+              <div class="export-card">
+                <span class="export-icon">📊</span>
+                <h4 style="color: #fff;">Microsoft PowerPoint (.pptx)</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">
+                  16:9 presentation deck covering Problem, Demarcation, 12-Role Loading, 18-Phase Timeline, and Cloud BoM.
+                </p>
+                <button class="btn-export btn-export-pptx" onclick="downloadPPTX()">
+                  <span>📥</span> Download Presentation (.pptx)
+                </button>
+              </div>
+
+              <div class="export-card">
+                <span class="export-icon">📑</span>
+                <h4 style="color: #fff;">BRD Specification Document</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">
+                  Complete Business Requirements Document with 6 Technical Components, In/Out Scope, and Printable Layout.
+                </p>
+                <button class="btn-export btn-export-brd" onclick="openBRDPreview()">
+                  <span>📄</span> View / Print Full BRD
+                </button>
+              </div>
+
+              <div class="export-card">
+                <span class="export-icon">📋</span>
+                <h4 style="color: #fff;">Requirements Handoff JSON</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">
+                  Complete machine-readable JSON dossier mapping all client discovery inputs, holiday calendars, and parameters.
+                </p>
+                <button class="btn-export" style="background: rgba(56, 189, 248, 0.15); border: 1px solid var(--primary); color: #fff;" onclick="downloadHandoffJSON()">
+                  <span>📥</span> Download Handoff JSON
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Multi-Cloud AI Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+          <span>☁️</span> Multi-Cloud AI Provider Settings
+        </h3>
+        <button onclick="closeSettingsModal()"
+          style="background: none; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer;">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Active Cloud Platform</label>
+        <select class="form-control" id="modalProviderSelect" onchange="onModalProviderChange()">
+          <option value="google">Google Cloud / Google AI Studio (Gemini)</option>
+          <option value="azure">Microsoft Azure (Azure OpenAI Service)</option>
+          <option value="aws">Amazon Web Services (AWS Bedrock)</option>
+        </select>
+      </div>
+
+      <div id="googleSettingsGroup">
+        <div class="form-group">
+          <label class="form-label">Gemini API Key</label>
+          <input type="password" class="form-control" id="modalGeminiKey" placeholder="AIzaSy...">
+        </div>
+      </div>
+
+      <div id="azureSettingsGroup" style="display: none;">
+        <div class="form-group">
+          <label class="form-label">Azure OpenAI Endpoint</label>
+          <input type="text" class="form-control" id="modalAzureEndpoint" placeholder="https://your-resource.openai.azure.com/">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Azure OpenAI API Key</label>
+          <input type="password" class="form-control" id="modalAzureKey" placeholder="Your Azure Key...">
+        </div>
+      </div>
+
+      <div id="awsSettingsGroup" style="display: none;">
+        <div class="form-group">
+          <label class="form-label">AWS Region</label>
+          <input type="text" class="form-control" id="modalAWSRegion" placeholder="us-east-1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">AWS Access Key ID</label>
+          <input type="text" class="form-control" id="modalAWSAccessKey" placeholder="AKIA...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">AWS Secret Access Key</label>
+          <input type="password" class="form-control" id="modalAWSSecretKey" placeholder="Secret Key...">
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn-header" onclick="closeSettingsModal()">Cancel</button>
+        <button class="btn-select-confirm" onclick="saveSettingsFromModal()">Save & Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review & Edit Discovery Responses Modal (Client Re-Plan Drawer) -->
+  <div class="modal-overlay" id="editResponsesModal">
+    <div class="modal-box" style="max-width: 900px; max-height: 88vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+          <span>✏️</span> Review & Modify Discovery Q&A Responses
+        </h3>
+        <button onclick="closeEditResponsesModal()"
+          style="background: none; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer;">✕</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+        Here are your responses and defaults from the interview. Modify any parameter below to immediately re-calculate the BRD, resource loading, BoM, and Day-Wise execution schedule.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <!-- Section A: Client & Scope -->
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">🏢 1. Client & Engagement Scope</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">Client & Engagement Working Title</label>
+              <input type="text" class="form-control" id="edit_q_client" placeholder="e.g., PVR INOX — Contract Intelligence">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Delivery Tier (11 Tiers)</label>
+              <select class="form-control" id="edit_q_tier">
+                <option value="PoC">PoC (Proof of Concept) [0.289]</option>
+                <option value="Pilot">Pilot [0.490]</option>
+                <option value="MVP">MVP (Minimum Viable Product) [0.730]</option>
+                <option value="Production Grade">Production Grade (Full enterprise build) [1.000]</option>
+                <option value="PoC to Pilot">PoC to Pilot [0.281]</option>
+                <option value="PoC to MVP">PoC to MVP [0.557]</option>
+                <option value="PoC to Production Grade">PoC to Production Grade [0.868]</option>
+                <option value="Pilot to MVP">Pilot to MVP [0.326]</option>
+                <option value="Pilot to Production Grade">Pilot to Production Grade [0.637]</option>
+                <option value="MVP to Production Grade">MVP to Production Grade [0.361]</option>
+                <option value="Delta on live production">Delta on live production [0.300]</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Target Project Kick-Off Start Date</label>
+              <input type="date" class="form-control" id="edit_q_start_date" value="2026-10-05">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Resource Buffer / Backup Strategy</label>
+              <select class="form-control" id="edit_q_buffer_strategy">
+                <option value="15% Shadow / Backup Capacity (Recommended)">15% Shadow / Backup Capacity (Recommended)</option>
+                <option value="10% Lean Standby Buffer">10% Lean Standby Buffer</option>
+                <option value="25% High-Resilience Shadow Engineering">25% High-Resilience Shadow Engineering</option>
+                <option value="0% Dedicated Core Only (Zero Standby)">0% Dedicated Core Only (Zero Standby)</option>
+              </select>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label">Business Problem & Functional Objectives</label>
+              <textarea class="form-control" id="edit_q_problem" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reference Duration (Weeks)</label>
+              <input type="number" class="form-control" id="edit_q_duration" step="0.5" min="1" max="52">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Target Cloud Platform</label>
+              <select class="form-control" id="edit_q_cloud">
+                <option value="Microsoft Azure">Microsoft Azure</option>
+                <option value="Google Cloud Platform (GCP)">Google Cloud Platform (GCP)</option>
+                <option value="Amazon Web Services (AWS)">Amazon Web Services (AWS)</option>
+                <option value="Hybrid / Multi-cloud">Hybrid / Multi-cloud</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Primary Delivery Geography</label>
+              <select class="form-control" id="edit_q_geography">
+                <option value="India">India (9.0 hrs/day)</option>
+                <option value="United Kingdom">United Kingdom (7.0 hrs/day)</option>
+                <option value="United States">United States (8.0 hrs/day)</option>
+                <option value="European Union">European Union (7.5 hrs/day)</option>
+                <option value="Singapore">Singapore (8.5 hrs/day)</option>
+                <option value="United Arab Emirates">United Arab Emirates (8.0 hrs/day)</option>
+                <option value="Australia">Australia (7.5 hrs/day)</option>
+                <option value="Canada">Canada (8.0 hrs/day)</option>
+                <option value="Japan">Japan (8.0 hrs/day)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section B: Scale Drivers -->
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📊 2. Scale & Complexity Drivers</h4>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">Number of Use Cases</label>
+              <input type="number" class="form-control" id="edit_q_usecases" min="1" max="50">
+            </div>
+            <div class="form-group">
+              <label class="form-label">User Personas</label>
+              <input type="number" class="form-control" id="edit_q_personas" min="1" max="50">
+            </div>
+            <div class="form-group">
+              <label class="form-label">External System Integrations</label>
+              <input type="number" class="form-control" id="edit_q_integrations" min="0" max="50">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Distinct Data Sources</label>
+              <input type="number" class="form-control" id="edit_q_datasources" min="1" max="50">
+            </div>
+            <div class="form-group">
+              <label class="form-label">User Interaction Channels</label>
+              <input type="number" class="form-control" id="edit_q_channels" min="1" max="20">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Languages Supported</label>
+              <input type="number" class="form-control" id="edit_q_languages" min="1" max="50">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Deployment Environments</label>
+              <input type="number" class="form-control" id="edit_q_envs" min="1" max="10">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Architecture Components</label>
+              <input type="number" class="form-control" id="edit_q_components" min="1" max="30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Complexity Level</label>
+              <select class="form-control" id="edit_q_complexity">
+                <option value="Low">Low (0.85x)</option>
+                <option value="Medium">Medium (1.00x)</option>
+                <option value="High">High (1.25x)</option>
+                <option value="Very High">Very High (1.50x)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Regulatory & Compliance</label>
+              <select class="form-control" id="edit_q_compliance">
+                <option value="None">None (1.00x)</option>
+                <option value="Internal policy only">Internal policy only (1.05x)</option>
+                <option value="Regulated - moderate">Regulated - moderate (1.15x)</option>
+                <option value="Regulated - high (BFSI/Health/Gov)">Regulated - high (BFSI/Health/Gov) (1.30x)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Security Posture</label>
+              <select class="form-control" id="edit_q_security">
+                <option value="Standard">Standard (1.00x)</option>
+                <option value="Enhanced">Enhanced (1.12x)</option>
+                <option value="Restricted / Air-gapped">Restricted / Air-gapped (1.30x)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">HA / DR Resilience Tier</label>
+              <select class="form-control" id="edit_q_hadr">
+                <option value="None (single instance)">None (single instance)</option>
+                <option value="Zone redundant">Zone redundant</option>
+                <option value="Region pair - active/passive">Region pair - active/passive</option>
+                <option value="Region pair - active/active">Region pair - active/active</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section C: Sizing & Users -->
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">👥 3. Sizing & Workload Expectations</h4>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">Total Named Users</label>
+              <input type="number" class="form-control" id="edit_q_named_users" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Peak Concurrent Users</label>
+              <input type="number" class="form-control" id="edit_q_concurrent_users" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Expected Daily Requests</label>
+              <input type="number" class="form-control" id="edit_q_daily_requests" min="1">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+        <button class="btn-header" onclick="closeEditResponsesModal()">Cancel</button>
+        <button class="btn-select-confirm" onclick="saveEditedResponsesAndReplan()" style="background: var(--primary-gradient);">
+          <span>⚡</span> Save & Re-Calculate Plan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Console Modal -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal-box" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <h3 style="font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+            <span>🛡️</span> Enterprise Admin Console
+          </h3>
+          <!-- Role Toggle: Viewer vs Admin -->
+          <div style="display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.8); padding: 4px 8px; border-radius: 20px; border: 1px solid var(--border-color);">
+            <button class="btn-role-toggle active" id="btnRoleViewer" onclick="setAdminRoleMode(false)">🔒 View-Only Mode</button>
+            <button class="btn-role-toggle" id="btnRoleAdmin" onclick="setAdminRoleMode(true)">🛡️ Admin Edit Mode</button>
+          </div>
+        </div>
+        <button onclick="closeAdminModal()"
+          style="background: none; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer;">✕</button>
+      </div>
+
+      <div id="adminModeBanner" style="padding: 8px 12px; border-radius: 6px; font-size: 0.82rem; margin-bottom: 14px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--primary);">
+        🔒 <strong>View-Only Mode:</strong> Regular users can inspect system default settings, location working hours, and holiday schedules. Switch to Admin Edit Mode to modify.
+      </div>
+
+      <!-- Section 1: Global Defaults -->
+      <div class="section-block" style="margin-bottom: 16px;">
+        <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 10px;">⚙️ Global System Parameters & Rates</h4>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Blended Hourly Rate (USD)</label>
+            <input type="number" class="form-control admin-field" id="adminHourlyRate" value="30.0" disabled>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Default Baseline Working Hours</label>
+            <input type="number" class="form-control admin-field" id="adminHoursPerDay" value="8.0" disabled>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Working Days Per Week</label>
+            <input type="number" class="form-control admin-field" id="adminDaysPerWeek" value="5" disabled>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Location-Wise Working Hours -->
+      <div class="section-block" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin: 0;">🌍 Location-Wise Working Hours & Calendars</h4>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Configures daily capacity (e.g., India=9.0, UK=7.0, US=8.0, EU=7.5, SG=8.5)</span>
+        </div>
+        <table class="custom-table" id="adminCalendarsTable">
+          <thead>
+            <tr>
+              <th>Country Code</th>
+              <th>Country Name</th>
+              <th>Daily Working Hours</th>
+              <th>Working Days/Wk</th>
+              <th>Statutory Holidays</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminCalendarsTableBody">
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Section 3: Statutory Holiday Manager & Upload -->
+      <div class="section-block" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin: 0;">📅 Location Statutory Holidays Manager</h4>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <label class="form-label" style="margin: 0; font-size: 0.8rem;">Select Location:</label>
+            <select class="form-control" id="adminSelectedCountry" onchange="renderAdminHolidaysList()" style="padding: 4px 8px; width: 140px; font-size: 0.82rem;">
+              <option value="IN">India (IN)</option>
+              <option value="UK">United Kingdom (UK)</option>
+              <option value="US">United States (US)</option>
+              <option value="EU">European Union (EU)</option>
+              <option value="SG">Singapore (SG)</option>
+              <option value="AE">UAE (AE)</option>
+              <option value="AU">Australia (AU)</option>
+              <option value="CA">Canada (CA)</option>
+              <option value="JP">Japan (JP)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <!-- Left: Current Holidays List -->
+          <div style="background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); max-height: 220px; overflow-y: auto;">
+            <table class="custom-table" style="font-size: 0.8rem;" id="adminHolidaysTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Holiday Name</th>
+                  <th>Type</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="adminHolidaysTableBody">
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Right: Add / Upload Holiday Form -->
+          <div style="background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <h5 style="color: #cbd5e1; font-size: 0.84rem; margin-bottom: 8px;">➕ Add Single Holiday (Admin Only)</h5>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <input type="date" class="form-control admin-field" id="newHolidayDate" disabled>
+              <input type="text" class="form-control admin-field" id="newHolidayName" placeholder="e.g. Independence Day" disabled>
+            </div>
+            <button class="btn-select-confirm admin-field" onclick="addAdminHolidayFromModal()" style="width: 100%; padding: 6px; font-size: 0.82rem; margin-bottom: 12px;" disabled>
+              <span>➕</span> Add Holiday to Location
+            </button>
+
+            <h5 style="color: #cbd5e1; font-size: 0.84rem; margin-bottom: 6px;">📂 Upload Holiday Sheet (.csv / .json)</h5>
+            <div style="display: flex; gap: 8px;">
+              <input type="file" class="form-control admin-field" id="adminHolidayFileInput" accept=".csv,.json,.txt" style="font-size: 0.78rem; padding: 4px;" disabled>
+              <button class="btn-header admin-field" onclick="uploadAdminHolidaySheet()" style="padding: 4px 10px; font-size: 0.8rem;" disabled>Upload</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+        <button class="btn-header" onclick="closeAdminModal()">Close</button>
+        <button class="btn-select-confirm admin-field" id="btnSaveAdminDefaults" onclick="saveAdminDefaultsFromModal()" disabled>
+          <span>💾</span> Save Admin Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,245 @@
+{
+  "handoff_metadata": {
+    "schema_version": "1.0",
+    "handoff_id": "HND-03206173-20260930083100",
+    "generated_at": "2026-09-30T08:31:00.102039Z",
+    "source_agent": "Agent 1: Discovery & Requirements Analyst",
+    "target_agent": "Agent 2: Project Planner & Estimator",
+    "status": "SATISFIED_COMPLETE_INFORMATION",
+    "completion_trigger": "All foundational usecase discovery questions satisfied by client",
+    "total_questions_mapped": 11,
+    "direct_answers_count": 10,
+    "default_fallbacks_count": 1,
+    "total_ambiguity_strikes": 3
+  },
+  "usecase_summary": {
+    "client_name": "Enterprise Client | Contract Intelligence & Risk Visibility Platform",
+    "engagement_title": "Enterprise Client | Contract Intelligence & Risk Visibility Platform \u2014 AI Planning & Automation Platform",
+    "delivery_tier": "MVP",
+    "reference_duration": "4 Weeks",
+    "primary_cloud_platform": "Multi-Cloud / Hybrid",
+    "deployment_geography": "India",
+    "problem_statement": "**Problem Statement & Operational Bottlenecks:**\n\u2022 **Core Objective:** i want a customer support chatbot\n\u2022 **Manual Bottlenecks:** humans review them about 100 pages contracts it takes 3 days for each contract\n\u2022 **Operational & Financial Impact:** Delayed deal turnarounds, risk of missed auto-renewals, financial leakage, and unmonitored compliance exposure",
+    "staffing_roles": "Enterprise Cloud Integration & Security Pod (Cloud Solutions Architect, Security/IAM Specialist, DevOps, Data Engineer)",
+    "ai_interventions": "Multi-Pass Agentic Extraction & Classification",
+    "non_ai_interventions": "Standard Azure Serverless (Blob, Functions, SQL, SSO Auth)",
+    "sizing_scale": "PoC Scale: 50-200 Named Users | 50 Peak Concurrent | 2,000 req/day",
+    "governance_and_compliance": "Full Human-in-the-Loop + 100% Clause Traceability + Entra SSO"
+  },
+  "location_and_holiday_calendar": {
+    "country_code": "IN",
+    "country_name": "India",
+    "working_days_per_week": 5,
+    "annual_holiday_allowance": 12,
+    "total_statutory_holidays": 8,
+    "holidays_list": [
+      {
+        "date": "2026-01-26",
+        "name": "Republic Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-03-04",
+        "name": "Holi",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-03-21",
+        "name": "Eid ul-Fitr",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-08-15",
+        "name": "Independence Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-10-02",
+        "name": "Mahatma Gandhi Jayanti",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-10-20",
+        "name": "Dussehra",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-11-08",
+        "name": "Diwali",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "type": "Statutory"
+      }
+    ]
+  },
+  "commercial_and_system_parameters": {
+    "blended_hourly_rate_usd": 30.0,
+    "currency": "USD",
+    "currency_symbol": "$",
+    "working_hours_per_day": 8.0,
+    "working_days_per_week": 5,
+    "max_ambiguity_strikes_allowed": 3,
+    "max_extraction_passes": 3
+  },
+  "questions_and_requirements_mapping": [
+    {
+      "step": 1,
+      "question_id": "q_client",
+      "category": "Scope",
+      "question_title": "Client & Engagement Name",
+      "prompt_asked": "Who is the client/account, and what is the working title for this project or initiative?",
+      "client_requirement": "Enterprise Client | Contract Intelligence & Risk Visibility Platform",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 3,
+      "hitl_confirmed": true,
+      "admin_default_baseline": "Enterprise Client | Contract Intelligence & Risk Visibility Platform",
+      "notes": "Admin default confirmed via Human-in-the-Loop (HITL) confirmation after 3 unclarified turns."
+    },
+    {
+      "step": 2,
+      "question_id": "q_tier",
+      "category": "Scope",
+      "question_title": "Delivery Tier",
+      "prompt_asked": "What is the targeted delivery tier for this phase?",
+      "client_requirement": "MVP",
+      "is_default_fallback": false,
+      "ambiguity_strikes": 0,
+      "hitl_confirmed": false,
+      "admin_default_baseline": "PoC",
+      "notes": "Validated from client interview input."
+    },
+    {
+      "step": 3,
+      "question_id": "q_problem",
+      "category": "Scope",
+      "question_title": "Problem Statement & Pain Points",
+      "prompt_asked": "Describe the core business problem, current manual process, and key operational pain points in 2 to 5 sentences.",
+      "client_requirement": "**Problem Statement & Operational Bottlenecks:**\n\u2022 **Core Objective:** i want a customer support chatbot\n\u2022 **Manual Bottlenecks:** humans review them about 100 pages contracts it takes 3 days for each contract\n\u2022 **Operational & Financial Impact:** Delayed deal turnarounds, risk of missed auto-renewals, financial leakage, and unmonitored compliance exposure",
+      "is_default_fallback": false,
+      "ambiguity_strikes": 0,
+      "hitl_confirmed": false,
+      "admin_default_baseline": "Manual review and verification of unstructured business documents is slow, error-prone, and dependent on scarce domain experts. Lack of consolidated traceability leads to unmonitored compliance risks.",
+      "notes": "Synthesized across 3 operational discovery facets in 3 turns."
+    },
+    {
+      "step": 4,
+      "question_id": "q_cloud",
+      "category": "Technical",
+      "question_title": "Primary Cloud & Hosting Platform",
+      "prompt_asked": "Which cloud platform will host this solution? (We are architecting on Azure, but will use Google Studio for early AI prototyping).",
+      "client_requirement": "Multi-Cloud / Hybrid",
+      "is_default_fallback": false,
+      "ambiguity_strikes": 0,
+      "hitl_confirmed": false,
+      "admin_default_baseline": "Microsoft Azure",
+      "notes": "Validated from client interview input."
+    },
+    {
+      "step": 5,
+      "question_id": "q_geography",
+      "category": "Technical",
+      "question_title": "Deployment Geography & Data Residency",
+      "prompt_asked": "What is the primary deployment geography and data residency boundary?",
+      "client_requirement": "India",
+      "is_default_fallback": false,
+      "ambiguity_strikes": 0,
+      "hitl_confirmed": false,
+      "admin_default_baseline": "India",
+      "notes": "Validated from client interview input."
+    },
+    {
+      "step": 6,
+      "question_id": "q_duration",
+      "category": "Scale",
+      "question_title": "Reference Duration (Weeks)",
+      "prompt_asked": "What is the reference delivery duration expected for this engagement?",
+      "client_requirement": "4 Weeks",
+      "is_default_fallback": false,
+      "ambiguity_strikes": 0,
+      "hitl_confirmed": false,
+      "admin_default_baseline": "6 Weeks",
+      "notes": "Validated from client interview input."
+    },
+    {
+      "step": 7,
+      "question_id": "q_staffing",
+      "category": "Scope",
+      "question_title": "Primary Engineering Pod & Staffing Roles",
+      "prompt_asked": "Which core engineering pod and discipline composition will be allocated for this engagement?",
+      "client_requirement": "Enterprise Cloud Integration & Security Pod (Cloud Solutions Architect, Security/IAM Specialist, DevOps, Data Engineer)",
+      "is_default_fallback": false,
+      "ambiguity_strikes": 0,
+      "hitl_confirmed": false,
+      "admin_default_baseline": "Full-Stack AI Engineering Pod (Lead AI Architect, Data Engineer, Full-Stack Dev, QA, PM)",
+      "notes": "Validated from client interview input."
+    },
+    {
+      "step": 8,
+      "question_id": "q_ai_interventions",
+      "category": "Technical",
+      "question_title": "AI & Agentic Interventions",
+      "prompt_asked": "Which AI capabilities and agentic workflows are required to deliver the solution?",
+      "client_requirement": "Multi-Pass Agentic Extraction & Classification",
+      "is_default_fallback": false,
+      "ambiguity_strikes": 0,
+      "hitl_confirmed": false,
+      "admin_default_baseline": "Multi-Pass Agentic Extraction & Classification",
+      "notes": "Validated from client interview input."
+    },
+    {
+      "step": 9,
+      "question_id": "q_non_ai",
+      "category": "Technical",
+      "question_title": "Non-AI Interventions & Deterministic Workflows",
+      "prompt_asked": "Confirm the deterministic (Non-AI) components required so they are NOT delegated to AI agents:",
+      "client_requirement": "Standard Azure Serverless (Blob, Functions, SQL, SSO Auth)",
+      "is_default_fallback": false,
+      "ambiguity_strikes": 0,
+      "hitl_confirmed": false,
+      "admin_default_baseline": "Standard Azure Serverless (Blob, Functions, SQL, SSO Auth)",
+      "notes": "Validated from client interview input."
+    },
+    {
+      "step": 10,
+      "question_id": "q_scale",
+      "category": "Scale",
+      "question_title": "Sizing & Concurrency Drivers",
+      "prompt_asked": "What is the anticipated usage scale (total users, peak concurrency, daily volume)?",
+      "client_requirement": "PoC Scale: 50-200 Named Users | 50 Peak Concurrent | 2,000 req/day",
+      "is_default_fallback": false,
+      "ambiguity_strikes": 0,
+      "hitl_confirmed": false,
+      "admin_default_baseline": "PoC Scale: 50-200 Named Users | 50 Peak Concurrent | 2,000 req/day",
+      "notes": "Validated from client interview input."
+    },
+    {
+      "step": 11,
+      "question_id": "q_governance",
+      "category": "Governance",
+      "question_title": "Responsible AI, Security & Human-in-the-Loop",
+      "prompt_asked": "What level of human oversight, auditability, and guardrails are mandated?",
+      "client_requirement": "Full Human-in-the-Loop + 100% Clause Traceability + Entra SSO",
+      "is_default_fallback": false,
+      "ambiguity_strikes": 0,
+      "hitl_confirmed": false,
+      "admin_default_baseline": "Full Human-in-the-Loop + 100% Clause Traceability + Entra SSO",
+      "notes": "Validated from client interview input."
+    }
+  ],
+  "attached_documents_context": [],
+  "handoff_instructions_for_next_agent": {
+    "agent_role": "Agent 2 - Project Planner & Estimator",
+    "mandate": "Synthesize a production-ready Business Requirements Document (BRD) and comprehensive Project Plan based strictly on the mapped requirements above.",
+    "deliverables_required": [
+      "1. Complete Executive BRD with AI vs Non-AI demarcation and architecture narrative",
+      "2. 7-discipline resource loading table calculating hours and total labour cost at blended rate",
+      "3. 4-Phase Delivery Roadmap factoring the regional statutory calendar & working days",
+      "4. Cloud Bill of Materials (BoM) with monthly cost estimation",
+      "5. Master Assumptions Ledger linking fallback items and enterprise governance",
+      "6. 10-Slide Executive PowerPoint Deck ready for download"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "startDate": "2026-10-05",
+  "workingDaysPerWeek": 5,
+  "leaveDaysPerYear": 18,
+  "utilisation": 0.8,
+  "contingencyPct": 15,
+  "currency": "USD",
+  "rates": { "Business Analyst": 300, "Solution Architect": 450, "Developer": 320, "QA Engineer": 260, "Project Manager": 380, "Data/AI Engineer": 400 },
+  "geographies": {
+    "India": { "holidays": [
+      {"date":"2026-10-20","name":"Dussehra"},
+      {"date":"2026-11-08","name":"Diwali"},{"date":"2026-11-09","name":"Govardhan Puja"},
+      {"date":"2026-12-25","name":"Christmas"},{"date":"2027-01-26","name":"Republic Day"}]},
+    "United States": { "holidays": [
+      {"date":"2026-11-26","name":"Thanksgiving"},{"date":"2026-12-25","name":"Christmas"},{"date":"2027-01-01","name":"New Year"}]},
+    "United Kingdom": { "holidays": [
+      {"date":"2026-12-25","name":"Christmas Day"},{"date":"2026-12-28","name":"Boxing Day (obs.)"},{"date":"2027-01-01","name":"New Year"}]},
+    "Other": { "holidays": [] }
+  },
+  "geography": "India"
+}

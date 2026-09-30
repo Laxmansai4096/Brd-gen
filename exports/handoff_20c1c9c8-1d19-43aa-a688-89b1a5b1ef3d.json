@@ -1,0 +1,221 @@
+{
+  "handoff_metadata": {
+    "schema_version": "1.0",
+    "handoff_id": "HND-20c1c9c8-20260929121439",
+    "generated_at": "2026-09-29T12:14:39.053092Z",
+    "source_agent": "Agent 1: Discovery & Requirements Analyst",
+    "target_agent": "Agent 2: Project Planner & Estimator",
+    "status": "SATISFIED_COMPLETE_INFORMATION",
+    "completion_trigger": "All foundational usecase discovery questions satisfied by client",
+    "total_questions_mapped": 10,
+    "direct_answers_count": 0,
+    "default_fallbacks_count": 10,
+    "total_ambiguity_strikes": 0
+  },
+  "usecase_summary": {
+    "client_name": "Enterprise Client",
+    "engagement_title": "Enterprise Client \u2014 AI Planning & Automation Platform",
+    "delivery_tier": "PoC",
+    "reference_duration": "6 Weeks",
+    "primary_cloud_platform": "Microsoft Azure",
+    "deployment_geography": "India",
+    "problem_statement": "Manual review and verification of unstructured business documents is slow and error-prone.",
+    "ai_interventions": "Multi-Pass Agentic Extraction & Classification",
+    "non_ai_interventions": "Standard Azure Serverless (Blob, Functions, SQL, SSO Auth)",
+    "sizing_scale": "PoC Scale: 50-200 Named Users",
+    "governance_and_compliance": "Full Human-in-the-Loop + 100% Clause Traceability"
+  },
+  "location_and_holiday_calendar": {
+    "country_code": "IN",
+    "country_name": "India",
+    "working_days_per_week": 5,
+    "annual_holiday_allowance": 12,
+    "total_statutory_holidays": 8,
+    "holidays_list": [
+      {
+        "date": "2026-01-26",
+        "name": "Republic Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-03-04",
+        "name": "Holi",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-03-21",
+        "name": "Eid ul-Fitr",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-08-15",
+        "name": "Independence Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-10-02",
+        "name": "Mahatma Gandhi Jayanti",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-10-20",
+        "name": "Dussehra",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-11-08",
+        "name": "Diwali",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "type": "Statutory"
+      }
+    ]
+  },
+  "commercial_and_system_parameters": {
+    "blended_hourly_rate_usd": 30.0,
+    "currency": "USD",
+    "currency_symbol": "$",
+    "working_hours_per_day": 8.0,
+    "working_days_per_week": 5,
+    "max_ambiguity_strikes_allowed": 3,
+    "max_extraction_passes": 3
+  },
+  "questions_and_requirements_mapping": [
+    {
+      "step": 1,
+      "question_id": "q_client",
+      "category": "Scope",
+      "question_title": "Client & Engagement Name",
+      "prompt_asked": "Who is the client/account, and what is the working title for this project or initiative?",
+      "client_requirement": "Enterprise Client | Contract Intelligence & Risk Visibility Platform",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 0,
+      "admin_default_baseline": "Enterprise Client | Contract Intelligence & Risk Visibility Platform",
+      "notes": "Industry default benchmark applied following ambiguity."
+    },
+    {
+      "step": 2,
+      "question_id": "q_tier",
+      "category": "Scope",
+      "question_title": "Delivery Tier",
+      "prompt_asked": "What is the targeted delivery tier for this phase?",
+      "client_requirement": "PoC",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 0,
+      "admin_default_baseline": "PoC",
+      "notes": "Industry default benchmark applied following ambiguity."
+    },
+    {
+      "step": 3,
+      "question_id": "q_problem",
+      "category": "Scope",
+      "question_title": "Problem Statement & Pain Points",
+      "prompt_asked": "Describe the core business problem, current manual process, and key operational pain points in 2 to 5 sentences.",
+      "client_requirement": "Manual review and verification of unstructured business documents is slow, error-prone, and dependent on scarce domain experts. Lack of consolidated traceability leads to unmonitored compliance risks.",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 0,
+      "admin_default_baseline": "Manual review and verification of unstructured business documents is slow, error-prone, and dependent on scarce domain experts. Lack of consolidated traceability leads to unmonitored compliance risks.",
+      "notes": "Industry default benchmark applied following ambiguity."
+    },
+    {
+      "step": 4,
+      "question_id": "q_cloud",
+      "category": "Technical",
+      "question_title": "Primary Cloud & Hosting Platform",
+      "prompt_asked": "Which cloud platform will host this solution? (We are architecting on Azure, but will use Google Studio for early AI prototyping).",
+      "client_requirement": "Microsoft Azure",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 0,
+      "admin_default_baseline": "Microsoft Azure",
+      "notes": "Industry default benchmark applied following ambiguity."
+    },
+    {
+      "step": 5,
+      "question_id": "q_geography",
+      "category": "Technical",
+      "question_title": "Deployment Geography & Data Residency",
+      "prompt_asked": "What is the primary deployment geography and data residency boundary?",
+      "client_requirement": "India",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 0,
+      "admin_default_baseline": "India",
+      "notes": "Industry default benchmark applied following ambiguity."
+    },
+    {
+      "step": 6,
+      "question_id": "q_duration",
+      "category": "Scale",
+      "question_title": "Reference Duration (Weeks)",
+      "prompt_asked": "What is the reference delivery duration expected for this engagement?",
+      "client_requirement": "6 Weeks",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 0,
+      "admin_default_baseline": "6 Weeks",
+      "notes": "Industry default benchmark applied following ambiguity."
+    },
+    {
+      "step": 7,
+      "question_id": "q_ai_interventions",
+      "category": "Technical",
+      "question_title": "AI & Agentic Interventions",
+      "prompt_asked": "Which AI capabilities and agentic workflows are required to deliver the solution?",
+      "client_requirement": "Multi-Pass Agentic Extraction & Classification",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 0,
+      "admin_default_baseline": "Multi-Pass Agentic Extraction & Classification",
+      "notes": "Industry default benchmark applied following ambiguity."
+    },
+    {
+      "step": 8,
+      "question_id": "q_non_ai",
+      "category": "Technical",
+      "question_title": "Non-AI Interventions & Deterministic Workflows",
+      "prompt_asked": "Confirm the deterministic (Non-AI) components required so they are NOT delegated to AI agents:",
+      "client_requirement": "Standard Azure Serverless (Blob, Functions, SQL, SSO Auth)",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 0,
+      "admin_default_baseline": "Standard Azure Serverless (Blob, Functions, SQL, SSO Auth)",
+      "notes": "Industry default benchmark applied following ambiguity."
+    },
+    {
+      "step": 9,
+      "question_id": "q_scale",
+      "category": "Scale",
+      "question_title": "Sizing & Concurrency Drivers",
+      "prompt_asked": "What is the anticipated usage scale (total users, peak concurrency, daily volume)?",
+      "client_requirement": "PoC Scale: 50-200 Named Users | 50 Peak Concurrent | 2,000 req/day",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 0,
+      "admin_default_baseline": "PoC Scale: 50-200 Named Users | 50 Peak Concurrent | 2,000 req/day",
+      "notes": "Industry default benchmark applied following ambiguity."
+    },
+    {
+      "step": 10,
+      "question_id": "q_governance",
+      "category": "Governance",
+      "question_title": "Responsible AI, Security & Human-in-the-Loop",
+      "prompt_asked": "What level of human oversight, auditability, and guardrails are mandated?",
+      "client_requirement": "Full Human-in-the-Loop + 100% Clause Traceability + Entra SSO",
+      "is_default_fallback": true,
+      "ambiguity_strikes": 0,
+      "admin_default_baseline": "Full Human-in-the-Loop + 100% Clause Traceability + Entra SSO",
+      "notes": "Industry default benchmark applied following ambiguity."
+    }
+  ],
+  "attached_documents_context": [],
+  "handoff_instructions_for_next_agent": {
+    "agent_role": "Agent 2 - Project Planner & Estimator",
+    "mandate": "Synthesize a production-ready Business Requirements Document (BRD) and comprehensive Project Plan based strictly on the mapped requirements above.",
+    "deliverables_required": [
+      "1. Complete Executive BRD with AI vs Non-AI demarcation and architecture narrative",
+      "2. 7-discipline resource loading table calculating hours and total labour cost at blended rate",
+      "3. 4-Phase Delivery Roadmap factoring the regional statutory calendar & working days",
+      "4. Cloud Bill of Materials (BoM) with monthly cost estimation",
+      "5. Master Assumptions Ledger linking fallback items and enterprise governance",
+      "6. 10-Slide Executive PowerPoint Deck ready for download"
+    ]
+  }
+}

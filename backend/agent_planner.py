@@ -10,7 +10,7 @@ from backend.models import (
 )
 from backend.config import get_settings
 from backend.admin_store import (
-    get_admin_defaults, get_calendar_for_geography, get_working_hours_for_geography, get_master_assumptions,
+    get_admin_defaults, get_calendar_for_geography, get_working_hours_for_geography, get_hourly_rate_for_geography, get_master_assumptions,
     DELIVERY_TIERS, PHASE_APPLICABILITY_ANCHORS, SCALE_DRIVERS,
     COMPLEXITY_MULTIPLIERS, COMPLIANCE_UPLIFTS, SECURITY_UPLIFTS,
     HA_DR_FOOTPRINTS, STANDARD_ROLES, STANDARD_TASK_LIBRARY,
@@ -792,8 +792,17 @@ def generate_brd(
     hours_per_day: Optional[float] = None
 ) -> BRDDocument:
     defaults = get_admin_defaults()
-    rate = blended_rate if blended_rate is not None else float(defaults.get("blended_hourly_rate", 30.0))
-    daily_hours = hours_per_day if hours_per_day is not None else float(defaults.get("hours_per_day", 8.0))
+    geo_ans = session.answers.get("q_geography", AnswerItem(question_id="q_geography", question_title="Geography", answer="India")).answer
+    
+    if hours_per_day is not None:
+        daily_hours = hours_per_day
+    else:
+        daily_hours = get_working_hours_for_geography(geo_ans)
+        
+    if blended_rate is not None:
+        rate = blended_rate
+    else:
+        rate = get_hourly_rate_for_geography(geo_ans)
     
     tier_ans = session.answers.get("q_tier", AnswerItem(question_id="q_tier", question_title="Delivery Tier", answer="PoC")).answer
     tier_info = DELIVERY_TIERS.get(tier_ans, DELIVERY_TIERS["PoC"])
@@ -833,9 +842,6 @@ def generate_brd(
         ref_weeks = 6.0
         
     cloud_ans = session.answers.get("q_cloud", AnswerItem(question_id="q_cloud", question_title="Cloud", answer="Microsoft Azure")).answer
-    geo_ans = session.answers.get("q_geography", AnswerItem(question_id="q_geography", question_title="Geography", answer="India")).answer
-    if hours_per_day is None:
-        daily_hours = get_working_hours_for_geography(geo_ans)
     
     def get_num_ans(qid: str, default_val: float) -> float:
         if qid in session.answers:

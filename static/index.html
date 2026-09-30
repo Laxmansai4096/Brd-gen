@@ -1147,7 +1147,7 @@
         <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 10px;">⚙️ Global System Parameters & Rates</h4>
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
           <div class="form-group">
-            <label class="form-label">Blended Hourly Rate (USD)</label>
+            <label class="form-label">Global Baseline Rate (USD/hr)</label>
             <input type="number" class="form-control admin-field" id="adminHourlyRate" value="30.0" disabled>
           </div>
           <div class="form-group">
@@ -1159,19 +1159,23 @@
             <input type="number" class="form-control admin-field" id="adminDaysPerWeek" value="5" disabled>
           </div>
         </div>
+        <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">
+          💡 <em>Location-specific hourly rates and working hours configured below automatically govern engagements in their respective regions (e.g. India = 9.0h @ $25/hr, UK = 7.0h @ $65/hr, US = 8.0h @ $85/hr).</em>
+        </p>
       </div>
 
-      <!-- Section 2: Location-Wise Working Hours -->
+      <!-- Section 2: Location-Wise Working Hours & Hourly Rates -->
       <div class="section-block" style="margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin: 0;">🌍 Location-Wise Working Hours & Calendars</h4>
-          <span style="font-size: 0.8rem; color: var(--text-muted);">Configures daily capacity (e.g., India=9.0, UK=7.0, US=8.0, EU=7.5, SG=8.5)</span>
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin: 0;">🌍 Location-Wise Working Hours, Rates & Calendars</h4>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Regional capacity & blended rate cards by delivery geography</span>
         </div>
         <table class="custom-table" id="adminCalendarsTable">
           <thead>
             <tr>
               <th>Country Code</th>
               <th>Country Name</th>
+              <th>Hourly Rate ($/hr)</th>
               <th>Daily Working Hours</th>
               <th>Working Days/Wk</th>
               <th>Statutory Holidays</th>

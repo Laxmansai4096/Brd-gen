@@ -1231,31 +1231,47 @@ function renderAdminCalendarsTable() {
 
   tbody.innerHTML = Object.entries(cachedAdminCalendars).map(([code, cal]) => {
     const hours = cal.daily_working_hours || 8.0;
+    const rate = cal.hourly_rate || 30.0;
     const hCount = (cal.holidays || []).length;
     return `
       <tr>
         <td><strong>${code}</strong></td>
         <td>${cal.country_name}</td>
         <td>
-          <input type="number" step="0.5" class="form-control admin-field" style="width: 80px; padding: 4px 8px; font-size: 0.8rem;" value="${hours}" ${isAdminEditMode ? '' : 'disabled'} onchange="saveLocationHours('${code}', this.value)">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">$</span>
+            <input type="number" step="1.0" id="rate_${code}" class="form-control admin-field" style="width: 75px; padding: 4px 6px; font-size: 0.82rem;" value="${rate}" ${isAdminEditMode ? '' : 'disabled'} onchange="saveLocationCalendar('${code}')">
+            <span style="font-size: 0.74rem; color: var(--text-dim);">/hr</span>
+          </div>
+        </td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <input type="number" step="0.5" id="hours_${code}" class="form-control admin-field" style="width: 70px; padding: 4px 6px; font-size: 0.82rem;" value="${hours}" ${isAdminEditMode ? '' : 'disabled'} onchange="saveLocationCalendar('${code}')">
+            <span style="font-size: 0.74rem; color: var(--text-dim);">hrs</span>
+          </div>
         </td>
         <td>${cal.working_days_per_week || 5} d/wk</td>
         <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.75rem;">${hCount} Holidays</span></td>
         <td>
-          <button class="btn-header admin-field" style="padding: 3px 8px; font-size: 0.75rem;" ${isAdminEditMode ? '' : 'disabled'} onclick="saveLocationHours('${code}')">Save</button>
+          <button class="btn-header admin-field" style="padding: 3px 8px; font-size: 0.75rem;" ${isAdminEditMode ? '' : 'disabled'} onclick="saveLocationCalendar('${code}')">Save</button>
         </td>
       </tr>
     `;
   }).join("");
 }
 
-async function saveLocationHours(countryCode, hoursVal) {
+async function saveLocationCalendar(countryCode) {
   const cal = cachedAdminCalendars[countryCode];
   if (!cal) return;
-  const hours = parseFloat(hoursVal) || (cal.daily_working_hours || 8.0);
+
+  const hoursEl = document.getElementById(`hours_${countryCode}`);
+  const rateEl = document.getElementById(`rate_${countryCode}`);
+  
+  const hours = hoursEl ? parseFloat(hoursEl.value) || 8.0 : (cal.daily_working_hours || 8.0);
+  const rate = rateEl ? parseFloat(rateEl.value) || 30.0 : (cal.hourly_rate || 30.0);
 
   try {
-    await fetch("/api/admin/calendars", {
+    const res = await fetch("/api/admin/calendars", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1263,13 +1279,17 @@ async function saveLocationHours(countryCode, hoursVal) {
         country_name: cal.country_name,
         working_days_per_week: cal.working_days_per_week || 5,
         daily_working_hours: hours,
+        hourly_rate: rate,
         annual_holiday_allowance: cal.annual_holiday_allowance || 12
       })
     });
-    cal.daily_working_hours = hours;
-    await triggerReplan();
+    if (res.ok) {
+      cal.daily_working_hours = hours;
+      cal.hourly_rate = rate;
+      await triggerReplan();
+    }
   } catch (err) {
-    console.error("Failed to save location hours:", err);
+    console.error("Failed to save location calendar:", err);
   }
 }
 

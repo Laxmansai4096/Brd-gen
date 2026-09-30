@@ -560,6 +560,7 @@ class CalendarUpsertPayload(BaseModel):
     country_name: str
     working_days_per_week: int = 5
     daily_working_hours: float = 8.0
+    hourly_rate: float = 30.0
     annual_holiday_allowance: int = 12
 
 @app.post("/api/admin/calendars")
@@ -569,6 +570,7 @@ def upsert_calendar_endpoint(payload: CalendarUpsertPayload):
         country_name=payload.country_name,
         working_days=payload.working_days_per_week,
         daily_working_hours=payload.daily_working_hours,
+        hourly_rate=payload.hourly_rate,
         annual_allowance=payload.annual_holiday_allowance
     )
     return {"status": "success", "calendar": cal}

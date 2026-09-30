@@ -23,6 +23,7 @@ class LocationCalendar(BaseModel):
     country_name: str
     working_days_per_week: int = 5
     daily_working_hours: float = 8.0
+    hourly_rate: float = 30.0
     annual_holiday_allowance: int = 12
     holidays: List[HolidayEntry] = []
 
@@ -399,6 +400,7 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
         country_name="India",
         working_days_per_week=5,
         daily_working_hours=9.0,
+        hourly_rate=25.0,
         annual_holiday_allowance=12,
         holidays=[
             HolidayEntry(date="2026-01-26", name="Republic Day", type="Statutory"),
@@ -416,6 +418,7 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
         country_name="United Kingdom",
         working_days_per_week=5,
         daily_working_hours=7.0,
+        hourly_rate=65.0,
         annual_holiday_allowance=8,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Bank Holiday"),
@@ -433,6 +436,7 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
         country_name="United States",
         working_days_per_week=5,
         daily_working_hours=8.0,
+        hourly_rate=85.0,
         annual_holiday_allowance=11,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -450,6 +454,7 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
         country_name="European Union",
         working_days_per_week=5,
         daily_working_hours=7.5,
+        hourly_rate=60.0,
         annual_holiday_allowance=10,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -462,6 +467,7 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
         country_name="Singapore",
         working_days_per_week=5,
         daily_working_hours=8.5,
+        hourly_rate=50.0,
         annual_holiday_allowance=11,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -476,6 +482,7 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
         country_name="United Arab Emirates",
         working_days_per_week=5,
         daily_working_hours=8.0,
+        hourly_rate=45.0,
         annual_holiday_allowance=14,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -491,6 +498,7 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
         country_name="Australia",
         working_days_per_week=5,
         daily_working_hours=7.5,
+        hourly_rate=55.0,
         annual_holiday_allowance=11,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -505,6 +513,7 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
         country_name="Canada",
         working_days_per_week=5,
         daily_working_hours=8.0,
+        hourly_rate=65.0,
         annual_holiday_allowance=10,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -517,6 +526,7 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
         country_name="Japan",
         working_days_per_week=5,
         daily_working_hours=8.0,
+        hourly_rate=70.0,
         annual_holiday_allowance=16,
         holidays=[
             HolidayEntry(date="2026-01-01", name="New Year's Day", type="Statutory"),
@@ -531,6 +541,10 @@ DEFAULT_CALENDARS: Dict[str, LocationCalendar] = {
 def get_working_hours_for_geography(geo_name_or_code: str) -> float:
     cal = get_calendar_for_geography(geo_name_or_code)
     return float(cal.get("daily_working_hours", 8.0))
+
+def get_hourly_rate_for_geography(geo_name_or_code: str) -> float:
+    cal = get_calendar_for_geography(geo_name_or_code)
+    return float(cal.get("hourly_rate", 30.0))
 
 # --- SYSTEM DEFAULTS ---
 DEFAULT_SYSTEM_DEFAULTS = {
@@ -573,13 +587,27 @@ def save_admin_defaults(defaults: Dict[str, Any]) -> Dict[str, Any]:
     return curr
 
 def get_calendars() -> Dict[str, Any]:
+    defaults_dict = {k: v.model_dump() for k, v in DEFAULT_CALENDARS.items()}
     if os.path.exists(CALENDARS_FILE):
         try:
             with open(CALENDARS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                saved = json.load(f)
+                for code, cal in defaults_dict.items():
+                    if code in saved:
+                        merged_cal = dict(cal)
+                        merged_cal.update(saved[code])
+                        if "hourly_rate" not in saved[code] or saved[code]["hourly_rate"] is None:
+                            merged_cal["hourly_rate"] = cal.get("hourly_rate", 30.0)
+                        defaults_dict[code] = merged_cal
+                    else:
+                        defaults_dict[code] = cal
+                for code, cal in saved.items():
+                    if code not in defaults_dict:
+                        defaults_dict[code] = cal
+                return defaults_dict
         except Exception:
             pass
-    return {k: v.model_dump() for k, v in DEFAULT_CALENDARS.items()}
+    return defaults_dict
 
 def save_calendars(calendars: Dict[str, Any]):
     with open(CALENDARS_FILE, "w", encoding="utf-8") as f:
@@ -599,11 +627,13 @@ def get_calendar_for_geography(geo_name_or_code: str) -> Dict[str, Any]:
         "country_code": "IN",
         "country_name": "India",
         "working_days_per_week": 5,
+        "daily_working_hours": 9.0,
+        "hourly_rate": 25.0,
         "annual_holiday_allowance": 12,
         "holidays": []
     })
 
-def upsert_calendar(country_code: str, country_name: str, working_days: int = 5, daily_working_hours: float = 8.0, annual_allowance: int = 12) -> Dict[str, Any]:
+def upsert_calendar(country_code: str, country_name: str, working_days: int = 5, daily_working_hours: float = 8.0, hourly_rate: float = 30.0, annual_allowance: int = 12) -> Dict[str, Any]:
     cals = get_calendars()
     code = country_code.strip().upper()
     existing = cals.get(code, {})
@@ -613,6 +643,7 @@ def upsert_calendar(country_code: str, country_name: str, working_days: int = 5,
         "country_name": country_name.strip() or existing.get("country_name", code),
         "working_days_per_week": int(working_days),
         "daily_working_hours": float(daily_working_hours),
+        "hourly_rate": float(hourly_rate),
         "annual_holiday_allowance": int(annual_allowance),
         "holidays": holidays
     }

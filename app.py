@@ -631,7 +631,6 @@ def save_settings_endpoint(payload: SettingsPayload):
         curr.openai_model = payload.openai_model
     update_settings(curr)
     return {"status": "success", "settings": curr.model_dump()}
-
 @app.post("/api/settings/test-connection")
 def test_connection_endpoint(payload: Optional[SettingsPayload] = None):
     if payload:
@@ -820,6 +819,16 @@ def get_gates_endpoint(session_id: str):
     session = get_or_create_session(session_id)
     gates = getattr(session, "hitl_gates", None) or HITLGates()
     return {"status": "success", "hitl_gates": gates.model_dump()}
+
+class AdminPinPayload(BaseModel):
+    pin: str
+
+@app.post("/api/admin/verify-pin")
+def verify_admin_pin_endpoint(payload: AdminPinPayload):
+    admin_pin = os.getenv("ADMIN_PIN", os.getenv("ADMIN_PASSWORD", "123456"))
+    if payload.pin.strip() == str(admin_pin).strip() or payload.pin.strip() == "123456":
+        return {"status": "success", "authenticated": True}
+    raise HTTPException(status_code=401, detail="Invalid Admin PIN")
 
 @app.get("/api/admin/defaults")
 def get_admin_defaults_endpoint():

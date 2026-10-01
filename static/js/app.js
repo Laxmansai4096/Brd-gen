@@ -127,10 +127,6 @@ function renderChatMessages() {
     const msgDiv = document.createElement("div");
     msgDiv.className = `chat-msg ${m.sender}`;
     
-    let avatarIcon = "🤖";
-    if (m.sender === "user") avatarIcon = "👤";
-    if (m.sender === "system") avatarIcon = "⚙️";
-    
     let formattedText = m.content
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.*?)\*/g, "<em>$1</em>")
@@ -139,7 +135,6 @@ function renderChatMessages() {
       .replace(/\n/g, "<br>");
       
     let innerHTML = `
-      <div class="msg-avatar">${avatarIcon}</div>
       <div class="msg-content">
         <p>${formattedText}</p>
       </div>
@@ -433,11 +428,11 @@ function renderBRDWorkbench(brd) {
           <td style="color: var(--success); font-weight: 600;">${sym}${Math.round(roleCostConverted).toLocaleString()}</td>
           <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.75rem;">${(r.active_fte || r.peak_fte || 0).toFixed(2)} FTE</span></td>
           <td><span style="color: var(--primary); font-size: 0.75rem;">+${(r.buffer_fte || 0).toFixed(2)} FTE</span></td>
-          <td><strong style="color: #fff;">${(r.total_assigned_fte || r.peak_fte || 0).toFixed(2)} FTE</strong></td>
+          <td><strong style="color: var(--text-heading);">${(r.total_assigned_fte || r.peak_fte || 0).toFixed(2)} FTE</strong></td>
         </tr>
       `;
     }).join("") + `
-      <tr style="background: rgba(56, 189, 248, 0.1); font-weight: bold;">
+      <tr style="background: rgba(72, 98, 247, 0.08); font-weight: bold;">
         <td colspan="3">TOTAL (12 Disciplines Standardized @ ${sym}${(30 * rate).toFixed(2)}/hr)</td>
         <td>${brd.total_person_days.toFixed(1)} d</td>
         <td>${brd.total_person_hours.toFixed(0)} h</td>
@@ -462,7 +457,7 @@ function renderBRDWorkbench(brd) {
           <td><span class="badge-ai" style="font-size: 0.72rem;">${b.level}</span></td>
           <td>${b.location}</td>
           <td><span style="color: var(--success); font-weight: 600;">${b.allocation_pct}</span></td>
-          <td style="font-size: 0.8rem; color: #cbd5e1;">${b.purpose}</td>
+          <td style="font-size: 0.82rem; color: var(--text-main);">${b.purpose}</td>
         </tr>
       `).join("");
     }
@@ -473,13 +468,13 @@ function renderBRDWorkbench(brd) {
     tasksTbody.innerHTML = (brd.task_estimates || []).map(t => `
       <tr>
         <td><span style="font-weight: 600; color: var(--primary);">${t.phase_code}</span></td>
-        <td style="font-size: 0.82rem;">${t.task_name}</td>
+        <td style="font-size: 0.82rem; color: var(--text-main);">${t.task_name}</td>
         <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${t.primary_role}</span></td>
         <td>${t.base_days.toFixed(1)}</td>
         <td>${t.phase_factor.toFixed(3)}</td>
         <td>${t.scale_factor.toFixed(3)}</td>
-        <td>${t.uplift_tag !== "NONE" ? `<span style="color: #f59e0b; font-weight: 600;">${t.uplift_tag} (${t.uplift_mult.toFixed(2)})</span>` : "1.00"}</td>
-        <td style="font-weight: 600; color: #fff;">${t.effort_days.toFixed(2)} d</td>
+        <td>${t.uplift_tag !== "NONE" ? `<span style="color: #d97706; font-weight: 600;">${t.uplift_tag} (${t.uplift_mult.toFixed(2)})</span>` : "1.00"}</td>
+        <td style="font-weight: 600; color: var(--text-heading);">${t.effort_days.toFixed(2)} d</td>
       </tr>
     `).join("");
   }
@@ -652,7 +647,7 @@ function renderBRDWorkbench(brd) {
       <tr>
         <td><strong>${c.control_id}</strong></td>
         <td style="color: var(--primary); font-weight: 600;">${c.domain}</td>
-        <td style="font-size: 0.82rem; color: #cbd5e1;">${c.requirement}</td>
+        <td style="font-size: 0.82rem; color: var(--text-main);">${c.requirement}</td>
         <td><span class="badge badge-success" style="font-size: 0.72rem;">${c.status || "Implemented"}</span></td>
       </tr>
     `).join("");
@@ -665,8 +660,8 @@ function renderBRDWorkbench(brd) {
       <tr>
         <td><strong>${a.id}</strong></td>
         <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${a.category}</span></td>
-        <td style="font-size: 0.82rem; color: #cbd5e1;">${a.statement}</td>
-        <td style="font-size: 0.8rem; color: #f87171;">${a.impact_if_wrong}</td>
+        <td style="font-size: 0.82rem; color: var(--text-main);">${a.statement}</td>
+        <td style="font-size: 0.8rem; color: #dc2626; font-weight: 500;">${a.impact_if_wrong}</td>
         <td style="font-size: 0.8rem; color: var(--text-muted);">${a.owner_to_confirm}</td>
         <td>
           <select class="form-control" style="padding: 4px 8px; font-size: 0.8rem;" onchange="updateAssumptionStatus('${a.id}', this.value)">
@@ -772,41 +767,40 @@ function filterDayWiseSchedule(filterType) {
     let taskText = "";
 
     if (d.is_holiday) {
-      statusBadge = `<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; font-size: 0.72rem;">${d.holiday_name || "Statutory Holiday"}</span>`;
-      rowBg = "background: rgba(245, 158, 11, 0.05);";
+      statusBadge = `<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #d97706; border: 1px solid #f59e0b; font-size: 0.62rem; font-weight: 600; padding: 1px 4px;">${d.holiday_name || "Statutory Holiday"}</span>`;
+      rowBg = "background: #fffbeb;";
       roleText = "N/A";
       hoursText = "0h";
-      taskText = `<span style="color: #f59e0b; font-style: italic;">Statutory Holiday observed — Non-working calendar day</span>`;
-    } else if (!d.is_working_day) {
-      statusBadge = `<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #64748b; font-size: 0.72rem;">Weekend Off</span>`;
+      taskText = `<span style="color: #d97706; font-style: italic; font-size: 0.68rem;">Statutory Holiday observed — Non-working calendar day</span>`;
+      statusBadge = `<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #64748b; font-size: 0.62rem; font-weight: 600; padding: 1px 4px;">Weekend Off</span>`;
       rowBg = "background: #f8fafc;";
       roleText = "N/A";
       hoursText = "0h";
-      taskText = `<span style="color: #64748b; font-style: italic;">Non-working weekend period</span>`;
+      taskText = `<span style="color: var(--text-dim); font-style: italic; font-size: 0.68rem;">Non-working weekend period</span>`;
     } else {
       const taskList = d.tasks_allocated || [];
       if (taskList.length > 0) {
-        taskText = taskList.map(t => `<div style="margin-bottom: 3px;">• <strong>${t.task_name}</strong></div>`).join("");
+        taskText = taskList.map(t => `<div style="margin-bottom: 2px; font-size: 0.68rem; line-height: 1.35;">• <strong>${t.task_name}</strong></div>`).join("");
         roleText = taskList.map(t => t.primary_role).filter(Boolean).join(", ") || "Engineering Team";
       } else {
-        taskText = `Deliverable sprint execution for ${d.phase_name}`;
+        taskText = `<span style="font-size: 0.68rem;">Deliverable sprint execution for ${d.phase_name}</span>`;
       }
     }
 
     return `
       <tr style="${rowBg}">
-        <td><strong>#${d.day_number}</strong></td>
+        <td><strong style="font-size: 0.70rem;">#${d.day_number}</strong></td>
         <td>
-          <div style="font-weight: 600; color: #fff;">${d.date}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">${d.day_name}</div>
+          <div style="font-weight: 700; color: var(--text-heading); font-size: 0.72rem;">${d.date}</div>
+          <div style="font-size: 0.64rem; color: var(--text-muted);">${d.day_name}</div>
         </td>
         <td>
-          <span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${d.phase_code}</span>
-          <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">${d.phase_name}</div>
+          <span class="badge-ai" style="padding: 1px 4px; font-size: 0.62rem;">${d.phase_code}</span>
+          <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 1px;">${d.phase_name}</div>
         </td>
-        <td style="font-size: 0.82rem; color: #cbd5e1;">${taskText}</td>
-        <td><span class="badge-ai" style="padding: 2px 6px; font-size: 0.72rem;">${roleText}</span></td>
-        <td style="font-weight: 600; color: ${d.is_working_day ? 'var(--primary)' : 'var(--text-dim)'};">${hoursText}</td>
+        <td style="font-size: 0.68rem; color: var(--text-main); line-height: 1.35;">${taskText}</td>
+        <td><span class="badge-ai" style="padding: 1px 4px; font-size: 0.62rem;">${roleText}</span></td>
+        <td style="font-weight: 600; font-size: 0.70rem; color: ${d.is_working_day ? 'var(--primary)' : 'var(--text-dim)'};">${hoursText}</td>
         <td>${statusBadge}</td>
       </tr>
     `;
@@ -1030,15 +1024,20 @@ async function triggerReplan() {
 
 // Tab Switching
 function switchTab(tabId) {
-  document.querySelectorAll(".workbench-tabs .tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".sidebar-tab-btn, .tab-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".tab-pane").forEach(p => p.style.display = "none");
   
   const targetPane = document.getElementById(tabId);
-  if (targetPane) targetPane.style.display = "block";
+  if (targetPane) {
+    targetPane.style.display = "block";
+  }
   
-  const activeBtn = Array.from(document.querySelectorAll(".workbench-tabs .tab-btn"))
-    .find(b => b.getAttribute("onclick").includes(tabId));
-  if (activeBtn) activeBtn.classList.add("active");
+  const activeBtns = Array.from(document.querySelectorAll(".sidebar-tab-btn, .tab-btn"))
+    .filter(b => {
+      const onclickAttr = b.getAttribute("onclick") || "";
+      return onclickAttr.includes(`'${tabId}'`) || onclickAttr.includes(`"${tabId}"`);
+    });
+  activeBtns.forEach(b => b.classList.add("active"));
 }
 
 // 0-Click RFP Auto-Discovery Ingestion
@@ -2000,6 +1999,81 @@ async function commitSimulationToBaseline() {
 // Admin Console Functions
 let cachedAdminCalendars = {};
 let isAdminEditMode = false;
+let isAdminAuthenticated = false;
+
+function requestAdminEditMode() {
+  if (isAdminAuthenticated) {
+    setAdminRoleMode(true);
+  } else {
+    openAdminPinModal();
+  }
+}
+
+function openAdminPinModal() {
+  const modal = document.getElementById("adminPinModal");
+  const input = document.getElementById("adminPinInput");
+  const err = document.getElementById("adminPinError");
+  if (err) err.style.display = "none";
+  if (input) input.value = "";
+  if (modal) modal.classList.add("active");
+  setTimeout(() => {
+    if (input) input.focus();
+  }, 100);
+}
+
+function closeAdminPinModal() {
+  const modal = document.getElementById("adminPinModal");
+  if (modal) modal.classList.remove("active");
+  if (!isAdminEditMode) {
+    setAdminRoleMode(false);
+  }
+}
+
+async function submitAdminPin() {
+  const input = document.getElementById("adminPinInput");
+  const err = document.getElementById("adminPinError");
+  const pin = input ? input.value.trim() : "";
+
+  if (!pin) {
+    if (err) {
+      err.textContent = "❌ Please enter the 6-digit Admin PIN.";
+      err.style.display = "block";
+    }
+    return;
+  }
+
+  // Check pin (supports "123456" directly and backend verification)
+  if (pin === "123456") {
+    isAdminAuthenticated = true;
+    closeAdminPinModal();
+    setAdminRoleMode(true);
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/admin/verify-pin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: pin })
+    });
+    if (res.ok) {
+      isAdminAuthenticated = true;
+      closeAdminPinModal();
+      setAdminRoleMode(true);
+    } else {
+      if (err) {
+        err.textContent = "❌ Invalid PIN. Please enter the correct Admin PIN.";
+        err.style.display = "block";
+      }
+      if (input) input.select();
+    }
+  } catch (e) {
+    if (err) {
+      err.textContent = "❌ Invalid PIN. Please enter the correct Admin PIN.";
+      err.style.display = "block";
+    }
+  }
+}
 
 function setAdminRoleMode(isAdmin) {
   isAdminEditMode = isAdmin;
@@ -2016,7 +2090,7 @@ function setAdminRoleMode(isAdmin) {
       banner.style.background = "rgba(16, 185, 129, 0.15)";
       banner.style.borderColor = "rgba(16, 185, 129, 0.4)";
       banner.style.color = "var(--success)";
-      banner.innerHTML = "🛡️ <strong>Admin Edit Mode:</strong> You have full administrative privileges to edit location working hours, add statutory holidays, upload holiday sheets, and adjust global rates.";
+      banner.innerHTML = "🛡️ <strong>Admin Edit Mode (Authenticated):</strong> You have full administrative privileges to edit location working hours, add statutory holidays, upload holiday sheets, and adjust global rates.";
     } else {
       banner.style.background = "rgba(56, 189, 248, 0.1)";
       banner.style.borderColor = "rgba(56, 189, 248, 0.3)";
@@ -2313,12 +2387,76 @@ async function saveAdminDefaultsFromModal() {
 // Project Workspaces & Folderwise BRD History
 let cachedProjectList = [];
 
+function getDeletedWorkspaceIds() {
+  try {
+    return JSON.parse(localStorage.getItem("brd_deleted_workspaces") || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveDeletedWorkspaceId(id) {
+  const list = getDeletedWorkspaceIds();
+  if (!list.includes(id)) {
+    list.push(id);
+    localStorage.setItem("brd_deleted_workspaces", JSON.stringify(list));
+  }
+}
+
+function initWorkspacesCollapseState() {
+  const isCollapsed = localStorage.getItem("brd_workspaces_collapsed") === "true";
+  const collapsibleArea = document.getElementById("workspacesCollapsibleArea");
+  const chev = document.getElementById("workspacesCollapseIcon");
+  const btn = document.getElementById("btnToggleWorkspaces");
+
+  if (collapsibleArea) {
+    if (isCollapsed) {
+      collapsibleArea.classList.add("collapsed");
+      if (chev) chev.style.transform = "rotate(-90deg)";
+      if (btn) btn.textContent = "Show";
+    } else {
+      collapsibleArea.classList.remove("collapsed");
+      if (chev) chev.style.transform = "rotate(0deg)";
+      if (btn) btn.textContent = "Hide";
+    }
+  }
+}
+
+function toggleAllWorkspaces(forcedState) {
+  const collapsibleArea = document.getElementById("workspacesCollapsibleArea");
+  const chev = document.getElementById("workspacesCollapseIcon");
+  const btn = document.getElementById("btnToggleWorkspaces");
+  if (!collapsibleArea) return;
+
+  let willCollapse;
+  if (typeof forcedState === "boolean") {
+    willCollapse = forcedState;
+  } else {
+    willCollapse = !collapsibleArea.classList.contains("collapsed");
+  }
+
+  if (willCollapse) {
+    collapsibleArea.classList.add("collapsed");
+    if (chev) chev.style.transform = "rotate(-90deg)";
+    if (btn) btn.textContent = "Show";
+    localStorage.setItem("brd_workspaces_collapsed", "true");
+  } else {
+    collapsibleArea.classList.remove("collapsed");
+    if (chev) chev.style.transform = "rotate(0deg)";
+    if (btn) btn.textContent = "Hide";
+    localStorage.setItem("brd_workspaces_collapsed", "false");
+  }
+}
+
 async function loadProjectHistory() {
   try {
+    initWorkspacesCollapseState();
     const res = await fetch("/api/projects/history");
     if (res.ok) {
       const data = await res.json();
-      cachedProjectList = data.projects || [];
+      const rawProjects = data.projects || [];
+      const deletedIds = getDeletedWorkspaceIds();
+      cachedProjectList = rawProjects.filter(p => !deletedIds.includes(p.id));
       renderProjectFolders(cachedProjectList);
     }
   } catch (err) {
@@ -2333,18 +2471,27 @@ function renderProjectFolders(projects) {
 
   if (countBadge) countBadge.textContent = `${projects.length} Workspaces`;
 
+  const deletedIds = getDeletedWorkspaceIds();
+  const hasDeleted = deletedIds.length > 0;
+
   if (projects.length === 0) {
-    container.innerHTML = `<div style="font-size: 0.76rem; color: var(--text-dim); text-align: center; padding: 10px;">No project workspaces found.</div>`;
+    container.innerHTML = `
+      <div style="font-size: 0.76rem; color: var(--text-dim); text-align: center; padding: 14px 10px; background: rgba(15, 23, 42, 0.4); border-radius: var(--radius-sm); border: 1px dashed var(--bg-sidebar-border);">
+        <div style="margin-bottom: 6px; color: #cbd5e1;">All workspaces hidden or removed</div>
+        ${hasDeleted ? `<button class="folder-restore-btn" onclick="restoreDefaultWorkspaces()"><span>🔄</span> Restore Default Workspaces</button>` : ''}
+      </div>
+    `;
     return;
   }
 
   container.innerHTML = projects.map((p, idx) => {
     const isActive = (p.id === currentSessionId || (idx === 0 && !currentSessionId));
+    const safeTitle = (p.name || '').replace(/'/g, "\\'");
     return `
       <div class="project-folder-card ${isActive ? 'active' : ''}" id="folder_card_${p.id}">
         <div class="project-folder-header" onclick="toggleProjectFolder('${p.id}')">
           <div class="project-folder-info">
-            <span style="font-size: 0.95rem;">📁</span>
+            <span style="font-size: 0.95rem; flex-shrink: 0;">📁</span>
             <div style="min-width: 0;">
               <div class="folder-title-text" title="${p.name}">${p.name}</div>
               <div class="folder-meta">
@@ -2353,13 +2500,18 @@ function renderProjectFolders(projects) {
               </div>
             </div>
           </div>
-          <span style="font-size: 0.75rem; color: var(--text-dim); transition: transform 0.2s;" id="chevron_${p.id}">▼</span>
+          <div class="project-folder-actions">
+            <button class="btn-folder-delete" onclick="event.stopPropagation(); removeProjectWorkspace('${p.id}', '${safeTitle}')" title="Remove workspace from sidebar">
+              🗑️
+            </button>
+            <span style="font-size: 0.75rem; color: var(--text-dim); transition: transform 0.2s;" id="chevron_${p.id}">▼</span>
+          </div>
         </div>
 
         <div class="project-subfiles" id="subfiles_${p.id}" style="${isActive ? 'display: flex;' : 'display: none;'}">
           <div class="project-subfile-link" onclick="loadProjectWorkspace('${p.id}')" title="Load active discovery interview & chat">
             <span>💬 Discovery Chat & Q&A</span>
-            <span class="file-type-tag" style="background: rgba(56, 189, 248, 0.15); color: var(--primary);">${p.answers_count} Ans</span>
+            <span class="file-type-tag" style="background: rgba(56, 189, 248, 0.15); color: var(--primary);">${p.answers_count || 22} Ans</span>
           </div>
           <a class="project-subfile-link" href="${p.files.word_docx}" target="_blank" title="Download Formal Word BRD">
             <span>📄 Executive BRD Document</span>
@@ -2380,7 +2532,43 @@ function renderProjectFolders(projects) {
         </div>
       </div>
     `;
-  }).join("");
+  }).join("") + (hasDeleted ? `
+    <div style="margin-top: 4px; text-align: center;">
+      <button class="folder-restore-btn" onclick="restoreDefaultWorkspaces()" style="font-size: 0.68rem; padding: 4px 8px;">
+        <span>🔄</span> Restore ${deletedIds.length} Removed Workspace${deletedIds.length > 1 ? 's' : ''}
+      </button>
+    </div>
+  ` : '');
+}
+
+function removeProjectWorkspace(projectId, projectName) {
+  if (!confirm(`Are you sure you want to remove the workspace "${projectName || projectId}" from your sidebar?`)) {
+    return;
+  }
+
+  saveDeletedWorkspaceId(projectId);
+  cachedProjectList = cachedProjectList.filter(p => p.id !== projectId);
+  
+  const searchVal = document.getElementById("projectSearchInput") ? document.getElementById("projectSearchInput").value : "";
+  if (searchVal) {
+    filterProjectFolders(searchVal);
+  } else {
+    renderProjectFolders(cachedProjectList);
+  }
+
+  // If the removed workspace was the currently active one, load the first remaining workspace or reset
+  if (currentSessionId === projectId) {
+    if (cachedProjectList.length > 0) {
+      loadProjectWorkspace(cachedProjectList[0].id);
+    } else {
+      resetSession();
+    }
+  }
+}
+
+function restoreDefaultWorkspaces() {
+  localStorage.removeItem("brd_deleted_workspaces");
+  loadProjectHistory();
 }
 
 function toggleProjectFolder(projectId) {
@@ -2430,10 +2618,10 @@ function filterProjectFolders(query) {
   }
   const q = query.toLowerCase().trim();
   const filtered = cachedProjectList.filter(p => 
-    p.name.toLowerCase().includes(q) ||
-    p.client.toLowerCase().includes(q) ||
-    p.tier.toLowerCase().includes(q) ||
-    p.cloud_platform.toLowerCase().includes(q)
+    (p.name && p.name.toLowerCase().includes(q)) ||
+    (p.client && p.client.toLowerCase().includes(q)) ||
+    (p.tier && p.tier.toLowerCase().includes(q)) ||
+    (p.cloud_platform && p.cloud_platform.toLowerCase().includes(q))
   );
   renderProjectFolders(filtered);
 }

@@ -409,6 +409,35 @@ body {
   font-weight: 600;
 }
 
+.btn-toggle-workspaces {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--bg-sidebar-border);
+  color: #94a3b8;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.btn-toggle-workspaces:hover {
+  background: rgba(72, 98, 247, 0.25);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.workspaces-collapsible-area {
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s ease;
+}
+
+.workspaces-collapsible-area.collapsed {
+  display: none !important;
+}
+
 /* Project Folder Items */
 .project-folders-container {
   display: flex;
@@ -422,6 +451,7 @@ body {
   border-radius: var(--radius-sm);
   overflow: hidden;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .project-folder-card:hover {
@@ -442,6 +472,62 @@ body {
   justify-content: space-between;
   cursor: pointer;
   user-select: none;
+  gap: 6px;
+}
+
+.project-folder-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-folder-delete {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 0.76rem;
+  line-height: 1;
+  opacity: 0.6;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-folder-card:hover .btn-folder-delete {
+  opacity: 0.9;
+  color: #94a3b8;
+}
+
+.btn-folder-delete:hover {
+  opacity: 1 !important;
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.35);
+  transform: scale(1.1);
+}
+
+.folder-restore-btn {
+  background: rgba(72, 98, 247, 0.15);
+  border: 1px solid rgba(72, 98, 247, 0.4);
+  color: #93c5fd;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.folder-restore-btn:hover {
+  background: var(--primary);
+  color: #ffffff;
 }
 
 .project-folder-info {
@@ -499,21 +585,21 @@ body {
   font-weight: 600;
 }
 
-/* Admin Nav Items */
-.admin-nav-list {
+/* Sidebar Workbench Tabs & Navigation */
+.sidebar-nav-tabs {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.admin-nav-btn {
+.sidebar-tab-btn {
   width: 100%;
-  padding: 9px 12px;
-  background: transparent;
-  border: 1px solid transparent;
+  padding: 8px 12px;
+  background: var(--bg-sidebar-card);
+  border: 1px solid var(--bg-sidebar-border);
   border-radius: var(--radius-sm);
-  color: var(--text-sidebar);
-  font-size: 0.82rem;
+  color: #cbd5e1;
+  font-size: 0.8rem;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -523,10 +609,25 @@ body {
   text-align: left;
 }
 
-.admin-nav-btn:hover {
+.sidebar-tab-btn:hover {
   background: var(--bg-sidebar-hover);
-  border-color: var(--bg-sidebar-border);
+  border-color: rgba(72, 98, 247, 0.4);
   color: #ffffff;
+  transform: translateX(2px);
+}
+
+.sidebar-tab-btn.active {
+  background: rgba(72, 98, 247, 0.22);
+  border-color: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(72, 98, 247, 0.25);
+}
+
+.sidebar-tab-btn .tab-btn-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .sidebar-footer-widget {
@@ -542,8 +643,8 @@ body {
 
 /* 2. CENTER PANEL: Increased Chat Space Area (Expansive & Professional) */
 .chat-panel {
-  flex: 1 1 54%;
-  min-width: 480px;
+  flex: 1 1 47%;
+  min-width: 400px;
   max-width: none;
   border-right: 1px solid var(--border-color);
   background: #ffffff;
@@ -565,7 +666,7 @@ body {
   height: 54px;
   min-height: 54px;
   flex-shrink: 0;
-  padding: 12px 24px;
+  padding: 12px 18px;
   background: #ffffff;
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -598,10 +699,10 @@ body {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 24px 28px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   scroll-behavior: smooth;
   background: var(--bg-workspace);
 }
@@ -609,8 +710,8 @@ body {
 /* Chat Message Bubbles - Modern SaaS Card Styling */
 .chat-msg {
   display: flex;
-  gap: 14px;
-  max-width: 94%;
+  width: 100%;
+  max-width: 100%;
   animation: fadeIn 0.3s ease-in-out;
 }
 
@@ -622,18 +723,18 @@ body {
 .chat-msg.agent {
   align-self: flex-start;
   width: 100%;
-  max-width: 94%;
+  max-width: 100%;
 }
 
 .chat-msg.user {
   align-self: flex-end;
-  flex-direction: row-reverse;
+  justify-content: flex-end;
   max-width: 85%;
 }
 
 .chat-msg.system {
   align-self: center;
-  max-width: 96%;
+  max-width: 98%;
   width: 100%;
 }
 
@@ -889,7 +990,7 @@ body {
 /* Chat Input Bar & Dropzone */
 .chat-controls {
   flex-shrink: 0;
-  padding: 14px 24px;
+  padding: 12px 18px;
   background: #ffffff;
   border-top: 1px solid var(--border-color);
   display: flex;
@@ -1060,8 +1161,8 @@ body {
 
 /* 3. RIGHT HALF: Project Cockpit & BRD Workbench */
 .workbench-panel {
-  flex: 1 1 46%;
-  min-width: 420px;
+  flex: 1 1 53%;
+  min-width: 480px;
   background: var(--bg-workspace);
   display: flex;
   flex-direction: column;
@@ -1223,6 +1324,36 @@ body {
   justify-content: space-between;
 }
 
+/* Scope Demarcation Cards */
+.scope-card-in {
+  background: #f0fdf4 !important;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #bbf7d0 !important;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.08);
+}
+
+.scope-card-out {
+  background: #fef2f2 !important;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #fecaca !important;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.08);
+}
+
+#brdInScopeList, #brdOutScopeList {
+  padding-left: 20px;
+  font-size: 0.85rem;
+  color: #1e293b !important;
+  line-height: 1.65;
+}
+
+#brdInScopeList li, #brdOutScopeList li {
+  color: #1e293b !important;
+  margin-bottom: 6px;
+}
+
+
 /* Tables */
 .custom-table {
   width: 100%;
@@ -1257,6 +1388,29 @@ body {
 .custom-table tr:hover td {
   background: #f8fafc;
 }
+
+/* Day-Wise Schedule Compact Table */
+#dayWiseTable {
+  font-size: 0.70rem !important;
+}
+
+#dayWiseTable th {
+  padding: 6px 8px !important;
+  font-size: 0.65rem !important;
+  letter-spacing: 0.02em;
+}
+
+#dayWiseTable td {
+  padding: 5px 8px !important;
+  font-size: 0.70rem !important;
+  vertical-align: middle;
+}
+
+#dayWiseTable .badge, #dayWiseTable .badge-ai {
+  font-size: 0.62rem !important;
+  padding: 1px 4px !important;
+}
+
 
 /* Editable Assumptions Table */
 .editable-input {

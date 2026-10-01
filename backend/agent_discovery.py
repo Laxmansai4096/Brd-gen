@@ -15,7 +15,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="Who is the client/account, and what is the working title for this initiative?",
         type="dropdown",
         options=[
-            QuestionOption(value="PVR INOX | Contract Intelligence & Risk Visibility Platform", label="PVR INOX | Contract Intelligence & Risk Visibility Platform (Recommended)", description="Automated contract risk classification and clause extraction"),
+            QuestionOption(value="Contract Intelligence & Risk Visibility Platform", label="PVR INOX | Contract Intelligence & Risk Visibility Platform (Recommended)", description="Automated contract risk classification and clause extraction"),
             QuestionOption(value="Enterprise Retail | AI-Powered Customer Support & Virtual Agent Cockpit", label="Enterprise Retail | AI Support & Agent Cockpit", description="Omnichannel customer support resolution and CRM integration"),
             QuestionOption(value="Global Banking Corp | Intelligent AML & Financial Fraud Detection System", label="Global Bank | Financial Fraud & AML Detection", description="Real-time transaction risk scoring and compliance tracking"),
             QuestionOption(value="Healthcare System | Intelligent Clinical Document Extraction Platform", label="Healthcare | Clinical Document Extraction", description="Layout-aware medical record and claims extraction"),

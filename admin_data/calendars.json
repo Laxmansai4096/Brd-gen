@@ -1,0 +1,379 @@
+{
+  "IN": {
+    "country_code": "IN",
+    "country_name": "India",
+    "currency_code": "INR",
+    "currency_symbol": "\u20b9",
+    "working_days_per_week": 5,
+    "daily_working_hours": 9.0,
+    "hourly_rate": 25.0,
+    "hourly_rate_local": 2100.0,
+    "annual_holiday_allowance": 12,
+    "holidays": [
+      {
+        "date": "2026-01-26",
+        "name": "Republic Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-03-04",
+        "name": "Holi",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-03-21",
+        "name": "Eid ul-Fitr",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-08-15",
+        "name": "Independence Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-10-02",
+        "name": "Mahatma Gandhi Jayanti",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-10-18",
+        "name": "Dusshera",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-10-20",
+        "name": "Dussehra",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-11-08",
+        "name": "Diwali",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "type": "Statutory"
+      }
+    ]
+  },
+  "UK": {
+    "country_code": "UK",
+    "country_name": "United Kingdom",
+    "currency_code": "GBP",
+    "currency_symbol": "\u00a3",
+    "working_days_per_week": 5,
+    "daily_working_hours": 7.0,
+    "hourly_rate": 65.0,
+    "hourly_rate_local": 52.0,
+    "annual_holiday_allowance": 8,
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "type": "Bank Holiday"
+      },
+      {
+        "date": "2026-04-03",
+        "name": "Good Friday",
+        "type": "Bank Holiday"
+      },
+      {
+        "date": "2026-04-06",
+        "name": "Easter Monday",
+        "type": "Bank Holiday"
+      },
+      {
+        "date": "2026-05-04",
+        "name": "Early May Bank Holiday",
+        "type": "Bank Holiday"
+      },
+      {
+        "date": "2026-05-25",
+        "name": "Spring Bank Holiday",
+        "type": "Bank Holiday"
+      },
+      {
+        "date": "2026-08-31",
+        "name": "Summer Bank Holiday",
+        "type": "Bank Holiday"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "type": "Bank Holiday"
+      },
+      {
+        "date": "2026-12-28",
+        "name": "Boxing Day (Observed)",
+        "type": "Bank Holiday"
+      }
+    ]
+  },
+  "US": {
+    "country_code": "US",
+    "country_name": "United States",
+    "currency_code": "USD",
+    "currency_symbol": "$",
+    "working_days_per_week": 5,
+    "daily_working_hours": 8.0,
+    "hourly_rate": 85.0,
+    "hourly_rate_local": 85.0,
+    "annual_holiday_allowance": 11,
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-01-19",
+        "name": "Martin Luther King Jr. Day",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-05-25",
+        "name": "Memorial Day",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-06-19",
+        "name": "Juneteenth",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-07-04",
+        "name": "Independence Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-09-07",
+        "name": "Labor Day",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-11-26",
+        "name": "Thanksgiving Day",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "type": "Statutory"
+      }
+    ]
+  },
+  "EU": {
+    "country_code": "EU",
+    "country_name": "European Union",
+    "currency_code": "EUR",
+    "currency_symbol": "\u20ac",
+    "working_days_per_week": 5,
+    "daily_working_hours": 7.5,
+    "hourly_rate": 60.0,
+    "hourly_rate_local": 55.0,
+    "annual_holiday_allowance": 10,
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-05-01",
+        "name": "Labour Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "type": "Statutory"
+      }
+    ]
+  },
+  "SG": {
+    "country_code": "SG",
+    "country_name": "Singapore",
+    "currency_code": "SGD",
+    "currency_symbol": "S$",
+    "working_days_per_week": 5,
+    "daily_working_hours": 8.5,
+    "hourly_rate": 50.0,
+    "hourly_rate_local": 68.0,
+    "annual_holiday_allowance": 11,
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-02-17",
+        "name": "Chinese New Year",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-05-01",
+        "name": "Labour Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-08-09",
+        "name": "National Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "type": "Statutory"
+      }
+    ]
+  },
+  "AE": {
+    "country_code": "AE",
+    "country_name": "United Arab Emirates",
+    "currency_code": "AED",
+    "currency_symbol": "AED ",
+    "working_days_per_week": 5,
+    "daily_working_hours": 8.0,
+    "hourly_rate": 45.0,
+    "hourly_rate_local": 165.0,
+    "annual_holiday_allowance": 14,
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-03-21",
+        "name": "Eid Al Fitr",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-05-27",
+        "name": "Arafat Day",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-05-28",
+        "name": "Eid Al Adha",
+        "type": "Floating"
+      },
+      {
+        "date": "2026-12-01",
+        "name": "Commemoration Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-12-02",
+        "name": "National Day",
+        "type": "Statutory"
+      }
+    ]
+  },
+  "AU": {
+    "country_code": "AU",
+    "country_name": "Australia",
+    "currency_code": "AUD",
+    "currency_symbol": "A$",
+    "working_days_per_week": 5,
+    "daily_working_hours": 7.5,
+    "hourly_rate": 55.0,
+    "hourly_rate_local": 82.0,
+    "annual_holiday_allowance": 11,
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-01-26",
+        "name": "Australia Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-04-25",
+        "name": "Anzac Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-12-26",
+        "name": "Boxing Day",
+        "type": "Statutory"
+      }
+    ]
+  },
+  "CA": {
+    "country_code": "CA",
+    "country_name": "Canada",
+    "currency_code": "CAD",
+    "currency_symbol": "C$",
+    "working_days_per_week": 5,
+    "daily_working_hours": 8.0,
+    "hourly_rate": 65.0,
+    "hourly_rate_local": 88.0,
+    "annual_holiday_allowance": 10,
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-07-01",
+        "name": "Canada Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "type": "Statutory"
+      }
+    ]
+  },
+  "JP": {
+    "country_code": "JP",
+    "country_name": "Japan",
+    "currency_code": "JPY",
+    "currency_symbol": "\u00a5",
+    "working_days_per_week": 5,
+    "daily_working_hours": 8.0,
+    "hourly_rate": 70.0,
+    "hourly_rate_local": 10500.0,
+    "annual_holiday_allowance": 16,
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-02-11",
+        "name": "National Foundation Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-04-29",
+        "name": "Showa Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-05-03",
+        "name": "Constitution Day",
+        "type": "Statutory"
+      },
+      {
+        "date": "2026-05-04",
+        "name": "Greenery Day",
+        "type": "Statutory"
+      }
+    ]
+  }
+}

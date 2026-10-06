@@ -16,6 +16,7 @@ class QuestionItem(BaseModel):
     default_value: str
     category: str  # "Scope", "Scale", "Technical", "Sizing", "Governance", "KEY_DECISION"
     priority: str = "Medium"  # "Blocker", "High", "Medium"
+    owner_persona: str = "CLIENT"  # "CLIENT", "SOLUTIONS_ARCHITECT", "PROJECT_MANAGER"
     help_text: Optional[str] = None
     ask_when: Optional[List[Dict[str, Any]]] = None  # Conditional display rules e.g. [{"question_id": "q_cloud", "equals": "multi-cloud"}]
     dependencies: Optional[List[str]] = None
@@ -121,7 +122,79 @@ class ImpactAnalysisResult(BaseModel):
     sim_fte: float = 0.0
     sim_monthly_cloud_usd: float = 0.0
 
-# --- Section 51: 4 HITL Approval Gates ---
+# --- Section 51: 4 HITL Approval Gates & 3-Persona Collaborative Workflow ---
+class PersonaReview(BaseModel):
+    persona: str  # "CLIENT", "SOLUTIONS_ARCHITECT", "PROJECT_MANAGER"
+    satisfied: bool = False
+    status: str = "PENDING"  # "PENDING", "APPROVED", "CHANGES_REQUESTED"
+    feedback: Optional[str] = None
+    timestamp: Optional[str] = None
+    signature_name: Optional[str] = None
+
+class TripartyMessage(BaseModel):
+    id: str
+    sender_persona: str  # "CLIENT", "SOLUTIONS_ARCHITECT", "PROJECT_MANAGER", "AI_AGENT"
+    sender_name: str
+    message: str
+    timestamp: str
+    resolved: bool = False
+    action_taken: Optional[str] = None
+
+class PMQueryItem(BaseModel):
+    id: str
+    topic: str
+    query_text: str
+    addressed_to: str = "ALL"  # "CLIENT", "SOLUTIONS_ARCHITECT", "ALL"
+    client_response: Optional[str] = None
+    architect_response: Optional[str] = None
+    status: str = "OPEN"  # "OPEN", "RESOLVED"
+
+class EscalatedTopicItem(BaseModel):
+    id: str
+    question_id: str
+    topic_title: str
+    question_text: str
+    why_needed: str
+    client_context: str
+    category: str = "Technical Architecture"
+    options: List[Dict[str, str]] = []
+    default_recommendation: str = ""
+    status: str = "PENDING_ARCHITECT"  # "PENDING_ARCHITECT", "RESOLVED"
+    architect_answer: Optional[str] = None
+    architect_notes: Optional[str] = None
+    escalated_at: Optional[str] = None
+    resolved_at: Optional[str] = None
+
+class WorkflowState(BaseModel):
+    stage: str = "IDEATION"  # "IDEATION", "DISCOVERY", "DUAL_REVIEW", "PM_REVIEW", "FINAL_APPROVED"
+    current_stage: Optional[str] = "IDEATION"
+    active_persona: str = "CLIENT"  # "CLIENT", "SOLUTIONS_ARCHITECT", "PROJECT_MANAGER"
+    confidence_score: float = 0.0  # 0 to 100
+    confidence_threshold: float = 98.0
+    is_confidence_reached: bool = False
+    
+    # Stage 1: Ideation Data
+    ideation_client_idea: Optional[str] = None
+    ideation_architect_feedback: Optional[str] = None
+    ideation_agreed_project: Optional[str] = None
+    
+    # Stage 2: Architect Escalation Queue
+    escalated_topics: List[EscalatedTopicItem] = []
+    
+    # Stage 3: Dual Review
+    client_review: PersonaReview = PersonaReview(persona="CLIENT", signature_name="Elena Vance (Client Business Lead)")
+    architect_review: PersonaReview = PersonaReview(persona="SOLUTIONS_ARCHITECT", signature_name="Alex Morgan (Principal Architect)")
+    dual_review_iterations: int = 0
+    
+    # Stage 4: PM Review & Triparty Consensus
+    pm_review: PersonaReview = PersonaReview(persona="PROJECT_MANAGER", signature_name="Marcus Reed (Senior Delivery PM)")
+    pm_queries: List[PMQueryItem] = []
+    triparty_messages: List[TripartyMessage] = []
+    
+    # Stage 5: Final Distribution
+    final_signoff_timestamp: Optional[str] = None
+    final_shared_with: List[str] = ["Client", "Solutions Architect", "Project Manager"]
+
 class HITLGates(BaseModel):
     gate1_requirements_approved: bool = False
     gate1_notes: Optional[str] = None
@@ -131,6 +204,38 @@ class HITLGates(BaseModel):
     gate3_notes: Optional[str] = None
     gate4_brd_approved: bool = False
     gate4_notes: Optional[str] = None
+    
+    # Persona-specific Sign-offs
+    client_business_approved: bool = False
+    client_approval_timestamp: Optional[str] = None
+    client_notes: Optional[str] = None
+    
+    architect_tech_approved: bool = False
+    architect_approval_timestamp: Optional[str] = None
+    architect_notes: Optional[str] = None
+    
+    manager_estimate_approved: bool = False
+    manager_approval_timestamp: Optional[str] = None
+    manager_notes: Optional[str] = None
+
+class DimensionScore(BaseModel):
+    name: str
+    category: str
+    weight: float
+    score: float
+    status: str  # "GROUNDED", "PARTIAL", "MISSING"
+    captured_value: Optional[str] = None
+    impact: str = "High"
+
+class DiscoveryConfidence(BaseModel):
+    score: float = 0.0  # 0 to 100
+    is_ready_for_brd: bool = False  # True when >= 98.0
+    threshold: float = 98.0
+    dimensions: List[DimensionScore] = []
+    missing_items: List[str] = []
+    recommendation: str = ""
+    next_question: Optional[QuestionItem] = None
+    summary_dossier: Optional[Dict[str, Any]] = None
 
 # --- Existing Core Estimation & Schedule Models ---
 class AssumptionItem(BaseModel):
@@ -247,6 +352,7 @@ class BRDDocument(BaseModel):
     security_posture: str = "Standard"
     security_multiplier: float = 1.00
     ha_dr_tier: str = "None (single instance)"
+    cloud_platform: str = "Microsoft Azure"
     
     # Timing & Delivery
     start_date: str = "2026-10-05"
@@ -305,6 +411,11 @@ class BRDDocument(BaseModel):
     # Estimation & Resource Loading
     total_duration_weeks: float
     reference_duration_weeks: float
+    delivery_task_days: float = 97.5
+    pm_task_days: float = 6.3
+    pm_overhead_days: float = 11.7
+    contingency_days: float = 11.6
+    base_task_days: float = 103.7
     total_person_days: float
     total_person_hours: float
     total_labour_cost_usd: float
@@ -343,9 +454,13 @@ class RevisionSnapshot(BaseModel):
     brd_snapshot: Dict[str, Any]
 
 class ChatMessage(BaseModel):
-    sender: str  # "agent", "user", "system"
+    sender: str  # "agent", "user", "system", "architect", "manager", "client"
     content: str
     timestamp: str
+    persona: Optional[str] = None  # "CLIENT", "SOLUTIONS_ARCHITECT", "PROJECT_MANAGER", "AI_AGENT"
+    persona_badge: Optional[str] = None
+    is_architect_input: bool = False
+    is_pm_input: bool = False
     question_context: Optional[QuestionItem] = None
     is_ambiguity_warning: bool = False
     ambiguity_strike: int = 0
@@ -365,3 +480,5 @@ class ProjectSession(BaseModel):
     brd: Optional[BRDDocument] = None
     handoff_dossier: Optional[Dict[str, Any]] = None
     hitl_gates: HITLGates = HITLGates()
+    workflow: WorkflowState = Field(default_factory=WorkflowState)
+    confidence: Optional[DiscoveryConfidence] = None

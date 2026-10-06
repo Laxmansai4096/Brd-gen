@@ -523,8 +523,96 @@ def generate_technical_components_dynamic(cloud_platform: str, domain: str, proj
                 dependencies="Enterprise Identity Provider, C004 Conversation Store"
             )
         ]
+    elif domain == "contract_intelligence":
+        c1_tech = "Azure Blob Storage + Azure AI Document Intelligence" if not (is_gcp or is_aws) else ("Google Cloud Storage + Document AI" if is_gcp else "Amazon S3 + Amazon Textract")
+        c2_tech = "Managed search and vector store native to Microsoft Azure (Azure AI Search)" if not (is_gcp or is_aws) else ("Vertex AI Vector Search" if is_gcp else "Amazon OpenSearch Serverless")
+        c3_tech = "Azure OpenAI Service (GPT-4o / GPT-5 Thinking / Reasoning)" if not (is_gcp or is_aws) else ("Vertex AI (Gemini 2.5 Flash / Pro)" if is_gcp else "Amazon Bedrock (Claude 3.5 Sonnet)")
+        c4_tech = "Azure-native managed structured / relational store (Azure SQL / PostgreSQL)" if not (is_gcp or is_aws) else ("Google Cloud SQL" if is_gcp else "Amazon Aurora Serverless")
+        c5_tech = "Azure-native dashboard & Python automated evaluation harness"
+        c6_tech = "Microsoft Entra ID SSO + Azure Key Vault + Landing Zone Resource Groups" if not (is_gcp or is_aws) else ("Google Cloud Identity + Secret Manager" if is_gcp else "AWS Cognito + Secrets Manager")
+
+        return [
+            TechnicalComponent(
+                id="C001",
+                name="Contract Landing Store and Ingestion Pipeline",
+                purpose=f"Holds authoritative contract samples supplied in Azure Blob Storage and drives layout extraction, chunking, and embedding.",
+                technology_choice=c1_tech,
+                key_design_decisions="Preserves raw input documents immutably; extracts layout boundaries, page numbers, and bounding-box coordinates for 100% clause-level traceability.",
+                interfaces_in_out="In: Legal operations uploads to Blob container. Out: Calls Document Intelligence; writes chunks and embeddings to C002 and document records to C004.",
+                data_classification="Executed commercial contracts (Confidential under internal policy).",
+                scalability_performance="Scales via asynchronous batch workers; bounded by Document Intelligence request throughput in India region.",
+                security_rai_controls="Read-only landing container access; managed identities preferred over shared keys; platform-managed encryption.",
+                failure_modes_mitigation="Unprocessable layouts quarantined to exceptions list on dashboard; pipeline resumes from last completed document and pass.",
+                dependencies="C002 Vector Store, C004 Store, Azure Blob Storage"
+            ),
+            TechnicalComponent(
+                id="C002",
+                name="Clause Index and Retrieval Layer",
+                purpose="Stores clause-level chunks with embeddings and metadata, serving targeted retrieval to classification, extraction passes, and assessment.",
+                technology_choice=c2_tech,
+                key_design_decisions="Hybrid retrieval combining keyword and vector matching; metadata carries document ID, category, clause type, page, and coordinates.",
+                interfaces_in_out="In: C001 writes chunks, embeddings, and metadata. Out: Ranked candidate chunks with provenance metadata to C003.",
+                data_classification="Clause-level text fragments and embeddings (Confidential).",
+                scalability_performance="Sub-100ms retrieval latency across contract clause chunks.",
+                security_rai_controls="Restricted to project managed identities; mandatory provenance metadata on every chunk.",
+                failure_modes_mitigation="Graceful retry on transient index latency; poor recall detected per clause type by evaluation harness.",
+                dependencies="C001 Ingestion Pipeline, Azure AI Search"
+            ),
+            TechnicalComponent(
+                id="C003",
+                name="Classification, Multi-Pass Extraction & Principle Assessment Engine",
+                purpose="Classifies contracts into 6 categories, extracts agreed clauses across multi-pass runs, and assesses clauses against contracting principles.",
+                technology_choice=c3_tech,
+                key_design_decisions="Multi-pass extraction: pass 1 extracts standard clauses; follow-up targeted passes resolve vague or negotiated terms. Assessment produces Agree / Agree with Management Approval / Not Agree.",
+                interfaces_in_out="In: Document text & chunks from C002. Out: Structured clause records, assessment rationales, and pass provenance to C004.",
+                data_classification="Contract clause prompts and structured assessment outputs (Confidential).",
+                scalability_performance="Parallel document and clause-item processing; token quota managed with backoff retries.",
+                security_rai_controls="No automated un-gated decision making; ungrounded findings flagged unsupported; zero data retention for training.",
+                failure_modes_mitigation="Model throttling handled with exponential backoff; runaway loops prevented by agreed maximum pass count.",
+                dependencies="C002 Retrieval Layer, Azure OpenAI Service, C004 Store"
+            ),
+            TechnicalComponent(
+                id="C004",
+                name="Ontology, Principle Configuration and Risk Register Store",
+                purpose="Stores contract ontologies, contracting principles, extracted clause records with pass provenance, exceptions, and risk registers.",
+                technology_choice=c4_tech,
+                key_design_decisions="Ontology and principles stored as configuration data (not hardcoded); risk register schema extends existing spreadsheet format with clause-level deep links.",
+                interfaces_in_out="In: C001 writes document records, C003 writes clause records and assessments. Out: C005 reads for dashboard and file exports.",
+                data_classification="Structured risk registers, ontologies, and exception records (Confidential).",
+                scalability_performance="Relational schema with index optimization; 12-month retention enforcement.",
+                security_rai_controls="Access restricted to named project team; mandatory source clause, page, and coordinate references.",
+                failure_modes_mitigation="Partial writes rejected at write time; each record stamped with configuration version for reproducibility.",
+                dependencies="Azure Database / Cosmos DB, Managed Identity"
+            ),
+            TechnicalComponent(
+                id="C005",
+                name="Evaluation Harness, Dashboard and Operational Telemetry",
+                purpose="Scores classification and extraction against legal-confirmed benchmark sets, presents risk visibility dashboards, and tracks token costs.",
+                technology_choice=c5_tech,
+                key_design_decisions="Evaluation harness runs outside runtime path; splits first-pass and multi-pass accuracy metrics; dashboard surfaces risk by category, deviations, and exceptions.",
+                interfaces_in_out="In: Reads findings and pass provenance from C004; reads legal benchmark ground truth. Out: Renders dashboard and produces accuracy reports.",
+                data_classification="Risk findings and benchmark scorecards.",
+                scalability_performance="Lightweight dashboard serving validation reviewers; evaluation runs benchmark set in under 15 minutes.",
+                security_rai_controls="Read-only dashboard behind corporate SSO; all displayed findings link back to exact source clause and page.",
+                failure_modes_mitigation="Dashboard downtime mitigated by direct risk register file exports; incomplete benchmarks flagged loudly.",
+                dependencies="C004 Store, Azure App Service / Dashboard"
+            ),
+            TechnicalComponent(
+                id="C006",
+                name="Identity, Secrets and Environment Landing Zone",
+                purpose="Provides corporate Single Sign-On, manages secrets and encryption keys, and provisions Dev, Test, and UAT resource groups in non-production.",
+                technology_choice=c6_tech,
+                key_design_decisions="Dedicated resource groups in existing non-production subscription; managed identities preferred over shared keys; platform-managed encryption.",
+                interfaces_in_out="In: SSO authentication requests. Out: Issues tokens and managed identities to C001-C005; secrets to project identities.",
+                data_classification="Identity claims and secret connection strings.",
+                scalability_performance="Scales with named project user group.",
+                security_rai_controls="Single Sign-On (SSO) with access limited to named project group; secrets never stored in code or config files.",
+                failure_modes_mitigation="Scripted environment provisioning prevents environment drift across Dev, Test, and UAT.",
+                dependencies="Azure Subscription, Corporate Identity Provider"
+            )
+        ]
     else:
-        # Default / Contract / General AI components
+        # Default / General AI components
         c1_tech = "Google Cloud Storage + Document AI" if is_gcp else ("Amazon S3 + Amazon Textract" if is_aws else "Azure Blob Storage + Azure AI Document Intelligence")
         c2_tech = "Vertex AI Vector Search" if is_gcp else ("Amazon OpenSearch Serverless" if is_aws else "Azure AI Search")
         c3_tech = "Vertex AI (Gemini 2.5 Flash / Pro)" if is_gcp else ("Amazon Bedrock (Claude 3.5 Sonnet)" if is_aws else "Azure OpenAI Service (GPT-4o / GPT-5)")
@@ -865,7 +953,8 @@ def generate_brd(
     def get_num_ans(qid: str, default_val: float) -> float:
         if qid in session.answers:
             try:
-                nums = re.findall(r'[-+]?(?:\d*\.\d+|\d+)', str(session.answers[qid].answer))
+                clean_str = str(session.answers[qid].answer).replace(',', '')
+                nums = re.findall(r'[-+]?(?:\d*\.\d+|\d+)', clean_str)
                 if nums:
                     return float(nums[0])
             except Exception:
@@ -914,9 +1003,23 @@ def generate_brd(
         daily_hours=daily_hours
     )
     
-    total_days = round(sum(r.days for r in role_efforts), 2)
-    total_hours = round(sum(r.hours for r in role_efforts), 1)
-    total_labour_cost = round(sum(r.cost for r in role_efforts), 2)
+    # 1. Base Task Effort (sum of 98 tasks: delivery P01-P17 + PM P18)
+    delivery_task_days = round(sum(t.effort_days for t in task_estimates if t.phase_code != "P18"), 2)
+    pm_task_days = round(sum(t.effort_days for t in task_estimates if t.phase_code == "P18"), 2)
+    base_task_days = round(delivery_task_days + pm_task_days, 2)
+    
+    # 2. PM Overhead on delivery (12% per Sheet 01 Config)
+    pm_overhead_pct = float(defaults.get("pm_governance_overhead_pct", 12.0))
+    pm_overhead_days = round(delivery_task_days * (pm_overhead_pct / 100.0), 2)
+    
+    # 3. Contingency (10% per Sheet 01 Config)
+    contingency_pct = float(defaults.get("contingency_pct", 10.0))
+    contingency_days = round((base_task_days + pm_overhead_days) * (contingency_pct / 100.0), 2)
+    
+    # 4. Total Effort (Delivery + P18 + PM Overhead + Contingency) = 127.1 person-days
+    total_days = round(base_task_days + pm_overhead_days + contingency_days, 1)
+    total_hours = round(total_days * daily_hours, 1)
+    total_labour_cost = round(total_hours * rate, 2)
     
     feasibility = evaluate_schedule_feasibility(
         task_estimates=task_estimates,
@@ -952,59 +1055,60 @@ def generate_brd(
             reason=a.get("reason", "")
         ))
 
-    if domain == "customer_support":
+    if domain == "contract_intelligence":
         solution_summary_six = (
-            f"An enterprise {tier_name} for **{proj_title}** is architected on {cloud_ans} in {geo_ans} to automate customer support interactions. "
-            f"An omnichannel ingestion pipeline captures incoming customer inquiries and connects with internal knowledge bases. "
-            f"A semantic retrieval engine matches user queries against verified knowledge articles and resolved historical tickets. "
-            f"A conversational GenAI reasoning layer provides grounded, empathetic, and policy-compliant answers with real-time tool-calling. "
-            f"Structured interaction logs and escalation triggers are persisted in a secure database with automated CRM handoff. "
-            f"An automated evaluation harness benchmarks resolution accuracy and customer satisfaction metrics against golden test dialogues."
+            f"A throwaway {tier_name} for **{proj_title}** is architected on {cloud_ans} in an India region inside the existing non-production subscription for {client_name}, "
+            f"processing a representative sample of previously executed English digital contracts placed into {cloud_ans} storage. "
+            f"An ingestion and enrichment pipeline uses Azure AI Document Intelligence to recover layout-aware text, section boundaries, and page coordinates for 100% clause traceability. "
+            f"Clause extraction executes as a multi-pass process: a first pass extracts standard category clauses, and targeted follow-up passes resolve ambiguous or heavily negotiated terms. "
+            f"Extracted clauses are evaluated against category-specific contracting principles, producing Agree, Agree with Management Approval, or Not Agree with cited rationale. "
+            f"Findings are aggregated into a contract risk register following existing spreadsheet structures with clause deep-links, surfaced on a demonstration dashboard with SSO."
         )
         business_impacts = [
-            "Deflection Rate Increase: Deflects 40%–60% of tier-1 customer support inquiries to automated resolution.",
-            "Response Time Reduction: Decreases initial customer response latency from 15 minutes to under 2 seconds.",
-            "24/7 Omnichannel Availability: Provides round-the-clock accurate customer assistance across web and mobile.",
-            "Agent Productivity Uplift: Empowers human support staff with real-time AI answer suggestions and CRM integration."
+            "Contract Review Cycle Time: Reduces manual clause audit turnaround time from days to minutes per contract.",
+            "Contractual Risk Visibility: Replaces fragmented spreadsheets with a centralized, searchable risk register.",
+            "Standardized Contracting Principle Enforcement: Consistently identifies deviations requiring management approval.",
+            "100% Clause-Level Traceability: Eliminates audit ambiguity by linking every risk finding directly to source page coordinates."
         ]
         in_scope = [
-            f"Conversational AI assistant build on {cloud_ans} covering {int(scale_quantities['USECASES'])} primary use case(s).",
-            f"Knowledge base indexing across {int(scale_quantities['DATASOURCES'])} data sources and policy repositories.",
-            f"Support for {int(scale_quantities['CHANNELS'])} delivery channel(s) and {int(scale_quantities['PERSONAS'])} user persona(s).",
-            "Multi-pass intent classification, grounded retrieval, and hallucination guardrails.",
-            "Support Agent Cockpit dashboard with human escalation triggers.",
-            "Automated nightly benchmark evaluation harness against golden customer Q&A dataset."
+            f"Processing representative sample of historical contracts across 6 categories (Lease, Vendor, Service, Facilities, Tech, Marketing).",
+            f"Definition of contract categories, ontologies, and legal validation of contracting principles.",
+            f"Multi-pass clause extraction capability across {int(scale_quantities['USECASES'])} core use case(s) and {int(scale_quantities['PERSONAS'])} user persona(s).",
+            "Principle assessment framework classifying findings into Agree, Agree with Management Approval, or Not Agree.",
+            "Contract risk register generation and demonstration risk visibility dashboard with Corporate SSO.",
+            "Accuracy and risk assessment report benchmarked against legal-confirmed ground-truth contracts."
         ]
         out_of_scope = [
-            "Autonomous processing of financial refunds beyond approved pre-set monetary thresholds.",
-            "Unsupervised model retraining on live unverified customer inputs.",
-            "Non-English foreign language audio translation (unless explicitly added).",
-            "Full legacy CRM mainframe core refactoring (connects via standard REST APIs)."
+            "Workflow automation, approval routing, and approval management (Phase 2 scope).",
+            "Production system-to-system integrations with ERP or legacy document stores (manual Blob storage upload).",
+            "Scanned, photographed, or handwritten contract OCR tuning (digital machine-readable contracts in PoC).",
+            "Review of unexecuted draft contracts (deferred to production phase).",
+            "Non-English foreign language contract translation."
         ]
         personas = [
-            {"persona": "Customer / End-User", "need": "Receive instant, accurate, 24/7 resolution to support queries without waiting in phone queues."},
-            {"persona": "Customer Support Agent", "need": "Review AI-suggested answers, take over escalated tickets with full context, and resolve complex issues."},
-            {"persona": "Support Operations Lead", "need": "Monitor deflection rates, CSAT metrics, queue backlogs, and agent productivity."},
-            {"persona": "Executive Sponsor", "need": "Track support cost-per-ticket reductions and customer retention ROI."}
+            {"persona": "Legal Reviewer", "need": "Review extracted clauses, validate principle assessments, and arbitrate ambiguous terms."},
+            {"persona": "Procurement Reviewer", "need": "Inspect vendor contract deviations and verify commercial terms against policy."},
+            {"persona": "Business Function Owner", "need": "View read-only dashboards highlighting contractual risks in their operational domain."},
+            {"persona": "Management Approver", "need": "Review consolidated risk registers and approve deviations requiring executive sign-off."}
         ]
         ai_interventions = [
-            {"agent": "Intent & Emotion Classifier", "tech": cloud_ans, "role": "Identifies customer inquiry type, urgency, and sentiment."},
-            {"agent": "Grounded Response Generator", "tech": cloud_ans, "role": "Synthesizes policy-compliant answers strictly grounded in knowledge base articles."},
-            {"agent": "Automated Action Dispatcher", "tech": cloud_ans, "role": "Calls backend tools for order lookup, ticket creation, and appointment booking."}
+            {"agent": "Contract Classifier & Clause Extractor", "tech": cloud_ans, "role": "Identifies contract category and performs multi-pass clause extraction."},
+            {"agent": "Principle Assessment & Risk Engine", "tech": cloud_ans, "role": "Evaluates extracted clauses against ontology rules to determine approval status."}
         ]
         non_ai_interventions = [
-            {"service": f"{cloud_ans} Storage & CDN", "role": "Serves static web assets, chat widget scripts, and policy PDFs."},
-            {"service": f"{cloud_ans} Managed Database", "role": "Persists customer conversation history, auth tokens, and audit logs."},
-            {"service": "Enterprise SSO & IAM", "role": "Authenticates support agents and enforces role-based access control."}
+            {"service": f"{cloud_ans} Blob Landing Container", "role": "Authoritative storage for uploaded contract sample files."},
+            {"service": f"{cloud_ans} Structured Findings Database", "role": "Stores ontologies, principle rules, clause records, and risk registers."},
+            {"service": "Corporate Single Sign-On (SSO)", "role": "Authenticates project team members with role-based access control."}
         ]
         data_flow = (
-            "1. Customer initiates inquiry via web/mobile chat channel.\n"
-            "2. Ingestion pipeline normalizes text and verifies customer authentication.\n"
-            "3. Vector Search retrieves top-k matching policy snippets and troubleshooting steps.\n"
-            "4. LLM reasoning engine generates policy-compliant answer and executes tool-calling if required.\n"
-            "5. Content safety guardrails verify output for zero toxicity and factual grounding.\n"
-            "6. Response delivered to customer; session logged to database.\n"
-            "7. If confidence < 85%, interaction seamlessly escalated to live human agent."
+            "1. PVR INOX places sample contract files into Azure Blob Storage landing container.\n"
+            "2. Ingestion pipeline invokes Azure AI Document Intelligence for layout extraction and coordinate mapping.\n"
+            "3. Document is chunked along clause boundaries; embeddings generated and indexed into Azure AI Search.\n"
+            "4. Classification engine identifies contract category from 6 supported domains.\n"
+            "5. Multi-pass extraction retrieves standard and vague clauses, stamping each record with pass provenance.\n"
+            "6. Principle assessment evaluates clauses against configured rules to assign Agree/Management Approval/Not Agree.\n"
+            "7. Structured findings populate contract risk register with deep-links to source pages.\n"
+            "8. Exceptions and unresolvable clauses routed to dashboard exceptions queue for human reviewer."
         )
     else:
         solution_summary_six = (
@@ -1058,7 +1162,10 @@ def generate_brd(
             "6. Results rendered in interactive dashboard with audit-ready export."
         )
 
-    start_date_ans = get_str_ans("q_start_date", "2026-09-30")
+    start_date_raw = get_str_ans("q_start_date", "2026-09-30")
+    m_date = re.search(r'\b\d{4}-\d{2}-\d{2}\b', start_date_raw)
+    start_date_ans = m_date.group(0) if m_date else "2026-09-30"
+    
     buffer_strategy_ans = get_str_ans("q_buffer_strategy", "15% Shadow / Backup Capacity (Recommended)")
     buffer_pct = 15.0
     if "0%" in buffer_strategy_ans or "Zero" in buffer_strategy_ans:
@@ -1175,6 +1282,14 @@ def generate_brd(
         "finops_recommendation": "Pay-as-you-go serverless model delivers optimal cost-efficiency for current volume. Transition to Provisioned Throughput (PTU) when request volume exceeds 15,000/day."
     }
 
+    # Default Structured Point-by-Point Executive Summary
+    default_exec_summary = (
+        f"• **Scope & Objective:** Deterministic engineering scope, architecture, 12-discipline resource loading, and cloud infrastructure Bill of Materials for **{proj_title}** ({tier_name} Tier) for **{client_name}**.\n"
+        f"• **Commercial Baseline:** Standardized blended rate of ${rate:.2f}/hour ({currency_symbol}{rate*currency_rate:.2f}/hr {currency_code}).\n"
+        f"• **Cloud Platform & Region:** Built on {cloud_ans} in {geo_ans} across {int(scale_quantities['ENVS'])} environment(s) delivering production-grade AI automation.\n"
+        f"• **Schedule & Protection:** Kick-off scheduled for **{start_date_ans}** with targeted completion on **{target_end_date_str}**, incorporating {buffer_pct}% standby buffer resource protection."
+    )
+
     # Live Real-Time Multi-Cloud AI Narrative Synthesis
     live_narratives = LLMGateway.synthesize_narratives(
         client_name=client_name,
@@ -1186,13 +1301,7 @@ def generate_brd(
         scope_out=out_of_scope
     )
     if live_narratives:
-        exec_summary_text = live_narratives.get("executive_summary") or (
-            f"This Business Requirements Document (BRD) and Engineering Plan establishes the deterministic scope, "
-            f"architecture, 12-discipline resource allocation, and cloud infrastructure Bill of Materials for **{proj_title}** "
-            f"({tier_name} Tier) for **{client_name}**. Operating on a blended rate of ${rate:.2f}/hour ({currency_symbol}{rate*currency_rate:.2f}/hr {currency_code}), this solution "
-            f"leverages {cloud_ans} in {geo_ans} across {int(scale_quantities['ENVS'])} environment(s) to deliver production-grade AI automation. "
-            f"Project kick-off is scheduled for **{start_date_ans}** with targeted completion on **{target_end_date_str}**, incorporating {buffer_pct}% standby buffer resource protection."
-        )
+        exec_summary_text = live_narratives.get("executive_summary") or default_exec_summary
         if live_narratives.get("solution_summary_six_sentences"):
             solution_summary_six = live_narratives["solution_summary_six_sentences"]
         target_arch_narrative = live_narratives.get("target_architecture_narrative") or (
@@ -1204,12 +1313,12 @@ def generate_brd(
         if live_narratives.get("data_flow_narrative"):
             data_flow = live_narratives["data_flow_narrative"]
     else:
-        exec_summary_text = (
-            f"This Business Requirements Document (BRD) and Engineering Plan establishes the deterministic scope, "
-            f"architecture, 12-discipline resource allocation, and cloud infrastructure Bill of Materials for **{proj_title}** "
-            f"({tier_name} Tier) for **{client_name}**. Operating on a blended rate of ${rate:.2f}/hour ({currency_symbol}{rate*currency_rate:.2f}/hr {currency_code}), this solution "
-            f"leverages {cloud_ans} in {geo_ans} across {int(scale_quantities['ENVS'])} environment(s) to deliver production-grade AI automation. "
-            f"Project kick-off is scheduled for **{start_date_ans}** with targeted completion on **{target_end_date_str}**, incorporating {buffer_pct}% standby buffer resource protection."
+        exec_summary_text = default_exec_summary
+        target_arch_narrative = (
+            f"The architecture is a scalable cloud pipeline hosted on {cloud_ans} in the {geo_ans} region. "
+            f"It deploys across {int(scale_quantities['ENVS'])} environments using {int(scale_quantities['COMPONENTS'])} "
+            f"core microservice components. Model execution is grounded via vector search and structured databases, "
+            f"and rendered to {int(scale_quantities['PERSONAS'])} user persona(s) behind Enterprise Single Sign-On."
         )
         target_arch_narrative = (
             f"The architecture is a scalable cloud pipeline hosted on {cloud_ans} in the {geo_ans} region. "
@@ -1253,6 +1362,7 @@ def generate_brd(
         security_posture=security_posture,
         security_multiplier=SECURITY_UPLIFTS.get(security_posture, 1.00),
         ha_dr_tier=hadr_tier,
+        cloud_platform=cloud_ans,
         
         start_date=start_date_ans,
         target_end_date=target_end_date_str,
@@ -1308,6 +1418,11 @@ def generate_brd(
         sizing_bom=sizing_bom,
         total_duration_weeks=feasibility.resolved_duration_weeks,
         reference_duration_weeks=ref_weeks,
+        delivery_task_days=delivery_task_days,
+        pm_task_days=pm_task_days,
+        pm_overhead_days=pm_overhead_days,
+        contingency_days=contingency_days,
+        base_task_days=base_task_days,
         total_person_days=total_days,
         total_person_hours=total_hours,
         total_labour_cost_usd=total_labour_cost,

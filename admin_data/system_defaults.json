@@ -1,0 +1,19 @@
+{
+  "blended_hourly_rate": 30,
+  "currency": "USD",
+  "currency_symbol": "$",
+  "hours_per_day": 8,
+  "working_days_per_week": 5,
+  "default_delivery_tier": "PoC",
+  "default_reference_duration": "6.0",
+  "default_cloud_platform": "Microsoft Azure",
+  "default_primary_location": "India",
+  "max_fte_per_role_peak": 20.0,
+  "max_ramp_per_week": 80.0,
+  "phase_overlap_fraction": 0.5,
+  "min_fte_granularity": 0.25,
+  "productive_utilisation_pct": 100.0,
+  "leave_and_buffer_pct": 0.0,
+  "contingency_pct": 10.0,
+  "pm_governance_overhead_pct": 12.0
+}

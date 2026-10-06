@@ -12,19 +12,40 @@
 </head>
 
 <body>
+  <!-- Multi-Port Persona & Admin Localhost Interface Bar -->
+  <div class="multi-port-banner" id="multiPortBanner">
+    <div class="port-identity-box">
+      <span class="port-badge-indicator" id="portCurrentBadge">
+        <span class="port-pulse-dot"></span>
+        <span id="portCurrentTitle">Loading Persona Interface...</span>
+      </span>
+      <span style="color: #64748b; font-size: 0.72rem;" id="portSessionInfo">Port-Synchronized State</span>
+    </div>
+    <div class="port-switcher-links">
+      <span class="port-links-title">Adjacent Local Ports:</span>
+      <a href="http://127.0.0.1:8081" class="port-nav-btn" id="navPort8081" title="Open Client Portal (Port 8081)">🧑‍💼 Client :8081</a>
+      <a href="http://127.0.0.1:8082" class="port-nav-btn" id="navPort8082" title="Open Solutions Architect Portal (Port 8082)">🏗️ Architect :8082</a>
+      <a href="http://127.0.0.1:8083" class="port-nav-btn" id="navPort8083" title="Open Project Manager Portal (Port 8083)">👔 PM :8083</a>
+      <a href="http://127.0.0.1:8084" class="port-nav-btn" id="navPort8084" title="Open Enterprise Admin Console (Port 8084)">🛡️ Admin :8084</a>
+      <a href="http://127.0.0.1:8088" class="port-nav-btn" id="navPort8088" title="Open Unified Gateway (Port 8088)">🌐 Unified :8088</a>
+    </div>
+  </div>
+
   <!-- Global Top Header -->
   <header class="app-header">
     <div class="brand-section">
       <div class="brand-logo">
-        <span>⚡</span> BRD Studio <span class="brand-badge">PRO</span>
+        <span>⚡</span> BRD Studio
       </div>
       <span class="brand-divider">/</span>
-      <span class="client-tag" id="headerClientTag">PVR INOX — Contract Intelligence Platform</span>
+      <span class="client-tag" id="headerClientTag">Contract Intelligence Platform</span>
     </div>
 
     <div class="header-actions">
       <!-- Currency Switcher -->
-      <select id="globalCurrencySelect" class="form-control" style="width: 110px; padding: 5px 10px; font-size: 0.82rem; font-weight: 600;" onchange="changeGlobalCurrency(this.value)" title="Switch Display Currency & Rate Card">
+      <select id="globalCurrencySelect" class="form-control"
+        style="width: 110px; padding: 5px 10px; font-size: 0.82rem; font-weight: 600;"
+        onchange="changeGlobalCurrency(this.value)" title="Switch Display Currency & Rate Card">
         <option value="USD">USD ($)</option>
         <option value="EUR">EUR (€)</option>
         <option value="GBP">GBP (£)</option>
@@ -60,43 +81,99 @@
     </div>
   </header>
 
+  <!-- 3-Persona Collaborative Control Bar & Stage Stepper -->
+  <div class="workflow-control-bar">
+    <!-- Persona Switcher -->
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 0.76rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Active Persona:</span>
+      <div class="persona-switcher" id="personaSwitcher">
+        <button class="persona-pill active client" id="pillClient" onclick="switchActivePersona('CLIENT')" title="Act as Elena Vance (Client Business Lead)">
+          <span>🧑‍💼</span> Client (Elena)
+        </button>
+        <button class="persona-pill architect" id="pillArchitect" onclick="switchActivePersona('SOLUTIONS_ARCHITECT')" title="Act as Alex Morgan (Principal Solutions Architect)">
+          <span>🏗️</span> Architect (Alex)
+        </button>
+        <button class="persona-pill pm" id="pillPM" onclick="switchActivePersona('PROJECT_MANAGER')" title="Act as Marcus Reed (Senior Delivery PM)">
+          <span>👔</span> PM (Marcus)
+        </button>
+      </div>
+    </div>
+
+    <!-- Workflow Stage Stepper -->
+    <div class="workflow-stepper" id="workflowStepper">
+      <div class="stage-step active" id="stepIdeation" onclick="switchTab('tab-ideation')">
+        <span>1️⃣</span> Ideation
+      </div>
+      <span class="stage-step-arrow">➔</span>
+      <div class="stage-step" id="stepDiscovery" onclick="switchTab('tab-brd')">
+        <span>2️⃣</span> Discovery
+      </div>
+      <span class="stage-step-arrow">➔</span>
+      <div class="stage-step" id="stepDualReview" onclick="switchTab('tab-dual-review')">
+        <span>3️⃣</span> Dual Review
+      </div>
+      <span class="stage-step-arrow">➔</span>
+      <div class="stage-step" id="stepPMReview" onclick="switchTab('tab-pm-review')">
+        <span>4️⃣</span> PM Sign-Off
+      </div>
+      <span class="stage-step-arrow">➔</span>
+      <div class="stage-step" id="stepFinalBRD" onclick="switchTab('tab-export')">
+        <span>5️⃣</span> Final Approved
+      </div>
+    </div>
+
+    <!-- Real-Time Confidence Gauge -->
+    <div class="confidence-gauge-card" id="confidenceCard" title="Discovery Confidence Score (98%+ threshold for BRD Synthesis)">
+      <span style="font-size: 0.75rem; font-weight: 600; color: #475569;">Confidence:</span>
+      <div class="confidence-gauge-bar">
+        <div class="confidence-gauge-fill" id="confidenceFill" style="width: 10%;"></div>
+      </div>
+      <span class="confidence-gauge-text" id="confidenceScoreText">10%</span>
+      <span class="confidence-threshold-tag" id="confidenceThresholdTag">98% Goal</span>
+    </div>
+  </div>
+
   <!-- 3-Column Modern Workspace -->
   <main class="workspace-container">
     <!-- 1. LEFT SIDEBAR: User Profile, Folder History & System Controls -->
     <aside class="sidebar-panel" id="sidebarPanel">
       <div class="sidebar-scroll-area">
         <!-- User Profile Card -->
-        <div class="user-profile-widget">
-          <div class="profile-avatar">
-            AM
-            <span class="status-online-dot" title="Active Solution Architect Session"></span>
+        <div class="user-profile-widget" id="userProfileWidget">
+          <div class="profile-avatar" id="sidebarAvatar">
+            EV
+            <span class="status-online-dot" title="Active Session"></span>
           </div>
           <div class="profile-info">
-            <span class="profile-name">Alex Morgan</span>
-            <span class="profile-role">Principal Solutions Architect</span>
+            <span class="profile-name" id="sidebarProfileName">Elena Vance</span>
+            <span class="profile-role" id="sidebarProfileRole">Client Business Lead</span>
             <span class="profile-tenant">⚡ Enterprise AI Delivery Hub</span>
           </div>
         </div>
 
         <!-- Quick Workspace Action Buttons -->
         <div class="sidebar-actions">
-          <button class="btn-sidebar-action primary" onclick="resetSession()">
-            <span>➕</span> New BRD Discovery
+          <button class="btn-sidebar-action primary" onclick="switchTab('tab-ideation')">
+            <span>💡</span> Project Ideation
           </button>
-          <button class="btn-sidebar-action secondary" onclick="document.getElementById('rfpAutoDiscoverInput').click()">
+          <button class="btn-sidebar-action secondary"
+            onclick="document.getElementById('rfpAutoDiscoverInput').click()">
             <span>⚡</span> 0-Click RFP Ingestion
           </button>
         </div>
 
         <!-- Folderwise Project BRD Archives & Chat History -->
-        <div class="sidebar-section-header" style="cursor: pointer; user-select: none;" onclick="toggleAllWorkspaces()" title="Click to collapse / expand all workspaces">
+        <div class="sidebar-section-header" style="cursor: pointer; user-select: none;" onclick="toggleAllWorkspaces()"
+          title="Click to collapse / expand all workspaces">
           <div style="display: flex; align-items: center; gap: 6px;">
-            <span id="workspacesCollapseIcon" style="font-size: 0.72rem; color: var(--text-sidebar); transition: transform 0.2s;">▼</span>
+            <span id="workspacesCollapseIcon"
+              style="font-size: 0.72rem; color: var(--text-sidebar); transition: transform 0.2s;">▼</span>
             <span class="sidebar-section-title">📂 Project Workspaces & BRDs</span>
           </div>
           <div style="display: flex; align-items: center; gap: 6px;">
             <span class="sidebar-count-badge" id="projectCountBadge">4 Workspaces</span>
-            <button class="btn-toggle-workspaces" id="btnToggleWorkspaces" onclick="event.stopPropagation(); toggleAllWorkspaces();" title="Toggle Workspaces Visibility">
+            <button class="btn-toggle-workspaces" id="btnToggleWorkspaces"
+              onclick="event.stopPropagation(); toggleAllWorkspaces();" title="Toggle Workspaces Visibility">
               Hide
             </button>
           </div>
@@ -106,7 +183,8 @@
           <!-- Search Project Workspaces -->
           <div class="sidebar-search-box" style="margin-bottom: 8px;">
             <span>🔍</span>
-            <input type="text" id="projectSearchInput" placeholder="Filter project workspaces..." oninput="filterProjectFolders(this.value)">
+            <input type="text" id="projectSearchInput" placeholder="Filter project workspaces..."
+              oninput="filterProjectFolders(this.value)">
           </div>
 
           <div class="project-folders-container" id="projectFoldersList">
@@ -114,14 +192,23 @@
           </div>
         </div>
 
-        <!-- BRD Deliverables & Workbench Navigation -->
+        <!-- BRD Deliverables & Collaborative Workflow Navigation -->
         <div class="sidebar-section-header" style="margin-top: 6px;">
-          <span class="sidebar-section-title">📑 BRD & Workbench Views</span>
+          <span class="sidebar-section-title">👥 3-Persona Lifecycle</span>
         </div>
 
         <div class="sidebar-nav-tabs" id="sidebarNavTabs">
-          <button class="sidebar-tab-btn active" onclick="switchTab('tab-brd')">
-            <span class="tab-btn-title"><span>📄</span> BRD Document</span>
+          <button class="sidebar-tab-btn" onclick="switchTab('tab-ideation')" id="tabBtnIdeation">
+            <span class="tab-btn-title"><span>💡</span> 1. Ideation Studio</span>
+          </button>
+          <button class="sidebar-tab-btn active" onclick="switchTab('tab-brd')" id="tabBtnBRD">
+            <span class="tab-btn-title"><span>📄</span> 2. BRD & Discovery</span>
+          </button>
+          <button class="sidebar-tab-btn" onclick="switchTab('tab-dual-review')" id="tabBtnDualReview">
+            <span class="tab-btn-title"><span>⚖️</span> 3. Dual Review Hub</span>
+          </button>
+          <button class="sidebar-tab-btn" onclick="switchTab('tab-pm-review')" id="tabBtnPMReview">
+            <span class="tab-btn-title"><span>👔</span> 4. PM Consensus Room</span>
           </button>
           <button class="sidebar-tab-btn" onclick="switchTab('tab-roles')">
             <span class="tab-btn-title"><span>👥</span> 12 Disciplines & Tasks</span>
@@ -144,18 +231,16 @@
           <button class="sidebar-tab-btn" onclick="switchTab('tab-assumptions')">
             <span class="tab-btn-title"><span>⚙️</span> Assumptions Gate</span>
           </button>
+          <button class="sidebar-tab-btn" onclick="switchTab('tab-canonical')">
+            <span class="tab-btn-title"><span>📋</span> Requirements & Gates</span>
+          </button>
+          <button class="sidebar-tab-btn" onclick="switchTab('tab-impact')">
+            <span class="tab-btn-title"><span>⚡</span> Impact & Ledger</span>
+          </button>
           <button class="sidebar-tab-btn" onclick="switchTab('tab-export')">
-            <span class="tab-btn-title"><span>📥</span> Export Suite</span>
+            <span class="tab-btn-title"><span>📥</span> 5. Final Export Suite</span>
           </button>
         </div>
-      </div>
-
-      <!-- Sidebar Footer -->
-      <div class="sidebar-footer-widget">
-        <span>💵 Rate: <strong>$30.00/hr</strong></span>
-        <span style="color: #4ade80; display: flex; align-items: center; gap: 4px; font-weight: 600;">
-          <span class="dot-pulse" style="width: 6px; height: 6px;"></span> Enterprise Admin
-        </span>
       </div>
     </aside>
 
@@ -164,18 +249,23 @@
       <div class="panel-header">
         <div class="panel-title">
           <span>💬</span> Discovery Interview
+          <span class="msg-persona-tag msg-persona-client" id="chatActivePersonaBadge" style="margin-left: 8px;">🧑‍💼 Client (Elena)</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <!-- 0-Click Auto Discovery Upload Button -->
-          <button class="btn-header" onclick="document.getElementById('rfpAutoDiscoverInput').click()" style="background: var(--primary-soft-bg); color: var(--primary); font-size: 0.76rem; padding: 4px 10px; border: 1px solid rgba(72, 98, 247, 0.3); font-weight: 700;" title="Drop RFP / SOW document to auto-populate all 25 discovery parameters">
-            <input type="file" id="rfpAutoDiscoverInput" style="display: none;" accept=".pdf,.docx,.txt,.csv,.json,.doc" onchange="handleRfpAutoDiscovery(event)">
+          <button class="btn-header" onclick="document.getElementById('rfpAutoDiscoverInput').click()"
+            style="background: var(--primary-soft-bg); color: var(--primary); font-size: 0.76rem; padding: 4px 10px; border: 1px solid rgba(72, 98, 247, 0.3); font-weight: 700;"
+            title="Drop RFP / SOW document to auto-populate all 25 discovery parameters">
+            <input type="file" id="rfpAutoDiscoverInput" style="display: none;" accept=".pdf,.docx,.txt,.csv,.json,.doc"
+              onchange="handleRfpAutoDiscovery(event)">
             <span>⚡</span> 0-Click Auto-Discovery
           </button>
           <div class="progress-counter" id="progressCounter">
-            Question 1 of 22
+            <span>📊</span> <strong>Domain Coverage:</strong> 0 / 32 (0%) <span class="gate-target-pill">Gate: 95%</span>
           </div>
           <!-- Toggle Expand Chat Area Button -->
-          <button class="btn-header" id="btnToggleExpand" onclick="toggleChatExpand()" style="padding: 4px 10px; font-size: 0.76rem;" title="Toggle Full/Split Chat Width">
+          <button class="btn-header" id="btnToggleExpand" onclick="toggleChatExpand()"
+            style="padding: 4px 10px; font-size: 0.76rem;" title="Toggle Full/Split Chat Width">
             <span>⛶</span> Focus Chat
           </button>
         </div>
@@ -188,27 +278,32 @@
 
       <!-- Chat Controls & File Attachment Area -->
       <div class="chat-controls">
+        <!-- Dynamic Options Tray (Interactive cards with 1-click & double-click submission) -->
+        <div class="quick-options-tray" id="quickOptionsTray" style="display: none;"></div>
+
+        <!-- Quick Delegation Bar -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; margin-bottom: 6px;">
+          <button class="btn-delegate-architect" id="btnDelegateArchitect" onclick="delegateCurrentQuestionToArchitect()" title="Forward this question to Principal Solutions Architect Alex Morgan for technical recommendation">
+            <span>🏗️</span> Ask Solutions Architect (Alex)
+          </button>
+          <span style="font-size: 0.72rem; color: #64748b;" id="chatPersonaTip">Typing as: <strong>Elena Vance (Client)</strong></span>
+        </div>
+
         <div class="input-row" id="chatInputRow" style="align-items: center;">
           <label class="btn-attach" title="Attach Document (PDF, TXT, CSV, DOCX)">
             📎
             <input type="file" id="fileInput" onchange="handleFileUpload(event)" style="display: none;"
               accept=".pdf,.txt,.csv,.json,.doc,.docx">
           </label>
-          
-          <!-- Unified Question Options Dropdown (Last option is always Custom Input) -->
-          <select class="chat-input toolbar-dropdown" id="chatDropdownSelect" onchange="handleDropdownChange()" onkeydown="handleDropdownKeyDown(event)" style="flex: 1; min-height: 42px; font-size: 0.88rem; cursor: pointer;">
-          </select>
 
-          <!-- Custom Input Field (shown when user selects Custom Input option) -->
-          <div id="customInputWrapper" style="display: none; flex: 1; align-items: center; gap: 8px;">
-            <input type="text" class="chat-input" id="chatCustomInput"
-              placeholder="Type your custom answer (or custom input)..." onkeydown="handleCustomInputKeyDown(event)" style="flex: 1;">
-            <button class="btn-header" onclick="cancelCustomInput()" style="padding: 6px 12px; font-size: 0.8rem; white-space: nowrap; height: 42px; border: 1px solid var(--border-color);" title="Return to predefined options">
-              ↩ Options
-            </button>
-          </div>
-          
-          <button class="btn-send" onclick="sendUserMessage()" title="Send Answer" style="height: 42px; width: 42px; display: flex; align-items: center; justify-content: center;">
+          <!-- Direct Custom Input Field (Always visible for typing or auto-filled on option click) -->
+          <input type="text" class="chat-input" id="chatCustomInput"
+            placeholder="Type answer or click 'Ask Solutions Architect'..."
+            onkeydown="handleCustomInputKeyDown(event)"
+            style="flex: 1; min-height: 42px; font-size: 0.88rem;">
+
+          <button class="btn-send" onclick="sendUserMessage()" title="Send Answer"
+            style="height: 42px; width: 42px; display: flex; align-items: center; justify-content: center;">
             ➤
           </button>
         </div>
@@ -217,45 +312,23 @@
 
     <!-- RIGHT PANEL: 50% Project Cockpit & BRD Workbench -->
     <section class="workbench-panel">
-      <!-- Tabs -->
-      <div class="workbench-tabs">
-        <button class="tab-btn active" onclick="switchTab('tab-brd')">
-          <span>📄</span> BRD Document
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-roles')">
-          <span>👥</span> 12 Disciplines & Tasks
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-phases')">
-          <span>📊</span> 18-Phase Roadmap
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-daywise')">
-          <span>📅</span> Day-Wise Plan
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-components')">
-          <span>🏗️</span> Tech Components (6)
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-sizing')">
-          <span>☁️</span> Sizing & 3-Yr TCO
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-governance')">
-          <span>🛡️</span> EU AI Act & ISO 42001
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-assumptions')">
-          <span>⚙️</span> Assumptions Gate
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-canonical')">
-          <span>📋</span> Requirements & Gates
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-impact')">
-          <span>⚡</span> Impact & Ledger
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-export')">
-          <span>📥</span> Export Suite
-        </button>
-      </div>
-
       <!-- Tab Content Area -->
       <div class="tab-content-area" id="tabContentArea">
+        <!-- Persona Welcome & Purpose Banner -->
+        <div class="persona-hero-card" id="personaHeroCard">
+          <div class="persona-hero-main">
+            <div class="persona-hero-icon" id="personaHeroIcon">🧑‍💼</div>
+            <div class="persona-hero-text">
+              <div class="persona-hero-tag" id="personaHeroTag">🧑‍💼 Client Portal (Port 8081) — Elena Vance (Client Business Lead)</div>
+              <h2 class="persona-hero-title" id="personaHeroTitle">Start Your Project & Define Business Requirements</h2>
+              <p class="persona-hero-desc" id="personaHeroDesc">Define business objectives, answer friendly discovery questions, or delegate technical items to Solutions Architect Alex Morgan.</p>
+            </div>
+          </div>
+          <div class="persona-hero-actions" id="personaHeroActions">
+            <!-- Dynamically populated action buttons -->
+          </div>
+        </div>
+
         <!-- Top Metrics Strip -->
         <div class="metrics-strip">
           <div class="metric-card">
@@ -280,31 +353,155 @@
           </div>
           <div class="metric-card">
             <span class="metric-label">Assumption Gate</span>
-            <span class="metric-val" id="metricGateStatus" style="color: var(--success); font-size: 1.05rem;">PASSED</span>
+            <span class="metric-val" id="metricGateStatus"
+              style="color: var(--success); font-size: 1.05rem;">PASSED</span>
             <span class="metric-sub">7 Approved / 0 Blocked</span>
+          </div>
+        </div>
+
+        <!-- TAB 0: Stage 1 Ideation & Scoping Studio -->
+        <div id="tab-ideation" class="tab-pane" style="display: none;">
+          <div class="section-block" style="background: linear-gradient(135deg, #1e1b4b 0%, #1e293b 100%); color: #ffffff; border: 1px solid #3b486f;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                  <span style="font-size: 1.3rem;">💡</span>
+                  <h3 style="color: #ffffff; margin: 0; font-size: 1.15rem; font-weight: 700;">Stage 1: Project Ideation & Scoping Studio</h3>
+                  <span class="badge badge-success" style="font-size: 0.75rem;">Client ↔ Architect Dialogue</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #cbd5e1; margin: 0; line-height: 1.5;">
+                  Client <strong>Elena Vance</strong> discusses project goals with Solutions Architect <strong>Alex Morgan</strong>. Once the project direction and cloud stack are aligned, the AI Interviewer conducts targeted deep-dive discovery.
+                </p>
+              </div>
+              <button class="btn-select-confirm" onclick="switchActivePersona('SOLUTIONS_ARCHITECT')" style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25); color: #ffffff;">
+                <span>🏗️</span> Consult Architect
+              </button>
+            </div>
+          </div>
+
+          <!-- Select Enterprise Blueprint or Custom Idea -->
+          <div class="section-block">
+            <h4 class="section-title"><span>🌟 1. Select an Enterprise Project Blueprint or Type Custom Idea</span></h4>
+            
+            <div class="idea-template-grid">
+              <div class="idea-template-card selected" onclick="selectIdeaTemplate(this, 'Contract Intelligence & Risk Visibility Platform', 'Limited visibility into contractual risk exposure across contracts and business functions. Manual review by scarce legal experts is slow, disconnected, and lacks traceability. The solution must extract clauses across 6 legal categories, assess them against category principles, and produce a centralized contract risk register with bounding-box coordinate traceability.', 'PoC')">
+                <div style="font-weight: 700; font-size: 0.88rem; color: #1e293b; margin-bottom: 4px;">📑 PVR INOX | Contract Risk Intelligence</div>
+                <div style="font-size: 0.78rem; color: #64748b; line-height: 1.4;">Automated contract risk classification, 6 legal categories, bounding-box coordinate OCR provenance.</div>
+                <div style="margin-top: 8px; display: flex; gap: 6px;">
+                  <span class="badge badge-info" style="font-size: 0.68rem;">Azure AI Layout</span>
+                  <span class="badge badge-success" style="font-size: 0.68rem;">PoC (6 wks)</span>
+                </div>
+              </div>
+
+              <div class="idea-template-card" onclick="selectIdeaTemplate(this, 'Enterprise Retail | AI Support & Agent Cockpit', 'High volume of tier-1 customer inquiries causing long wait times, operational overhead, and inconsistent support responses. The solution must automate customer deflection via grounded conversational AI, provide human support agent assist, and execute CRM workflows with sub-2-second latency.', 'Pilot to MVP')">
+                <div style="font-weight: 700; font-size: 0.88rem; color: #1e293b; margin-bottom: 4px;">🛍️ Retail | Customer AI & Agent Cockpit</div>
+                <div style="font-size: 0.78rem; color: #64748b; line-height: 1.4;">Omnichannel customer deflection, CRM tool calling, sub-2s latency, agent copilot.</div>
+                <div style="margin-top: 8px; display: flex; gap: 6px;">
+                  <span class="badge badge-info" style="font-size: 0.68rem;">GCP Vertex AI</span>
+                  <span class="badge badge-success" style="font-size: 0.68rem;">Pilot (8 wks)</span>
+                </div>
+              </div>
+
+              <div class="idea-template-card" onclick="selectIdeaTemplate(this, 'Global Bank | Financial Fraud & AML Detection', 'Real-time transaction risk scoring and compliance tracking to prevent money laundering and fraudulent wire transfers with strict audit logging.', 'Production Grade')">
+                <div style="font-weight: 700; font-size: 0.88rem; color: #1e293b; margin-bottom: 4px;">🏦 Banking | Real-Time AML & Fraud Defense</div>
+                <div style="font-size: 0.78rem; color: #64748b; line-height: 1.4;">Real-time risk scoring, regulatory compliance reports, automated SAR escalation.</div>
+                <div style="margin-top: 8px; display: flex; gap: 6px;">
+                  <span class="badge badge-info" style="font-size: 0.68rem;">AWS Bedrock</span>
+                  <span class="badge badge-success" style="font-size: 0.68rem;">Prod Grade (16 wks)</span>
+                </div>
+              </div>
+
+              <div class="idea-template-card" onclick="selectIdeaTemplate(this, 'Healthcare | Clinical Document Extraction', 'Manual medical record parsing and insurance claim pre-authorization extraction causing severe hospital backlog.', 'MVP')">
+                <div style="font-weight: 700; font-size: 0.88rem; color: #1e293b; margin-bottom: 4px;">🏥 Healthcare | Clinical Document Parser</div>
+                <div style="font-size: 0.78rem; color: #64748b; line-height: 1.4;">HIPAA compliant medical record parsing, insurance claim pre-authorization extraction.</div>
+                <div style="margin-top: 8px; display: flex; gap: 6px;">
+                  <span class="badge badge-info" style="font-size: 0.68rem;">Azure Health AI</span>
+                  <span class="badge badge-success" style="font-size: 0.68rem;">MVP (12 wks)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Custom Idea Input Form -->
+            <div style="margin-top: 14px;">
+              <label class="form-label">Project / Engagement Working Title</label>
+              <input type="text" class="form-control" id="ideationProjectTitle" value="PVR INOX | Contract Intelligence & Risk Visibility Platform" style="margin-bottom: 12px;">
+              
+              <label class="form-label">Client Problem Statement & Scope Vision (Elena Vance)</label>
+              <textarea class="form-control" id="ideationClientIdea" rows="3" style="margin-bottom: 12px; font-size: 0.86rem; line-height: 1.5;">Limited visibility into contractual risk exposure across contracts and business functions. Manual review by scarce legal experts is slow, disconnected, and lacks traceability. The solution must extract clauses across 6 legal categories, assess them against category principles, and produce a centralized contract risk register with bounding-box coordinate traceability.</textarea>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label class="form-label">Target Delivery Tier</label>
+                  <select class="form-control" id="ideationTargetTier" onchange="updateIdeationArchitectPreview()">
+                    <option value="PoC" selected>Proof of Concept (PoC) — 6.0 Weeks</option>
+                    <option value="Pilot">Pilot Trial — 8.0 Weeks</option>
+                    <option value="MVP">Minimum Viable Product (MVP) — 12.0 Weeks</option>
+                    <option value="Production Grade">Production Grade — 16.0 Weeks</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label">Primary Cloud Preference</label>
+                  <select class="form-control" id="ideationCloudSelect" onchange="updateIdeationArchitectPreview()">
+                    <option value="Microsoft Azure" selected>Microsoft Azure (Recommended for OCR & OpenAI)</option>
+                    <option value="Google Cloud Platform">Google Cloud Platform (Vertex AI & Gemini)</option>
+                    <option value="Amazon Web Services">Amazon Web Services (Bedrock & Textract)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Solutions Architect Feasibility & Technical Stack Card -->
+          <div class="arch-feasibility-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">🏗️</span>
+                <span style="font-weight: 700; font-size: 0.95rem; color: #fde68a;">Technical Feasibility Assessment by Alex Morgan</span>
+              </div>
+              <span class="badge badge-success" id="ideationFeasibilityBadge">95% High Feasibility</span>
+            </div>
+
+            <div id="ideationArchitectAdviceText" style="font-size: 0.84rem; color: #e2e8f0; line-height: 1.6; margin-bottom: 14px;">
+              • <strong>Recommended Hyperscaler:</strong> Microsoft Azure (Azure AI Document Intelligence + Azure OpenAI Service).<br>
+              • <strong>Decomposition:</strong> 6 microservices (Ingestion, Vector Index, Reasoning Engine, Metadata DB, Eval Harness, React Cockpit).<br>
+              • <strong>Security Baseline:</strong> Enhanced (Private Endpoints, Customer-Managed Keys CMEK, strict RBAC).<br>
+              • <strong>Confidence Projection:</strong> Ready to advance directly into structured discovery.
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button class="btn-select-confirm" onclick="commitIdeationAndStartDiscovery()" style="background: var(--primary-gradient); box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); color: #ffffff; padding: 8px 20px;">
+                <span>🚀</span> Agree on Project Scope & Launch Discovery
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- TAB 1: BRD Document -->
         <div id="tab-brd" class="tab-pane active">
           <!-- Client Approval & Decision Banner -->
-          <div class="section-block" id="brdApprovalBanner" style="background: linear-gradient(135deg, #1e2439 0%, #2a3454 100%); border: 1px solid #3b486f; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+          <div class="section-block" id="brdApprovalBanner"
+            style="background: linear-gradient(135deg, #1e2439 0%, #2a3454 100%); border: 1px solid #3b486f; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); margin-bottom: 16px;">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
               <div>
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
                   <span style="font-size: 1.2rem;">🌟</span>
                   <h4 style="color: #ffffff; font-size: 1.05rem; font-weight: 700;">Client Plan Review & Decision</h4>
-                  <span class="badge badge-success" id="clientApprovalStatusBadge" style="font-size: 0.75rem;">Plan Synthesized</span>
+                  <span class="badge badge-success" id="clientApprovalStatusBadge" style="font-size: 0.75rem;">Plan
+                    Synthesized</span>
                 </div>
                 <p style="font-size: 0.84rem; color: #e2e8f0; margin: 0; line-height: 1.5;">
-                  Satisfied with the generated Business Requirements Document and Day-Wise Schedule? Proceed to lock & export, or modify any discovery response or default setting.
+                  Satisfied with the generated Business Requirements Document and Day-Wise Schedule? Proceed to lock &
+                  export, or modify any discovery response or default setting.
                 </p>
               </div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn-select-confirm" onclick="openEditResponsesModal()" style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25); color: #ffffff;">
+                <button class="btn-select-confirm" onclick="openEditResponsesModal()"
+                  style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25); color: #ffffff;">
                   <span>✏️</span> Review / Modify Q&A Responses
                 </button>
-                <button class="btn-select-confirm" onclick="approveAndLockPlan()" style="background: var(--primary-gradient); box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); color: #ffffff;">
+                <button class="btn-select-confirm" onclick="approveAndLockPlan()"
+                  style="background: var(--primary-gradient); box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); color: #ffffff;">
                   <span>✅</span> Approve & Proceed Forward
                 </button>
               </div>
@@ -313,26 +510,47 @@
 
           <div class="section-block">
             <div class="section-title">
-              <span id="brdTitle">PVR INOX — Contract Intelligence & Risk Visibility Platform</span>
+              <span id="brdTitle"> Contract Intelligence & Risk Visibility Platform</span>
               <span class="brand-badge" id="brdBadgeTier">PoC TIER (Base)</span>
             </div>
-            <p id="brdExecSummary"
+            <div id="brdExecSummary"
               style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
               Complete the discovery interview on the left to synthesize the full executive BRD.
-            </p>
+            </div>
+
+            <!-- Client Executive Milestone & Delivery Summary HUD -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 14px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px;">
+              <div>
+                <span style="font-size: 0.68rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Estimated Go-Live</span>
+                <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a;" id="hudGoLive">Nov 11, 2026 (6 wks)</div>
+              </div>
+              <div>
+                <span style="font-size: 0.68rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Engineering Days</span>
+                <div style="font-size: 0.95rem; font-weight: 700; color: var(--primary);" id="hudEffort">103.7 Base (127.1 Total)</div>
+              </div>
+              <div>
+                <span style="font-size: 0.68rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Scope Confidence</span>
+                <div style="font-size: 0.95rem; font-weight: 700; color: var(--success);" id="hudConfidence">98.0% Gate Passed</div>
+              </div>
+              <div>
+                <span style="font-size: 0.68rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Monthly Cloud BoM</span>
+                <div style="font-size: 0.95rem; font-weight: 700; color: #0284c7;" id="hudCloud">$645.00 / month</div>
+              </div>
+            </div>
           </div>
 
           <div class="section-block">
             <h3 class="section-title">🎯 Business Problem & Key Impacts</h3>
-            <p id="brdProblemText" style="font-size: 0.88rem; color: var(--text-main); line-height: 1.6; margin-bottom: 12px;"></p>
-            <ul id="brdImpactsList"
-              style="padding-left: 20px; font-size: 0.88rem; color: #475569; line-height: 1.8;">
+            <p id="brdProblemText"
+              style="font-size: 0.88rem; color: var(--text-main); line-height: 1.6; margin-bottom: 12px;"></p>
+            <ul id="brdImpactsList" style="padding-left: 20px; font-size: 0.88rem; color: #475569; line-height: 1.8;">
             </ul>
           </div>
 
           <div class="section-block">
             <h3 class="section-title">⚡ Solution Narrative (Six Sentences)</h3>
-            <div id="brdSixSentences" style="background: #f8fafc; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.86rem; color: var(--text-main); line-height: 1.6;">
+            <div id="brdSixSentences"
+              style="background: #f8fafc; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.86rem; color: var(--text-main); line-height: 1.6;">
             </div>
           </div>
 
@@ -340,11 +558,15 @@
             <h3 class="section-title">⚖️ Scope Demarcation: In-Scope vs. Explicitly Out-of-Scope</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
               <div class="scope-card-in">
-                <h4 style="color: #15803d; font-size: 0.92rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">✅ In-Scope Deliverables</h4>
+                <h4
+                  style="color: #15803d; font-size: 0.92rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                  ✅ In-Scope Deliverables</h4>
                 <ul id="brdInScopeList"></ul>
               </div>
               <div class="scope-card-out">
-                <h4 style="color: #b91c1c; font-size: 0.92rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">❌ Explicitly Out-of-Scope</h4>
+                <h4
+                  style="color: #b91c1c; font-size: 0.92rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                  ❌ Explicitly Out-of-Scope</h4>
                 <ul id="brdOutScopeList"></ul>
               </div>
             </div>
@@ -358,12 +580,245 @@
           </div>
         </div>
 
+        <!-- TAB: Stage 3 Dual-Review Hub (Client + Architect) -->
+        <div id="tab-dual-review" class="tab-pane" style="display: none;">
+          <div class="section-block" style="background: linear-gradient(135deg, #1e2439 0%, #2a3454 100%); border: 1px solid #3b486f; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                  <span style="font-size: 1.3rem;">⚖️</span>
+                  <h3 style="color: #ffffff; margin: 0; font-size: 1.1rem; font-weight: 700;">Stage 3: Dual-Review & Iterative Refinement Hub</h3>
+                  <span class="badge badge-warning" id="dualReviewStageBadge" style="font-size: 0.75rem;">Dual Sign-Off Required</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #e2e8f0; margin: 0; line-height: 1.5;">
+                  Both <strong>Client Lead (Elena Vance)</strong> and <strong>Solutions Architect (Alex Morgan)</strong> must inspect the draft BRD. If either is unsatisfied, submit feedback to re-synthesize. Once BOTH approve, it automatically transfers to Project Manager Marcus Reed.
+                </p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="sidebar-count-badge" id="dualReviewIterBadge">Iteration #0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Architect Escalations & Client Overview Workspace -->
+          <div class="section-block" id="architectEscalationsSection" style="border-left: 3px solid #0284c7; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">🏗️</span>
+                <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #0f172a;">Alex Morgan's Escalation & Technical Context Queue</h4>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <span class="badge badge-info" id="archEscalationCountBadge">0 Pending Topics</span>
+                <button class="persona-action-btn" onclick="loadArchitectBriefing()" style="font-size: 0.72rem; padding: 2px 7px;">
+                  <span>🔄</span> Refresh Queue
+                </button>
+              </div>
+            </div>
+
+            <!-- Client Overview Briefing Strip -->
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 14px;" id="archClientBriefingBox">
+              <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📋 Brief Overview of Client's Discovered Scope:</div>
+              <div style="font-size: 0.84rem; color: #1e293b; line-height: 1.5;" id="archClientOverviewText">
+                Loading client discovery summary...
+              </div>
+            </div>
+
+            <!-- Escalated Questions Cards Stream -->
+            <div id="archEscalatedCardsStream" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Dynamically populated from /api/workflow/architect/briefing -->
+            </div>
+          </div>
+
+          <!-- Dual Review Side-by-Side Cards -->
+          <div class="dual-review-grid">
+            <!-- 1. Client Review Card -->
+            <div class="dual-review-box" id="clientReviewBox">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.3rem;">🧑‍💼</span>
+                  <div>
+                    <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #1e293b;">Client Business Review</h4>
+                    <span style="font-size: 0.75rem; color: #64748b;">Elena Vance (Client Business Lead)</span>
+                  </div>
+                </div>
+                <span class="badge badge-info" id="clientReviewStatusBadge">PENDING REVIEW</span>
+              </div>
+
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; font-size: 0.82rem; color: #334155; margin-bottom: 12px;">
+                <div style="font-weight: 600; margin-bottom: 4px;">Business Scope Checklist:</div>
+                <div>• Problem Statement & Pain Points: <span id="clientReviewProblemStatus" style="color: #16a34a; font-weight: 600;">✓ In Scope</span></div>
+                <div>• Delivery Timeline: <span id="clientReviewDurationStatus" style="font-weight: 600;">6.0 Weeks</span></div>
+                <div>• Core Categories: <span id="clientReviewCategoriesStatus">6 Legal Categories</span></div>
+              </div>
+
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 2px;">Client Feedback or Requested Adjustments:</label>
+              <textarea class="feedback-textarea" id="clientFeedbackInput" placeholder="What would you like adjusted? e.g. 'Reduce timeline to 5 weeks' or 'Add marketing contracts category'"></textarea>
+
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn-select-confirm" onclick="submitDualReviewFeedback('CLIENT')" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-size: 0.8rem;">
+                  <span>✍️</span> Request Changes
+                </button>
+                <button class="btn-select-confirm" onclick="submitDualReviewApproval('CLIENT')" style="background: #2563eb; color: #ffffff; font-size: 0.8rem;">
+                  <span>✅</span> Sign-Off as Client
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Solutions Architect Review Card -->
+            <div class="dual-review-box" id="architectReviewBox">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.3rem;">🏗️</span>
+                  <div>
+                    <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #1e293b;">Technical Architecture Review</h4>
+                    <span style="font-size: 0.75rem; color: #64748b;">Alex Morgan (Principal Architect)</span>
+                  </div>
+                </div>
+                <span class="badge badge-info" id="architectReviewStatusBadge">PENDING REVIEW</span>
+              </div>
+
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; font-size: 0.82rem; color: #334155; margin-bottom: 12px;">
+                <div style="font-weight: 600; margin-bottom: 4px;">Technical Architecture Checklist:</div>
+                <div>• Hyperscaler & Model: <span id="archReviewCloudStatus" style="color: #2563eb; font-weight: 600;">Azure OpenAI + Document Intelligence</span></div>
+                <div>• Microservices: <span id="archReviewComponentsStatus" style="font-weight: 600;">6 Decomposed Components</span></div>
+                <div>• Monthly Cloud BoM: <span id="archReviewBomStatus" style="color: #059669; font-weight: 600;">$645.00 / month</span></div>
+              </div>
+
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 2px;">Architect Technical Notes or Stack Upgrades:</label>
+              <textarea class="feedback-textarea" id="architectFeedbackInput" placeholder="Technical adjustments? e.g. 'Upgrade to Zone-Redundant HA' or 'Add AWS Bedrock fallback'"></textarea>
+
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn-select-confirm" onclick="submitDualReviewFeedback('SOLUTIONS_ARCHITECT')" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-size: 0.8rem;">
+                  <span>✍️</span> Request Changes
+                </button>
+                <button class="btn-select-confirm" onclick="submitDualReviewApproval('SOLUTIONS_ARCHITECT')" style="background: #d97706; color: #ffffff; font-size: 0.8rem;">
+                  <span>✅</span> Sign-Off as Architect
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Stage 4 Project Manager Review & Tripartite Consensus Room -->
+        <div id="tab-pm-review" class="tab-pane" style="display: none;">
+          <div class="pm-governance-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                  <span style="font-size: 1.3rem;">👔</span>
+                  <h3 style="color: #ffffff; margin: 0; font-size: 1.1rem; font-weight: 700;">Stage 4: Project Manager Governance & Consensus</h3>
+                  <span class="badge badge-success" id="pmReviewStageBadge" style="font-size: 0.75rem;">Delivery Lead Sign-Off</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #e2e8f0; margin: 0; line-height: 1.5;">
+                  Delivery PM <strong>Marcus Reed</strong> audits the dual-approved plan against commercial budgets, 18-phase timeline milestones, and statutory holiday calendars. PM can raise queries to Client/Architect, negotiate changes, or grant final sign-off.
+                </p>
+              </div>
+              <button class="btn-select-confirm" onclick="submitPMApproval()" style="background: #10b981; color: #ffffff; font-size: 0.88rem; font-weight: 700; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); padding: 8px 18px;">
+                <span>🏆</span> Final PM Approval Sign-Off
+              </button>
+            </div>
+          </div>
+
+          <!-- PM Governance Metric Checks -->
+          <div class="metrics-strip" style="margin-bottom: 16px;">
+            <div class="metric-card">
+              <span class="metric-label">Total Labour Budget</span>
+              <span class="metric-val" id="pmMetricCost" style="color: #059669;">$24,888</span>
+              <span class="metric-sub">@ $30/hr Rate</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Required Effort</span>
+              <span class="metric-val" id="pmMetricDays">103.7 d</span>
+              <span class="metric-sub">12 Disciplines</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Timeline Feasibility</span>
+              <span class="metric-val" id="pmMetricDuration" style="color: #2563eb;">6.0 Weeks</span>
+              <span class="metric-sub">30 Working Days</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">PM Gate Status</span>
+              <span class="metric-val" id="pmGateStatus" style="color: #d97706; font-size: 1.05rem;">REVIEW PENDING</span>
+              <span class="metric-sub" id="pmQueriesOpenCount">0 Open Queries</span>
+            </div>
+          </div>
+
+          <!-- Raise PM Query Form -->
+          <div class="section-block">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <h4 class="section-title" style="margin: 0;"><span>💬 Raise Query or Change Request</span></h4>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button class="persona-action-btn" onclick="applyPmQueryTemplate('timeline')" style="font-size: 0.72rem; padding: 3px 8px;">
+                  <span>⏱️</span> + Timeline Query
+                </button>
+                <button class="persona-action-btn" onclick="applyPmQueryTemplate('cloud_cost')" style="font-size: 0.72rem; padding: 3px 8px;">
+                  <span>☁️</span> + Cloud BoM Query
+                </button>
+                <button class="persona-action-btn" onclick="applyPmQueryTemplate('staffing')" style="font-size: 0.72rem; padding: 3px 8px;">
+                  <span>👥</span> + Staffing Query
+                </button>
+                <button class="persona-action-btn primary" onclick="downloadJiraDirect()" style="font-size: 0.72rem; padding: 3px 8px;">
+                  <span>📥</span> Download Jira CSV
+                </button>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 10px;">
+              <div>
+                <label class="form-label" style="font-size: 0.8rem;">Query Topic / Subject</label>
+                <input type="text" class="form-control" id="pmQueryTopic" placeholder="e.g. 'Phase 8 Testing Buffer & Shadow Staffing'">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.8rem;">Addressed To</label>
+                <select class="form-control" id="pmQueryAddressedTo">
+                  <option value="ALL">All (Client & Architect)</option>
+                  <option value="CLIENT">Client (Elena Vance)</option>
+                  <option value="SOLUTIONS_ARCHITECT">Solutions Architect (Alex Morgan)</option>
+                </select>
+              </div>
+            </div>
+
+            <label class="form-label" style="font-size: 0.8rem;">Query Details & Governance Concern</label>
+            <textarea class="feedback-textarea" id="pmQueryText" placeholder="Specify your query or click a preset above..."></textarea>
+
+            <div style="display: flex; justify-content: flex-end;">
+              <button class="btn-select-confirm" onclick="submitPMQuery()" style="background: #059669; color: #ffffff;">
+                <span>📢</span> Post Query to Tripartite Consensus
+              </button>
+            </div>
+          </div>
+
+          <!-- 3-Way Tripartite Consensus Discussion Room -->
+          <div class="triparty-room">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">🤝</span>
+                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #1e293b;">3-Persona Tripartite Discussion & Consensus Room</h4>
+              </div>
+              <span class="badge badge-info">Live Collaborative Thread</span>
+            </div>
+
+            <div class="triparty-messages-stream" id="tripartyMessagesStream">
+              <!-- Rendered dynamically from session.workflow.triparty_messages -->
+            </div>
+
+            <!-- Reply Box for Active Persona -->
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+              <input type="text" class="form-control" id="tripartyReplyInput" placeholder="Reply to query as active persona..." style="flex: 1;" onkeydown="if(event.key==='Enter') sendTripartyReply()">
+              <button class="btn-select-confirm" onclick="sendTripartyReply()" style="background: var(--primary); color: #ffffff; padding: 6px 16px;">
+                <span>💬</span> Reply
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- TAB 2: 12 Disciplines & Tasks -->
         <div id="tab-roles" class="tab-pane" style="display: none;">
           <div class="section-block">
             <div class="section-title">
               <span>12-Discipline Resource Loading Plan</span>
-              <span style="font-size: 0.82rem; color: var(--primary); font-weight: normal;">Standardized $30.00/Hour Blended Rate</span>
+              <span style="font-size: 0.82rem; color: var(--primary); font-weight: normal;">Standardized $30.00/Hour
+                Blended Rate</span>
             </div>
             <table class="custom-table" id="rolesTable">
               <thead>
@@ -385,13 +840,15 @@
           </div>
 
           <!-- Standby Buffer Resources Section -->
-          <div class="section-block" style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 22px;">
+          <div class="section-block"
+            style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 22px;">
             <div class="section-title" style="margin-bottom: 8px;">
               <span>🛡️ Standby / Shadow Engineering Buffer Staffing</span>
               <span id="standbyBufferBadge" class="badge-ai" style="font-size: 0.75rem;">15% Contingency Buffer</span>
             </div>
             <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
-              To prevent project schedule slippage from leaves, illness, and unexpected technical hurdles, shadow engineers are kept unassigned to critical path tasks and on hot standby.
+              To prevent project schedule slippage from leaves, illness, and unexpected technical hurdles, shadow
+              engineers are kept unassigned to critical path tasks and on hot standby.
             </p>
             <table class="custom-table">
               <thead>
@@ -411,7 +868,8 @@
           <div class="section-block">
             <div class="section-title">
               <span>Deterministic Task Estimation Ledger (18 Phases)</span>
-              <span style="font-size: 0.8rem; color: var(--text-muted);">Effort = Base × Phase Factor × Scale Factor × Uplift × Complexity</span>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Effort = Base × Phase Factor × Scale Factor ×
+                Uplift × Complexity</span>
             </div>
             <div style="max-height: 380px; overflow-y: auto;">
               <table class="custom-table" id="tasksTable">
@@ -440,7 +898,8 @@
             <div class="section-title">
               <span>Schedule Feasibility & Team Ramp Analysis</span>
             </div>
-            <div id="feasibilityCard" style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <div id="feasibilityCard"
+              style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
               <!-- Populated dynamically -->
             </div>
           </div>
@@ -479,14 +938,18 @@
           </div>
 
           <div class="section-block">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
               <div class="section-title" style="margin-bottom: 0;">
                 <span>📅 Day-Wise Master Execution Plan</span>
               </div>
               <div style="display: flex; gap: 8px;">
-                <button class="btn-header active" id="btnFilterAllDays" onclick="filterDayWiseSchedule('all')">All Days</button>
-                <button class="btn-header" id="btnFilterWorkDays" onclick="filterDayWiseSchedule('working')">Working Days Only</button>
-                <button class="btn-header" id="btnFilterHolidays" onclick="filterDayWiseSchedule('off')">Holidays & Weekends</button>
+                <button class="btn-header active" id="btnFilterAllDays" onclick="filterDayWiseSchedule('all')">All
+                  Days</button>
+                <button class="btn-header" id="btnFilterWorkDays" onclick="filterDayWiseSchedule('working')">Working
+                  Days Only</button>
+                <button class="btn-header" id="btnFilterHolidays" onclick="filterDayWiseSchedule('off')">Holidays &
+                  Weekends</button>
               </div>
             </div>
 
@@ -515,7 +978,8 @@
               <span>Solution Technical Components (6-Component Decomposition)</span>
             </div>
             <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 14px;">
-              Component decomposition detailing purpose, technology choice, key design decisions, interfaces in/out, data classification, scalability limits, security/RAI controls, failure modes, and dependencies.
+              Component decomposition detailing purpose, technology choice, key design decisions, interfaces in/out,
+              data classification, scalability limits, security/RAI controls, failure modes, and dependencies.
             </p>
             <div id="componentsList" style="display: flex; flex-direction: column; gap: 14px;">
             </div>
@@ -543,16 +1007,42 @@
             </div>
             <div class="metric-card">
               <span class="metric-label">3-Year Cumulative TCO</span>
-              <span class="metric-val" id="tcoCumulative" style="color: var(--success); font-weight: 700;">$59,019</span>
+              <span class="metric-val" id="tcoCumulative"
+                style="color: var(--success); font-weight: 700;">$59,019</span>
               <span class="metric-sub" id="tcoBreakEven">Break-Even @ Month 14</span>
             </div>
+          </div>
+
+          <!-- Architect Live Cloud Sizing & BoM Simulator -->
+          <div class="section-block" style="border-left: 3px solid var(--primary);">
+            <div class="section-title">
+              <span>⚡ Live Cloud Sizing & BoM Simulator (Alex Morgan)</span>
+              <span id="simResultText" style="font-size: 0.95rem; font-weight: 700; color: #0284c7;">$645 / month</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 8px;">
+              <div>
+                <label class="form-label" style="font-size: 0.78rem;">Corpus Documents (Volume)</label>
+                <input type="number" class="form-control" id="simDocsCount" value="50000" step="5000" oninput="simulateLiveSizing()" style="font-size: 0.84rem;">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.78rem;">Daily Evaluation Queries</label>
+                <input type="number" class="form-control" id="simReqsCount" value="2000" step="500" oninput="simulateLiveSizing()" style="font-size: 0.84rem;">
+              </div>
+              <div style="display: flex; flex-direction: column; justify-content: flex-end;">
+                <button class="persona-action-btn primary" onclick="simulateLiveSizing()" style="height: 38px; justify-content: center;">
+                  <span>🔄</span> Recalculate BoM
+                </button>
+              </div>
+            </div>
+            <span style="font-size: 0.74rem; color: #64748b;">Simulates real-time Azure AI Search standard partitions + Azure OpenAI token consumption pricing.</span>
           </div>
 
           <div class="section-block">
             <div class="section-title">
               <span>Runtime Sizing Drivers</span>
             </div>
-            <div id="sizingMetricsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            <div id="sizingMetricsGrid"
+              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
             </div>
           </div>
 
@@ -563,22 +1053,28 @@
               <span id="tcoStrategyBadge" class="badge-ai" style="font-size: 0.75rem;">Pay-As-You-Go Optimal</span>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-              <div style="background: #eff6ff; padding: 16px; border-radius: 8px; border: 1px solid #bfdbfe; border-left: 4px solid var(--primary);">
+              <div
+                style="background: #eff6ff; padding: 16px; border-radius: 8px; border: 1px solid #bfdbfe; border-left: 4px solid var(--primary);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                   <h4 style="color: #1e40af; font-size: 0.9rem; font-weight: 700;">📈 Pay-As-You-Go (Consumption)</h4>
                   <span id="tcoPaygMonthly" style="color: #1e3a8a; font-weight: 800; font-size: 1.05rem;">$645/mo</span>
                 </div>
                 <p style="font-size: 0.8rem; color: #475569; margin: 0; line-height: 1.5;">
-                  Billed per 1k input/output tokens & per-second compute. Best for dynamic loads, PoC, and MVP workloads under 2.5M tokens/day.
+                  Billed per 1k input/output tokens & per-second compute. Best for dynamic loads, PoC, and MVP workloads
+                  under 2.5M tokens/day.
                 </p>
               </div>
-              <div style="background: #fffbeb; padding: 16px; border-radius: 8px; border: 1px solid #fde68a; border-left: 4px solid var(--warning);">
+              <div
+                style="background: #fffbeb; padding: 16px; border-radius: 8px; border: 1px solid #fde68a; border-left: 4px solid var(--warning);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                  <h4 style="color: #b45309; font-size: 0.9rem; font-weight: 700;">🏢 Provisioned Throughput (PTU / Committed)</h4>
-                  <span id="tcoPtuMonthly" style="color: #92400e; font-weight: 800; font-size: 1.05rem;">$4,800/mo</span>
+                  <h4 style="color: #b45309; font-size: 0.9rem; font-weight: 700;">🏢 Provisioned Throughput (PTU /
+                    Committed)</h4>
+                  <span id="tcoPtuMonthly"
+                    style="color: #92400e; font-weight: 800; font-size: 1.05rem;">$4,800/mo</span>
                 </div>
                 <p style="font-size: 0.8rem; color: #475569; margin: 0; line-height: 1.5;">
-                  Dedicated reserved GPU/TPU capacity with guaranteed sub-second latency SLA. Recommended for high-scale enterprise (>5M tokens/day).
+                  Dedicated reserved GPU/TPU capacity with guaranteed sub-second latency SLA. Recommended for high-scale
+                  enterprise (>5M tokens/day).
                 </p>
               </div>
             </div>
@@ -587,7 +1083,8 @@
           <div class="section-block">
             <div class="section-title">
               <span>Cloud Infrastructure Bill of Materials (BoM)</span>
-              <span id="bomTotalBanner" style="font-size: 0.85rem; color: var(--success); font-weight: 600;">$645.00 / month</span>
+              <span id="bomTotalBanner" style="font-size: 0.85rem; color: var(--success); font-weight: 600;">$645.00 /
+                month</span>
             </div>
             <table class="custom-table" id="bomTable">
               <thead>
@@ -611,25 +1108,43 @@
           <div class="section-block">
             <div class="section-title">
               <span>🛡️ EU AI Act Classification & Regulatory Compliance</span>
-              <span id="aiActRiskBadge" class="badge-ai" style="font-size: 0.82rem; background: rgba(56, 189, 248, 0.15); border: 1px solid var(--primary); color: var(--primary);">Specific Transparency Risk (Article 50)</span>
+              <span id="aiActRiskBadge" class="badge-ai"
+                style="font-size: 0.82rem; background: rgba(56, 189, 248, 0.15); border: 1px solid var(--primary); color: var(--primary);">Specific
+                Transparency Risk (Article 50)</span>
             </div>
-            <div style="background: #f8fafc; padding: 18px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 16px;">
-              <h4 style="color: #0f172a; font-size: 0.95rem; margin-bottom: 6px; font-weight: 700;" id="aiActClassificationTitle">EU AI Act Assessment</h4>
-              <p style="font-size: 0.84rem; color: #475569; line-height: 1.6; margin-bottom: 14px;" id="aiActJustification">
-                Evaluating regulatory risk tier based on system capabilities, autonomy level, user personas, and data classification.
+            <div
+              style="background: #f8fafc; padding: 18px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 16px;">
+              <h4 style="color: #0f172a; font-size: 0.95rem; margin-bottom: 6px; font-weight: 700;"
+                id="aiActClassificationTitle">EU AI Act Assessment</h4>
+              <p style="font-size: 0.84rem; color: #475569; line-height: 1.6; margin-bottom: 14px;"
+                id="aiActJustification">
+                Evaluating regulatory risk tier based on system capabilities, autonomy level, user personas, and data
+                classification.
               </p>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-                <div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-                  <span style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 3px;">Mandatory Requirement</span>
-                  <strong style="color: #0f172a; font-size: 0.85rem;" id="aiActReq1">AI Content Watermarking & Notice</strong>
+                <div
+                  style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                  <span
+                    style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 3px;">Mandatory
+                    Requirement</span>
+                  <strong style="color: #0f172a; font-size: 0.85rem;" id="aiActReq1">AI Content Watermarking &
+                    Notice</strong>
                 </div>
-                <div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-                  <span style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 3px;">Human Oversight SLA</span>
-                  <strong style="color: #0f172a; font-size: 0.85rem;" id="aiActReq2">Human-in-the-Loop Review Controls</strong>
+                <div
+                  style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                  <span
+                    style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 3px;">Human
+                    Oversight SLA</span>
+                  <strong style="color: #0f172a; font-size: 0.85rem;" id="aiActReq2">Human-in-the-Loop Review
+                    Controls</strong>
                 </div>
-                <div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-                  <span style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 3px;">Auditability & Telemetry</span>
-                  <strong style="color: #0f172a; font-size: 0.85rem;" id="aiActReq3">Clause Coordinate Audit Trails</strong>
+                <div
+                  style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                  <span
+                    style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 3px;">Auditability
+                    & Telemetry</span>
+                  <strong style="color: #0f172a; font-size: 0.85rem;" id="aiActReq3">Clause Coordinate Audit
+                    Trails</strong>
                 </div>
               </div>
             </div>
@@ -640,7 +1155,8 @@
               <span>ISO/IEC 42001:2023 Responsible AI Management System (AIMS) Controls</span>
             </div>
             <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 12px;">
-              Enterprise governance controls applied across the AI lifecycle including risk management, data quality, bias mitigation, and human oversight.
+              Enterprise governance controls applied across the AI lifecycle including risk management, data quality,
+              bias mitigation, and human oversight.
             </p>
             <table class="custom-table" id="isoTable">
               <thead>
@@ -667,7 +1183,9 @@
               </button>
             </div>
             <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 14px;">
-              Every assumption must be marked <strong>Approve</strong> for the gate to pass. If you mark <strong>Correct</strong> or <strong>Reject</strong>, enter a reason and click <strong>'Re-Calculate Plan'</strong> to adjust estimates.
+              Every assumption must be marked <strong>Approve</strong> for the gate to pass. If you mark
+              <strong>Correct</strong> or <strong>Reject</strong>, enter a reason and click <strong>'Re-Calculate
+                Plan'</strong> to adjust estimates.
             </p>
             <table class="custom-table">
               <thead>
@@ -692,56 +1210,80 @@
           <div class="section-block">
             <h3 class="section-title">🛡️ Four-Gate Human-in-the-Loop Governance (Section 51)</h3>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-              Per <code>reference.txt</code>, the accelerator enforces 4 sequential HITL gates. Approved stages are immutable.
+              Per <code>reference.txt</code>, the accelerator enforces 4 sequential HITL gates. Approved stages are
+              immutable.
             </p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-bottom: 24px;">
+            <div
+              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-bottom: 24px;">
               <div class="metric-card" style="border-left: 4px solid var(--primary); padding: 14px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <strong>Gate 1: Requirements</strong>
-                  <span id="gate1Badge" class="status-badge" style="background: rgba(14, 116, 144, 0.2); color: var(--primary);">PENDING</span>
+                  <span id="gate1Badge" class="status-badge"
+                    style="background: rgba(14, 116, 144, 0.2); color: var(--primary);">PENDING</span>
                 </div>
-                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 8px 0;">Approve requirements, defaults, constraints, and scope boundaries.</p>
-                <button class="btn-select-confirm" style="width: 100%; padding: 6px; font-size: 0.8rem;" onclick="approveHITLGate('gate1')">Approve Gate 1</button>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 8px 0;">Approve requirements, defaults,
+                  constraints, and scope boundaries.</p>
+                <button class="btn-select-confirm" style="width: 100%; padding: 6px; font-size: 0.8rem;"
+                  onclick="approveHITLGate('gate1')">Approve Gate 1</button>
               </div>
 
               <div class="metric-card" style="border-left: 4px solid #10b981; padding: 14px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <strong>Gate 2: Solution Architecture</strong>
-                  <span id="gate2Badge" class="status-badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">PENDING</span>
+                  <span id="gate2Badge" class="status-badge"
+                    style="background: rgba(16, 185, 129, 0.2); color: #10b981;">PENDING</span>
                 </div>
-                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 8px 0;">Approve capabilities catalog, component designs, and data flows.</p>
-                <button class="btn-select-confirm" style="width: 100%; padding: 6px; font-size: 0.8rem; background: #10b981;" onclick="approveHITLGate('gate2')">Approve Gate 2</button>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 8px 0;">Approve capabilities catalog,
+                  component designs, and data flows.</p>
+                <button class="btn-select-confirm"
+                  style="width: 100%; padding: 6px; font-size: 0.8rem; background: #10b981;"
+                  onclick="approveHITLGate('gate2')">Approve Gate 2</button>
               </div>
 
               <div class="metric-card" style="border-left: 4px solid #f59e0b; padding: 14px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <strong>Gate 3: Deterministic Estimate</strong>
-                  <span id="gate3Badge" class="status-badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">PENDING</span>
+                  <span id="gate3Badge" class="status-badge"
+                    style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">PENDING</span>
                 </div>
-                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 8px 0;">Approve WBS, 12 roles, day-wise schedule, and feasibility bounds.</p>
-                <button class="btn-select-confirm" style="width: 100%; padding: 6px; font-size: 0.8rem; background: #f59e0b;" onclick="approveHITLGate('gate3')">Approve Gate 3</button>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 8px 0;">Approve WBS, 12 roles, day-wise
+                  schedule, and feasibility bounds.</p>
+                <button class="btn-select-confirm"
+                  style="width: 100%; padding: 6px; font-size: 0.8rem; background: #f59e0b;"
+                  onclick="approveHITLGate('gate3')">Approve Gate 3</button>
               </div>
 
               <div class="metric-card" style="border-left: 4px solid #8b5cf6; padding: 14px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <strong>Gate 4: BRD Baseline</strong>
-                  <span id="gate4Badge" class="status-badge" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">PENDING</span>
+                  <span id="gate4Badge" class="status-badge"
+                    style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">PENDING</span>
                 </div>
-                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 8px 0;">Approve final canonical BRD version and export bundle.</p>
-                <button class="btn-select-confirm" style="width: 100%; padding: 6px; font-size: 0.8rem; background: #8b5cf6;" onclick="approveHITLGate('gate4')">Approve Gate 4</button>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 8px 0;">Approve final canonical BRD
+                  version and export bundle.</p>
+                <button class="btn-select-confirm"
+                  style="width: 100%; padding: 6px; font-size: 0.8rem; background: #8b5cf6;"
+                  onclick="approveHITLGate('gate4')">Approve Gate 4</button>
               </div>
             </div>
 
-            <h3 class="section-title" style="margin-top: 24px;">📋 17 Canonical Requirements & MoSCoW Prioritization (Section 8 & 9)</h3>
+            <h3 class="section-title" style="margin-top: 24px;">📋 17 Canonical Requirements & MoSCoW Prioritization
+              (Section 8 & 9)</h3>
             <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 8px;">
-              Direct cell editing enabled: modify statements, actors, types, statuses, and <strong>MoSCoW Priorities</strong> (<code>MUST</code>, <code>SHOULD</code>, <code>COULD</code>, <code>WONT</code>) directly in the grid. Every edit triggers immediate deterministic calculation ledger tracking (Section 54).
+              Direct cell editing enabled: modify statements, actors, types, statuses, and <strong>MoSCoW
+                Priorities</strong> (<code>MUST</code>, <code>SHOULD</code>, <code>COULD</code>, <code>WONT</code>)
+              directly in the grid. Every edit triggers immediate deterministic calculation ledger tracking (Section
+              54).
             </p>
 
             <!-- Canonical & MoSCoW Controls Bar -->
             <div class="canonical-controls-bar">
               <div class="moscow-stats-bar">
-                <span style="font-size: 0.78rem; font-weight: 700; color: #475569; margin-right: 4px;">MoSCoW Distribution:</span>
-                <span id="moscowChipAll" class="moscow-stat-chip active-filter" style="background: rgba(72, 98, 247, 0.12); color: var(--primary); border: 1px solid rgba(72, 98, 247, 0.25);" onclick="filterCanonicalReqs('ALL')">
+                <span style="font-size: 0.78rem; font-weight: 700; color: #475569; margin-right: 4px;">MoSCoW
+                  Distribution:</span>
+                <span id="moscowChipAll" class="moscow-stat-chip active-filter"
+                  style="background: rgba(72, 98, 247, 0.12); color: var(--primary); border: 1px solid rgba(72, 98, 247, 0.25);"
+                  onclick="filterCanonicalReqs('ALL')">
                   ALL: <span id="countAllReqs">17</span>
                 </span>
                 <span id="moscowChipMust" class="moscow-stat-chip must" onclick="filterCanonicalReqs('MUST')">
@@ -758,8 +1300,10 @@
                 </span>
               </div>
               <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="text" id="canonicalSearchInput" class="inline-search-input" placeholder="🔍 Search requirements or actor..." oninput="onSearchCanonicalReqs(this.value)">
-                <span id="canonicalLedgerBadge" style="font-size: 0.75rem; color: var(--success); font-weight: 700; background: var(--success-soft-bg); padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                <input type="text" id="canonicalSearchInput" class="inline-search-input"
+                  placeholder="🔍 Search requirements or actor..." oninput="onSearchCanonicalReqs(this.value)">
+                <span id="canonicalLedgerBadge"
+                  style="font-size: 0.75rem; color: var(--success); font-weight: 700; background: var(--success-soft-bg); padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
                   🟢 Ledger Tracking Active
                 </span>
               </div>
@@ -831,10 +1375,12 @@
           <div class="section-block">
             <h3 class="section-title">⚡ Interactive Parameter Change & Impact Analysis (Section 50)</h3>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-              Test changes in scale drivers, delivery tier, or duration. The deterministic engine calculates exact affected vs unaffected dimensions without LLM hallucination.
+              Test changes in scale drivers, delivery tier, or duration. The deterministic engine calculates exact
+              affected vs unaffected dimensions without LLM hallucination.
             </p>
 
-            <div style="display: flex; gap: 14px; flex-wrap: wrap; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+            <div
+              style="display: flex; gap: 14px; flex-wrap: wrap; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
               <div style="flex: 1; min-width: 180px;">
                 <label class="form-label">Parameter to Change</label>
                 <select class="form-control" id="impactParamSelect" onchange="onImpactParamChange()">
@@ -866,7 +1412,8 @@
                 <div class="scenario-diff-header">
                   <div>
                     <h4><span>⚡</span> Side-by-Side Scenario Diff & Variance Analysis</h4>
-                    <div class="scenario-subtitle" id="diffSubtitle">Comparing Active Baseline against Simulated Target</div>
+                    <div class="scenario-subtitle" id="diffSubtitle">Comparing Active Baseline against Simulated Target
+                    </div>
                   </div>
                   <div>
                     <button id="btnCommitSimulation" class="btn-commit-baseline" onclick="commitSimulationToBaseline()">
@@ -931,7 +1478,8 @@
                     </div>
                     <div class="scenario-metric-row">
                       <span class="scenario-metric-label">Monthly Cloud Infrastructure</span>
-                      <span class="scenario-metric-value" id="cardSimCloud" style="color: var(--primary);">$1,080.38/mo</span>
+                      <span class="scenario-metric-value" id="cardSimCloud"
+                        style="color: var(--primary);">$1,080.38/mo</span>
                     </div>
                   </div>
                 </div>
@@ -953,18 +1501,23 @@
                   </table>
 
                   <!-- Narrative & Scope Breakdown -->
-                  <div style="margin-top: 16px; padding: 14px; background: #ffffff; border-radius: 8px; border: 1px solid var(--border-color);">
-                    <div style="font-weight: 700; font-size: 0.86rem; color: #1e293b; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                  <div
+                    style="margin-top: 16px; padding: 14px; background: #ffffff; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div
+                      style="font-weight: 700; font-size: 0.86rem; color: #1e293b; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
                       <span>📝</span> Architectural & Scope Assessment
                     </div>
-                    <p id="impactNarrative" style="font-size: 0.84rem; color: #475569; margin-bottom: 10px; line-height: 1.5;"></p>
+                    <p id="impactNarrative"
+                      style="font-size: 0.84rem; color: #475569; margin-bottom: 10px; line-height: 1.5;"></p>
                     <div id="impactAffectedDetails" style="font-size: 0.82rem; color: #334155;"></div>
                   </div>
 
                   <!-- Bottom Commit Action Bar -->
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 12px 16px; background: #ffffff; border-radius: 8px; border: 1px dashed var(--primary); flex-wrap: wrap; gap: 10px;">
+                  <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 12px 16px; background: #ffffff; border-radius: 8px; border: 1px dashed var(--primary); flex-wrap: wrap; gap: 10px;">
                     <div style="font-size: 0.82rem; color: var(--text-muted);">
-                      Commit permanently applies this scenario to all 18 WBS phases, adjusts baseline financials, and audits a <code>SCENARIO_COMMIT</code> entry in the calculation ledger.
+                      Commit permanently applies this scenario to all 18 WBS phases, adjusts baseline financials, and
+                      audits a <code>SCENARIO_COMMIT</code> entry in the calculation ledger.
                     </div>
                     <button class="btn-commit-baseline" onclick="commitSimulationToBaseline()">
                       <span>⚡</span> Commit Simulation to Baseline
@@ -976,7 +1529,8 @@
 
             <h3 class="section-title">📑 Calculation Ledger Audit Trail (Section 54)</h3>
             <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 12px;">
-              Every mathematical operation logged with engine version, inputs, formula, and timestamps for 100% auditability.
+              Every mathematical operation logged with engine version, inputs, formula, and timestamps for 100%
+              auditability.
             </p>
             <div style="overflow-x: auto;">
               <table class="custom-table" id="calcLedgerTable">
@@ -997,11 +1551,48 @@
         </div>
 
         <!-- TAB 7: Enterprise Export Suite -->
+        <!-- TAB 7: Enterprise Export Suite & Stage 5 Final Distribution -->
         <div id="tab-export" class="tab-pane" style="display: none;">
+          <!-- Stage 5 Tripartite Sign-Off Certificate -->
+          <div class="tripartite-certificate">
+            <div style="font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase; color: #a5b4fc; font-weight: 700; margin-bottom: 6px;">
+              🛡️ Official Project Governance & Execution Sign-Off
+            </div>
+            <h2 style="color: #ffffff; font-size: 1.45rem; font-weight: 800; margin-bottom: 8px;" id="certProjectTitle">
+              Contract Intelligence & Risk Visibility Platform
+            </h2>
+            <p style="color: #cbd5e1; font-size: 0.85rem; max-width: 680px; margin: 0 auto 16px auto; line-height: 1.5;">
+              This Business Requirements Document (BRD) and 18-Phase Execution Plan have completed multi-stage collaborative reviews and are officially sealed with tripartite consensus across Client, Solutions Architecture, and Delivery Management.
+            </p>
+
+            <div class="signature-badge-grid">
+              <div class="signature-card">
+                <div style="font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">1. Client Business Sign-Off</div>
+                <div class="signature-script" id="certClientSignature">Elena Vance</div>
+                <div style="font-size: 0.76rem; color: #e2e8f0; font-weight: 600;">Client Business Lead</div>
+                <div style="font-size: 0.68rem; color: #86efac;" id="certClientTimestamp">✓ Approved & Verified</div>
+              </div>
+
+              <div class="signature-card">
+                <div style="font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">2. Solutions Architect Sign-Off</div>
+                <div class="signature-script" id="certArchitectSignature">Alex Morgan</div>
+                <div style="font-size: 0.76rem; color: #e2e8f0; font-weight: 600;">Principal Solutions Architect</div>
+                <div style="font-size: 0.68rem; color: #86efac;" id="certArchitectTimestamp">✓ Technical Stack Approved</div>
+              </div>
+
+              <div class="signature-card">
+                <div style="font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">3. Delivery PM Governance Sign-Off</div>
+                <div class="signature-script" id="certPMSignature">Marcus Reed</div>
+                <div style="font-size: 0.76rem; color: #e2e8f0; font-weight: 600;">Senior Delivery Project Manager</div>
+                <div style="font-size: 0.68rem; color: #86efac;" id="certPMTimestamp">✓ Budget & Milestones Approved</div>
+              </div>
+            </div>
+          </div>
+
           <div class="section-block">
-            <h3 class="section-title">📦 Enterprise Multi-Format Export Suite</h3>
+            <h3 class="section-title">📦 Final Approved Deliverables Distribution Suite</h3>
             <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
-              Export your finalized BRD document, financial estimation models, project presentation decks, and backlog user stories in enterprise-standard formats.
+              Shared across all 3 personas: download your finalized BRD document, financial estimation models, PowerPoint presentation decks, and Jira backlog user stories.
             </p>
 
             <div class="export-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
@@ -1010,9 +1601,12 @@
                 <span class="export-icon">📝</span>
                 <h4 style="color: var(--text-heading); font-size: 1rem; font-weight: 700;">Formal Word BRD (.docx)</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
-                  Complete styled executive BRD with Table of Contents, 6 Components, 18 Phases, BoM, and Signature Sign-Off blocks.
+                  Complete styled executive BRD with Table of Contents, 6 Components, 18 Phases, BoM, and Signature
+                  Sign-Off blocks.
                 </p>
-                <button class="btn-export" style="background: linear-gradient(135deg, #2b579a 0%, #1e3f73 100%); color: #ffffff;" onclick="downloadWordBRD()">
+                <button class="btn-export"
+                  style="background: linear-gradient(135deg, #2b579a 0%, #1e3f73 100%); color: #ffffff;"
+                  onclick="downloadWordBRD()">
                   <span>📥</span> Download Word BRD (.docx)
                 </button>
               </div>
@@ -1022,9 +1616,12 @@
                 <span class="export-icon">📕</span>
                 <h4 style="color: #fff;">Corporate PDF BRD (.pdf)</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted);">
-                  Executive-ready, vector-rendered PDF document with structured tables, executive summary, 12 disciplines, and BoM.
+                  Executive-ready, vector-rendered PDF document with structured tables, executive summary, 12
+                  disciplines, and BoM.
                 </p>
-                <button class="btn-export" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: #fff;" onclick="downloadPDFBRD()">
+                <button class="btn-export"
+                  style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: #fff;"
+                  onclick="downloadPDFBRD()">
                   <span>📥</span> Download PDF BRD (.pdf)
                 </button>
               </div>
@@ -1032,11 +1629,15 @@
               <!-- Excel Financial Model -->
               <div class="export-card">
                 <span class="export-icon">📗</span>
-                <h4 style="color: var(--text-heading); font-size: 1rem; font-weight: 700;">Excel Financial Model (.xlsx)</h4>
+                <h4 style="color: var(--text-heading); font-size: 1rem; font-weight: 700;">Excel Financial Model (.xlsx)
+                </h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
-                  Multi-tab workbook containing 12-Role Loading Ledger, 18-Phase Estimator, 3-Yr TCO, and Cloud BoM with live formulas.
+                  Multi-tab workbook containing 12-Role Loading Ledger, 18-Phase Estimator, 3-Yr TCO, and Cloud BoM with
+                  live formulas.
                 </p>
-                <button class="btn-export" style="background: linear-gradient(135deg, #217346 0%, #165231 100%); color: #ffffff;" onclick="downloadExcelModel()">
+                <button class="btn-export"
+                  style="background: linear-gradient(135deg, #217346 0%, #165231 100%); color: #ffffff;"
+                  onclick="downloadExcelModel()">
                   <span>📥</span> Download Financial Model (.xlsx)
                 </button>
               </div>
@@ -1044,11 +1645,15 @@
               <!-- Jira / Azure DevOps CSV -->
               <div class="export-card">
                 <span class="export-icon">📋</span>
-                <h4 style="color: var(--text-heading); font-size: 1rem; font-weight: 700;">Jira / DevOps Backlog (.csv)</h4>
+                <h4 style="color: var(--text-heading); font-size: 1rem; font-weight: 700;">Jira / DevOps Backlog (.csv)
+                </h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
-                  Ready-to-import backlog containing Epics, User Stories, Acceptance Criteria, Story Points, and Role Assignments.
+                  Ready-to-import backlog containing Epics, User Stories, Acceptance Criteria, Story Points, and Role
+                  Assignments.
                 </p>
-                <button class="btn-export" style="background: linear-gradient(135deg, #0052cc 0%, #0747a6 100%); color: #ffffff;" onclick="downloadJiraCSV()">
+                <button class="btn-export"
+                  style="background: linear-gradient(135deg, #0052cc 0%, #0747a6 100%); color: #ffffff;"
+                  onclick="downloadJiraCSV()">
                   <span>📥</span> Download Backlog CSV (.csv)
                 </button>
               </div>
@@ -1056,9 +1661,11 @@
               <!-- PowerPoint Presentation -->
               <div class="export-card">
                 <span class="export-icon">📊</span>
-                <h4 style="color: var(--text-heading); font-size: 1rem; font-weight: 700;">Microsoft PowerPoint (.pptx)</h4>
+                <h4 style="color: var(--text-heading); font-size: 1rem; font-weight: 700;">Microsoft PowerPoint (.pptx)
+                </h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
-                  16:9 executive presentation deck covering Problem, Demarcation, 12-Role Loading, 18-Phase Timeline, and Cloud BoM.
+                  16:9 executive presentation deck covering Problem, Demarcation, 12-Role Loading, 18-Phase Timeline,
+                  and Cloud BoM.
                 </p>
                 <button class="btn-export btn-export-pptx" onclick="downloadPPTX()">
                   <span>📥</span> Download Presentation (.pptx)
@@ -1080,11 +1687,15 @@
               <!-- Handoff JSON Dossier -->
               <div class="export-card">
                 <span class="export-icon">🗂️</span>
-                <h4 style="color: var(--text-heading); font-size: 1rem; font-weight: 700;">Requirements Dossier (.json)</h4>
+                <h4 style="color: var(--text-heading); font-size: 1rem; font-weight: 700;">Requirements Dossier (.json)
+                </h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
-                  Complete machine-readable JSON dossier mapping all client discovery inputs, holiday calendars, and parameters.
+                  Complete machine-readable JSON dossier mapping all client discovery inputs, holiday calendars, and
+                  parameters.
                 </p>
-                <button class="btn-export" style="background: var(--primary-soft-bg); border: 1px solid var(--border-focus); color: var(--primary); font-weight: 700;" onclick="downloadHandoffJSON()">
+                <button class="btn-export"
+                  style="background: var(--primary-soft-bg); border: 1px solid var(--border-focus); color: var(--primary); font-weight: 700;"
+                  onclick="downloadHandoffJSON()">
                   <span>📥</span> Download JSON Dossier
                 </button>
               </div>
@@ -1109,7 +1720,8 @@
         Track every adjustment and re-plan snapshot across discovery changes, admin overrides, and currency conversions.
       </p>
 
-      <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 20px; max-height: 420px; overflow-y: auto;">
+      <div
+        style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 20px; max-height: 420px; overflow-y: auto;">
         <table class="custom-table" id="revisionsTable" style="margin: 0;">
           <thead>
             <tr>
@@ -1145,7 +1757,8 @@
       </div>
 
       <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 14px;">
-        Connect any cloud foundation model to power real-time discovery, requirement intelligence, and narrative synthesis.
+        Connect any cloud foundation model to power real-time discovery, requirement intelligence, and narrative
+        synthesis.
       </p>
 
       <div class="form-group">
@@ -1167,12 +1780,15 @@
         </div>
         <div class="form-group">
           <label class="form-label">Model Name</label>
-          <input type="text" class="form-control" id="modalGoogleModel" value="gemini-2.5-flash" placeholder="gemini-2.5-flash">
-          <small style="color: var(--text-muted); font-size: 0.75rem;">Supported: gemini-2.5-flash, gemini-1.5-pro, gemini-2.0-flash, gemini-2.5-pro</small>
+          <input type="text" class="form-control" id="modalGoogleModel" value="gemini-2.5-flash"
+            placeholder="gemini-2.5-flash">
+          <small style="color: var(--text-muted); font-size: 0.75rem;">Supported: gemini-2.5-flash, gemini-1.5-pro,
+            gemini-2.0-flash, gemini-2.5-pro</small>
         </div>
         <div class="form-group">
           <label class="form-label">Endpoint URL (Google AI Studio URL)</label>
-          <input type="text" class="form-control" id="modalGoogleEndpoint" value="https://generativelanguage.googleapis.com" placeholder="https://generativelanguage.googleapis.com">
+          <input type="text" class="form-control" id="modalGoogleEndpoint"
+            value="https://generativelanguage.googleapis.com" placeholder="https://generativelanguage.googleapis.com">
         </div>
       </div>
 
@@ -1180,7 +1796,8 @@
       <div id="azureSettingsGroup" style="display: none;">
         <div class="form-group">
           <label class="form-label">Azure OpenAI Endpoint URL</label>
-          <input type="text" class="form-control" id="modalAzureEndpoint" placeholder="https://your-resource.openai.azure.com/">
+          <input type="text" class="form-control" id="modalAzureEndpoint"
+            placeholder="https://your-resource.openai.azure.com/">
         </div>
         <div class="form-group">
           <label class="form-label">Azure OpenAI API Key</label>
@@ -1216,7 +1833,8 @@
         </div>
         <div class="form-group">
           <label class="form-label">Model ID</label>
-          <input type="text" class="form-control" id="modalAWSModel" value="anthropic.claude-3-5-sonnet-20240620-v1:0" placeholder="anthropic.claude-3-5-sonnet-20240620-v1:0">
+          <input type="text" class="form-control" id="modalAWSModel" value="anthropic.claude-3-5-sonnet-20240620-v1:0"
+            placeholder="anthropic.claude-3-5-sonnet-20240620-v1:0">
         </div>
       </div>
 
@@ -1224,7 +1842,8 @@
       <div id="openaiSettingsGroup" style="display: none;">
         <div class="form-group">
           <label class="form-label">Base URL / Endpoint</label>
-          <input type="text" class="form-control" id="modalOpenAIEndpoint" value="https://api.openai.com/v1" placeholder="https://api.openai.com/v1">
+          <input type="text" class="form-control" id="modalOpenAIEndpoint" value="https://api.openai.com/v1"
+            placeholder="https://api.openai.com/v1">
         </div>
         <div class="form-group">
           <label class="form-label">API Key</label>
@@ -1237,10 +1856,12 @@
       </div>
 
       <!-- Test Connection Status Banner -->
-      <div id="testConnStatusBanner" style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-top: 14px;"></div>
+      <div id="testConnStatusBanner"
+        style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-top: 14px;"></div>
 
       <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-        <button class="btn-header" style="color: var(--primary); border-color: var(--primary);" onclick="testProviderConnection()">
+        <button class="btn-header" style="color: var(--primary); border-color: var(--primary);"
+          onclick="testProviderConnection()">
           <span>⚡</span> Test Live Connection
         </button>
         <div style="display: flex; gap: 10px;">
@@ -1262,17 +1883,19 @@
           style="background: none; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer;">✕</button>
       </div>
       <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-        Here are your responses and defaults from the interview. Modify any parameter below to immediately re-calculate the BRD, resource loading, BoM, and Day-Wise execution schedule.
+        Here are your responses and defaults from the interview. Modify any parameter below to immediately re-calculate
+        the BRD, resource loading, BoM, and Day-Wise execution schedule.
       </p>
 
       <div style="display: flex; flex-direction: column; gap: 18px;">
         <!-- Category 1: Project Timeline & Scheduling Factors -->
         <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📅 1. Project Timeline & Scheduling Factors</h4>
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📅 1. Project Timeline &
+            Scheduling Factors</h4>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="form-group">
               <label class="form-label">Client & Engagement Working Title</label>
-              <input type="text" class="form-control" id="edit_q_client" placeholder="e.g., PVR INOX — Contract Intelligence">
+              <input type="text" class="form-control" id="edit_q_client" placeholder="e.g., Contract Intelligence">
             </div>
             <div class="form-group">
               <label class="form-label">Target Reference Duration (Weeks / 30 working days baseline)</label>
@@ -1299,7 +1922,8 @@
             <div class="form-group">
               <label class="form-label">Resource Buffer / Backup Strategy (Standby FTE)</label>
               <select class="form-control" id="edit_q_buffer_strategy">
-                <option value="15% Shadow / Backup Capacity (Recommended)">15% Shadow / Backup Capacity (Recommended)</option>
+                <option value="15% Shadow / Backup Capacity (Recommended)">15% Shadow / Backup Capacity (Recommended)
+                </option>
                 <option value="10% Lean Standby Buffer">10% Lean Standby Buffer</option>
                 <option value="25% High-Resilience Shadow Engineering">25% High-Resilience Shadow Engineering</option>
                 <option value="0% Dedicated Core Only (Zero Standby)">0% Dedicated Core Only (Zero Standby)</option>
@@ -1308,7 +1932,8 @@
             <div class="form-group">
               <label class="form-label">Assumption & Approval Gating</label>
               <select class="form-control" id="edit_q_approval_gate">
-                <option value="Strict (All assumptions must be Approved)">Strict (All assumptions must be Approved)</option>
+                <option value="Strict (All assumptions must be Approved)">Strict (All assumptions must be Approved)
+                </option>
                 <option value="Advisory (Non-blocking)">Advisory (Non-blocking)</option>
               </select>
             </div>
@@ -1317,7 +1942,8 @@
 
         <!-- Category 2: Delivery Effort & Sizing Multipliers -->
         <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📊 2. Delivery Effort & Sizing Multipliers</h4>
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📊 2. Delivery Effort & Sizing
+            Multipliers</h4>
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
             <div class="form-group">
               <label class="form-label">Delivery Tier Rigour</label>
@@ -1350,7 +1976,8 @@
                 <option value="Internal policy only">Internal policy only (1.050 / +5% COMP uplift)</option>
                 <option value="None">None (1.000 multiplier)</option>
                 <option value="Regulated - moderate">Regulated - moderate (1.150 multiplier)</option>
-                <option value="Regulated - high (BFSI/Health/Gov)">Regulated - high (BFSI/Health/Gov) (1.300 multiplier)</option>
+                <option value="Regulated - high (BFSI/Health/Gov)">Regulated - high (BFSI/Health/Gov) (1.300 multiplier)
+                </option>
               </select>
             </div>
             <div class="form-group">
@@ -1398,7 +2025,8 @@
 
         <!-- Category 3: Technology Stack, Cloud & Infrastructure Factors -->
         <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">☁️ 3. Technology Stack, Cloud & Infrastructure Factors</h4>
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">☁️ 3. Technology Stack, Cloud &
+            Infrastructure Factors</h4>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="form-group">
               <label class="form-label">Mandated Cloud Platform & Hyperscaler</label>
@@ -1421,14 +2049,16 @@
             <div class="form-group">
               <label class="form-label">On-Premises Infrastructure Footprint</label>
               <select class="form-control" id="edit_q_onprem_footprint">
-                <option value="Zero on-premises components permitted (No hybrid tunnels/VPN)">Zero on-premises components (No ExpressRoute/VPN)</option>
+                <option value="Zero on-premises components permitted (No hybrid tunnels/VPN)">Zero on-premises
+                  components (No ExpressRoute/VPN)</option>
                 <option value="Hybrid network tunnel required">Hybrid network tunnel required</option>
               </select>
             </div>
             <div class="form-group">
               <label class="form-label">Subscription & Tenant Isolation</label>
               <select class="form-control" id="edit_q_subscription_isolation">
-                <option value="Dedicated newly created non-production cloud subscription">Dedicated non-prod cloud subscription (Isolated)</option>
+                <option value="Dedicated newly created non-production cloud subscription">Dedicated non-prod cloud
+                  subscription (Isolated)</option>
                 <option value="Shared enterprise subscription">Shared enterprise subscription</option>
               </select>
             </div>
@@ -1437,15 +2067,18 @@
 
         <!-- Category 4: AI Engine, RAG Pipeline & Model Sizing Factors -->
         <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">🧠 4. AI Engine, RAG Pipeline & Model Sizing Factors</h4>
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">🧠 4. AI Engine, RAG Pipeline &
+            Model Sizing Factors</h4>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="form-group">
               <label class="form-label">Foundation LLM Architecture</label>
-              <input type="text" class="form-control" id="edit_q_foundation_llm" value="Azure OpenAI reasoning/thinking tier (GPT-5 Thinking/Reasoning parameters)">
+              <input type="text" class="form-control" id="edit_q_foundation_llm"
+                value="Azure OpenAI reasoning/thinking tier (GPT-5 Thinking/Reasoning parameters)">
             </div>
             <div class="form-group">
               <label class="form-label">Grounding & Surface Mode</label>
-              <input type="text" class="form-control" id="edit_q_grounding_mode" value="Work (Tenant data only, disabling public web retrieval) using M365 Copilot / Azure AI Agent services">
+              <input type="text" class="form-control" id="edit_q_grounding_mode"
+                value="Work (Tenant data only, disabling public web retrieval) using M365 Copilot / Azure AI Agent services">
             </div>
             <div class="form-group">
               <label class="form-label">Total Named Users</label>
@@ -1464,42 +2097,51 @@
 
         <!-- Category 5: Data Governance, Security & Administrative Control Factors -->
         <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">🛡️ 5. Data Governance, Security & Administrative Control Factors</h4>
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">🛡️ 5. Data Governance, Security &
+            Administrative Control Factors</h4>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="form-group">
               <label class="form-label">Identity & Authentication Topology</label>
-              <input type="text" class="form-control" id="edit_q_identity_auth" value="Microsoft Entra ID enforces Single Sign-On (SSO) and Role-Based Access Control (RBAC)">
+              <input type="text" class="form-control" id="edit_q_identity_auth"
+                value="Microsoft Entra ID enforces Single Sign-On (SSO) and Role-Based Access Control (RBAC)">
             </div>
             <div class="form-group">
               <label class="form-label">Secrets & Key Management</label>
-              <input type="text" class="form-control" id="edit_q_secrets_mgmt" value="Azure Key Vault using platform-managed keys (CMEK and air-gapped excluded)">
+              <input type="text" class="form-control" id="edit_q_secrets_mgmt"
+                value="Azure Key Vault using platform-managed keys (CMEK and air-gapped excluded)">
             </div>
             <div class="form-group">
               <label class="form-label">Component-to-Component Authorization</label>
-              <input type="text" class="form-control" id="edit_q_component_auth" value="HTTPS authenticated via Azure Managed Identities (zero hardcoded credentials)">
+              <input type="text" class="form-control" id="edit_q_component_auth"
+                value="HTTPS authenticated via Azure Managed Identities (zero hardcoded credentials)">
             </div>
             <div class="form-group">
               <label class="form-label">Data Retention Policy</label>
-              <input type="text" class="form-control" id="edit_q_retention" value="Mandatory 12-month data retention rule for logs and telemetry">
+              <input type="text" class="form-control" id="edit_q_retention"
+                value="Mandatory 12-month data retention rule for logs and telemetry">
             </div>
           </div>
         </div>
 
         <!-- Category 6: Functional Scope, Ingestion & Parser Contract Factors -->
         <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📜 6. Functional Scope, Ingestion & Parser Contract Factors</h4>
+          <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 12px;">📜 6. Functional Scope, Ingestion
+            & Parser Contract Factors</h4>
           <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
             <div class="form-group">
               <label class="form-label">In-Scope Legal Categories (Comma-separated)</label>
-              <input type="text" class="form-control" id="edit_q_legal_categories" value="Lease, Vendor, Service, Facilities, Technology, Marketing">
+              <input type="text" class="form-control" id="edit_q_legal_categories"
+                value="Lease, Vendor, Service, Facilities, Technology, Marketing">
             </div>
             <div class="form-group">
               <label class="form-label">Multi-Pass Evaluation Logic</label>
-              <input type="text" class="form-control" id="edit_q_multi_pass_policy" value="Pass 1 extracts explicit standard clauses | Pass 2 evaluates ambiguous terms: Agree, Agree with Management Approval, Not Agree">
+              <input type="text" class="form-control" id="edit_q_multi_pass_policy"
+                value="Pass 1 extracts explicit standard clauses | Pass 2 evaluates ambiguous terms: Agree, Agree with Management Approval, Not Agree">
             </div>
             <div class="form-group">
               <label class="form-label">Parser Delimiters & Truncation Thresholds</label>
-              <input type="text" class="form-control" id="edit_q_parser_delimiters" value="Block headers (<<<BEGIN:NAME>>>) and pipe (|), 30,000 char limit, 0.72 synonym confidence">
+              <input type="text" class="form-control" id="edit_q_parser_delimiters"
+                value="Block headers (<<<BEGIN:NAME>>>) and pipe (|), 30,000 char limit, 0.72 synonym confidence">
             </div>
             <div class="form-group">
               <label class="form-label">Business Problem & Functional Objectives</label>
@@ -1509,9 +2151,11 @@
         </div>
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+      <div
+        style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--border-color);">
         <button class="btn-header" onclick="closeEditResponsesModal()">Cancel</button>
-        <button class="btn-select-confirm" onclick="saveEditedResponsesAndReplan()" style="background: var(--primary-gradient);">
+        <button class="btn-select-confirm" onclick="saveEditedResponsesAndReplan()"
+          style="background: var(--primary-gradient);">
           <span>⚡</span> Save & Re-Calculate Plan
         </button>
       </div>
@@ -1520,7 +2164,8 @@
 
   <!-- Admin PIN Authentication Modal -->
   <div class="modal-overlay" id="adminPinModal" style="z-index: 10000;">
-    <div class="modal-box" style="max-width: 400px; text-align: center; padding: 28px 24px; border-top: 4px solid var(--primary);">
+    <div class="modal-box"
+      style="max-width: 400px; text-align: center; padding: 28px 24px; border-top: 4px solid var(--primary);">
       <div style="font-size: 2.5rem; margin-bottom: 8px;">🔐</div>
       <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-heading); margin-bottom: 6px;">
         Admin Authentication
@@ -1530,12 +2175,13 @@
       </p>
 
       <div style="margin-bottom: 12px;">
-        <input type="password" id="adminPinInput" class="form-control" maxlength="6" placeholder="••••••" 
-               style="font-size: 1.4rem; letter-spacing: 0.3em; text-align: center; font-weight: 700; width: 200px; margin: 0 auto; padding: 8px 14px;"
-               onkeydown="if(event.key === 'Enter') submitAdminPin()">
+        <input type="password" id="adminPinInput" class="form-control" maxlength="6" placeholder="••••••"
+          style="font-size: 1.4rem; letter-spacing: 0.3em; text-align: center; font-weight: 700; width: 200px; margin: 0 auto; padding: 8px 14px;"
+          onkeydown="if(event.key === 'Enter') submitAdminPin()">
       </div>
 
-      <div id="adminPinError" style="display: none; font-size: 0.78rem; color: var(--danger); margin-bottom: 14px; font-weight: 600; padding: 6px 10px; background: rgba(239, 68, 68, 0.1); border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.25);">
+      <div id="adminPinError"
+        style="display: none; font-size: 0.78rem; color: var(--danger); margin-bottom: 14px; font-weight: 600; padding: 6px 10px; background: rgba(239, 68, 68, 0.1); border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.25);">
         ❌ Invalid PIN. Please enter the correct Admin PIN.
       </div>
 
@@ -1559,9 +2205,12 @@
             <span>🛡️</span> Enterprise Admin Console
           </h3>
           <!-- Role Toggle: Viewer vs Admin -->
-          <div style="display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 4px 8px; border-radius: 20px; border: 1px solid var(--border-color);">
-            <button class="btn-role-toggle active" id="btnRoleViewer" onclick="setAdminRoleMode(false)">🔒 View-Only Mode</button>
-            <button class="btn-role-toggle" id="btnRoleAdmin" onclick="requestAdminEditMode()">🛡️ Admin Edit Mode</button>
+          <div
+            style="display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 4px 8px; border-radius: 20px; border: 1px solid var(--border-color);">
+            <button class="btn-role-toggle active" id="btnRoleViewer" onclick="setAdminRoleMode(false)">🔒 View-Only
+              Mode</button>
+            <button class="btn-role-toggle" id="btnRoleAdmin" onclick="requestAdminEditMode()">🛡️ Admin Edit
+              Mode</button>
           </div>
         </div>
         <button onclick="closeAdminModal()"
@@ -1569,13 +2218,16 @@
       </div>
 
       <div class="modal-content-scroll">
-        <div id="adminModeBanner" style="padding: 10px 14px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; background: rgba(72, 98, 247, 0.08); border: 1px solid rgba(72, 98, 247, 0.25); color: var(--primary);">
-          🔒 <strong>View-Only Mode:</strong> Regular users can inspect system default settings, location working hours, and holiday schedules. Switch to Admin Edit Mode to modify.
+        <div id="adminModeBanner"
+          style="padding: 10px 14px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; background: rgba(72, 98, 247, 0.08); border: 1px solid rgba(72, 98, 247, 0.25); color: var(--primary);">
+          🔒 <strong>View-Only Mode:</strong> Regular users can inspect system default settings, location working hours,
+          and holiday schedules. Switch to Admin Edit Mode to modify.
         </div>
 
         <!-- Section 1: Global Defaults -->
         <div class="section-block" style="margin-bottom: 20px;">
-          <h4 style="color: var(--primary); font-size: 0.96rem; margin-bottom: 12px; font-weight: 700;">⚙️ Global System Parameters & Rates</h4>
+          <h4 style="color: var(--primary); font-size: 0.96rem; margin-bottom: 12px; font-weight: 700;">⚙️ Global System
+            Parameters & Rates</h4>
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
             <div class="form-group">
               <label class="form-label">Global Baseline Rate (USD/hr)</label>
@@ -1591,15 +2243,18 @@
             </div>
           </div>
           <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
-            💡 <em>Location-specific hourly rates and working hours configured below automatically govern engagements in their respective regions (e.g. India = 9.0h @ $25/hr, UK = 7.0h @ $65/hr, US = 8.0h @ $85/hr).</em>
+            💡 <em>Location-specific hourly rates and working hours configured below automatically govern engagements in
+              their respective regions (e.g. India = 9.0h @ $25/hr, UK = 7.0h @ $65/hr, US = 8.0h @ $85/hr).</em>
           </p>
         </div>
 
         <!-- Section 2: Location-Wise Working Hours & Hourly Rates -->
         <div class="section-block" style="margin-bottom: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h4 style="color: var(--primary); font-size: 0.96rem; margin: 0; font-weight: 700;">🌍 Location-Wise Working Hours, Rates & Calendars</h4>
-            <span style="font-size: 0.82rem; color: var(--text-muted);">Regional capacity & blended rate cards by delivery geography</span>
+            <h4 style="color: var(--primary); font-size: 0.96rem; margin: 0; font-weight: 700;">🌍 Location-Wise Working
+              Hours, Rates & Calendars</h4>
+            <span style="font-size: 0.82rem; color: var(--text-muted);">Regional capacity & blended rate cards by
+              delivery geography</span>
           </div>
           <div style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
             <table class="custom-table" id="adminCalendarsTable" style="margin: 0;">
@@ -1624,10 +2279,12 @@
         <!-- Section 3: Statutory Holiday Manager & Upload -->
         <div class="section-block" style="margin-bottom: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h4 style="color: var(--primary); font-size: 0.96rem; margin: 0; font-weight: 700;">📅 Location Statutory Holidays Manager</h4>
+            <h4 style="color: var(--primary); font-size: 0.96rem; margin: 0; font-weight: 700;">📅 Location Statutory
+              Holidays Manager</h4>
             <div style="display: flex; gap: 10px; align-items: center;">
               <label class="form-label" style="margin: 0; font-size: 0.84rem;">Select Location:</label>
-              <select class="form-control" id="adminSelectedCountry" onchange="renderAdminHolidaysList()" style="padding: 6px 12px; width: 160px; font-size: 0.85rem; font-weight: 600;">
+              <select class="form-control" id="adminSelectedCountry" onchange="renderAdminHolidaysList()"
+                style="padding: 6px 12px; width: 160px; font-size: 0.85rem; font-weight: 600;">
                 <option value="IN">India (IN)</option>
                 <option value="UK">United Kingdom (UK)</option>
                 <option value="US">United States (US)</option>
@@ -1643,7 +2300,8 @@
 
           <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px;">
             <!-- Left: Current Holidays List -->
-            <div style="background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); max-height: 280px; overflow-y: auto;">
+            <div
+              style="background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); max-height: 280px; overflow-y: auto;">
               <table class="custom-table" style="font-size: 0.82rem; margin: 0;" id="adminHolidaysTable">
                 <thead>
                   <tr>
@@ -1660,28 +2318,36 @@
 
             <!-- Right: Add / Upload Holiday Form -->
             <div style="background: #ffffff; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-              <h5 style="color: var(--text-heading); font-size: 0.88rem; margin-bottom: 10px; font-weight: 700;">➕ Add Single Holiday (Admin Only)</h5>
+              <h5 style="color: var(--text-heading); font-size: 0.88rem; margin-bottom: 10px; font-weight: 700;">➕ Add
+                Single Holiday (Admin Only)</h5>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                 <input type="date" class="form-control admin-field" id="newHolidayDate" disabled>
-                <input type="text" class="form-control admin-field" id="newHolidayName" placeholder="e.g. Independence Day" disabled>
+                <input type="text" class="form-control admin-field" id="newHolidayName"
+                  placeholder="e.g. Independence Day" disabled>
               </div>
-              <button class="btn-select-confirm admin-field" onclick="addAdminHolidayFromModal()" style="width: 100%; padding: 8px; font-size: 0.85rem; margin-bottom: 16px;" disabled>
+              <button class="btn-select-confirm admin-field" onclick="addAdminHolidayFromModal()"
+                style="width: 100%; padding: 8px; font-size: 0.85rem; margin-bottom: 16px;" disabled>
                 <span>➕</span> Add Holiday to Location
               </button>
 
-              <h5 style="color: var(--text-heading); font-size: 0.88rem; margin-bottom: 8px; font-weight: 700;">📂 Upload Holiday Sheet (.csv / .json)</h5>
+              <h5 style="color: var(--text-heading); font-size: 0.88rem; margin-bottom: 8px; font-weight: 700;">📂
+                Upload Holiday Sheet (.csv / .json)</h5>
               <div style="display: flex; gap: 10px;">
-                <input type="file" class="form-control admin-field" id="adminHolidayFileInput" accept=".csv,.json,.txt" style="font-size: 0.82rem; padding: 6px;" disabled>
-                <button class="btn-header admin-field" onclick="uploadAdminHolidaySheet()" style="padding: 6px 14px; font-size: 0.84rem;" disabled>Upload</button>
+                <input type="file" class="form-control admin-field" id="adminHolidayFileInput" accept=".csv,.json,.txt"
+                  style="font-size: 0.82rem; padding: 6px;" disabled>
+                <button class="btn-header admin-field" onclick="uploadAdminHolidaySheet()"
+                  style="padding: 6px 14px; font-size: 0.84rem;" disabled>Upload</button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+      <div
+        style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
         <button class="btn-header" onclick="closeAdminModal()">Close</button>
-        <button class="btn-select-confirm admin-field" id="btnSaveAdminDefaults" onclick="saveAdminDefaultsFromModal()" disabled>
+        <button class="btn-select-confirm admin-field" id="btnSaveAdminDefaults" onclick="saveAdminDefaultsFromModal()"
+          disabled>
           <span>💾</span> Save Admin Settings
         </button>
       </div>

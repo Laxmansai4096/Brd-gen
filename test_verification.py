@@ -8,36 +8,18 @@ def test_flow():
     r = httpx.post(f"{BASE_URL}/api/reset?session_id=test_session_1")
     assert r.status_code == 200, f"Reset failed: {r.text}"
     
-    # 2. Complete discovery interview with simulated inputs matching the 23 discovery questions
-    answers = [
-        "PVR INOX — Contract Intelligence Platform", # 1. q_client
-        "PoC", # 2. q_tier
-        "Automate legal contract analysis and compliance extraction", # 3. q_problem
-        "6.0", # 4. q_duration
-        "2026-10-05", # 5. q_start_date
-        "Microsoft Azure", # 6. q_cloud
-        "India", # 7. q_geography (9.0 hrs/day)
-        "15% Shadow / Backup Capacity (Recommended)", # 8. q_buffer_strategy
-        "1", # 9. q_usecases_count
-        "4", # 10. q_personas_count
-        "0", # 11. q_integrations_count
-        "2", # 12. q_datasources_count
-        "1", # 13. q_channels_count
-        "1", # 14. q_languages_count
-        "3", # 15. q_envs_count
-        "6", # 16. q_components_count
-        "Low", # 17. q_complexity
-        "Internal policy only", # 18. q_compliance
-        "Standard", # 19. q_security
-        "200", # 20. q_named_users
-        "50", # 21. q_concurrent_users
-        "2000", # 22. q_daily_requests
-        "None (single instance)", # 23. q_hadr_tier
-        "Multi-Pass Agentic Extraction", # 24. q_multi_pass_policy
-        "Human-in-the-Loop Assistive Gate" # 25. q_approval_gate
-    ]
-    
-    for i, ans in enumerate(answers):
+    # 2. Complete discovery interview dynamically
+    step = 0
+    data = {"has_brd": False}
+    while not data.get("has_brd") and step < 40:
+        session_res = httpx.get(f"{BASE_URL}/api/session?session_id=test_session_1").json()
+        cur_q = session_res.get("current_question")
+        if not cur_q:
+            break
+        
+        step += 1
+        ans = cur_q.get("default_value") or (cur_q.get("options", [{}])[0].get("value")) or "Default Answer"
+        
         res = httpx.post(f"{BASE_URL}/api/chat", json={
             "session_id": "test_session_1",
             "message": ans,
@@ -45,7 +27,7 @@ def test_flow():
         })
         assert res.status_code == 200, f"Chat answer '{ans}' failed: {res.text}"
         data = res.json()
-        print(f"Answered Q{i+1}: '{ans}' -> Next Q: {data.get('current_question', {}).get('title') if data.get('current_question') else 'COMPLETED'}, has_brd: {data.get('has_brd')}")
+        print(f"Answered Q{step} ({cur_q.get('title')}): '{ans}' -> has_brd: {data.get('has_brd')}")
         
     assert data["has_brd"] == True, "BRD was not generated"
     brd = data["brd"]

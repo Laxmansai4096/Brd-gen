@@ -35,9 +35,9 @@ RED_ALERT = RGBColor(220, 38, 38)         # #DC2626 Red 600
 TEAL_ACCENT = RGBColor(13, 148, 136)      # #0D9488 Teal 600
 
 TOTAL_SLIDES = 56
-CLIENT_NAME = "<Enterprise Client>"
+CLIENT_NAME = "PVR INOX"
 PROJECT_TITLE = "Contract Intelligence & Risk Visibility Platform"
-FOOTER_CENTER = f"{CLIENT_NAME} × TCS | {PROJECT_TITLE} | TCS Confidential"
+FOOTER_CENTER = f"{CLIENT_NAME} × TCS  |  {PROJECT_TITLE}  |  TCS Confidential"
 
 TCS_LOGO_PATH = "exports/assets/tcs_logo_black.png"
 TATA_LOGO_PATH = "exports/assets/tata_logo_black.png"

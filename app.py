@@ -13,11 +13,14 @@ from backend.models import (
     ProjectSession, ChatMessage, AnswerItem, BRDDocument,
     AssumptionItem, TaskEstimate, RoleEffort, ProjectPhase,
     TechnicalComponent, SizingMetrics, SizingBOM, HITLGates,
-    CalculationLedgerItem
+    CalculationLedgerItem, WorkflowState, PersonaReview, PMQueryItem,
+    TripartyMessage, DiscoveryConfidence, DimensionScore, RevisionSnapshot
 )
 from backend.agent_discovery import (
     STATIC_QUESTIONS, process_user_answer, get_current_question,
-    get_discovery_questions, compile_and_save_handoff_dossier
+    get_discovery_questions, compile_and_save_handoff_dossier,
+    calculate_discovery_confidence, get_architect_technical_advice,
+    auto_discover_from_document_text
 )
 from backend.agent_planner import generate_brd
 from backend.pptx_generator import create_presentation_deck
@@ -55,25 +58,34 @@ def get_or_create_session(session_id: Optional[str] = None) -> ProjectSession:
             answers={},
             ambiguity_tracker={},
             uploaded_files=[],
+            workflow=WorkflowState(
+                stage="IDEATION",
+                active_persona="CLIENT",
+                confidence_score=0.0,
+                client_review=PersonaReview(persona="CLIENT", signature_name="Elena Vance (Client Business Lead)"),
+                architect_review=PersonaReview(persona="SOLUTIONS_ARCHITECT", signature_name="Alex Morgan (Principal Solutions Architect)"),
+                pm_review=PersonaReview(persona="PROJECT_MANAGER", signature_name="Marcus Reed (Senior Delivery PM)")
+            ),
             messages=[
                 ChatMessage(
                     sender="agent",
+                    persona="AI_AGENT",
+                    persona_badge="🤖 AI Discovery Agent",
                     content=(
-                        "👋 **Hello! I am your AI Project Discovery & Solution Estimation Assistant.**\n\n"
-                        "I will interview you to capture the project scope, business pain points, technical boundaries, "
-                        "and scale/sizing drivers. Once our discovery is complete, **Agent 2 (Planner & Estimator)** will "
-                        "synthesize a production-grade Business Requirements Document (BRD), 12-discipline resource loading "
-                        "plan ($30/hr rate), 18-phase timeline, cloud Bill of Materials, component tech designs, and PowerPoint presentation deck.\n\n"
-                        f"---\n\n"
-                        f"### 📋 Question 1 of {len(STATIC_QUESTIONS)}: **{q1.title}**\n\n"
-                        f"**{q1.prompt}**\n\n"
-                        f"*(Example: {q1.help_text})*"
+                        "👋 **Hello! Welcome to the 3-Persona AI Project Discovery & Estimation Accelerator.**\n\n"
+                        "Our collaborative team consists of:\n"
+                        "• 🧑‍💼 **Elena Vance (Client Business Lead)**: Defines business problem, user pain points, and delivery objectives.\n"
+                        "• 🏗️ **Alex Morgan (Principal Solutions Architect)**: Advises on cloud hyperscaler, security posture, and RAG pipelines.\n"
+                        "• 👔 **Marcus Reed (Senior Delivery PM)**: Reviews resourcing, timeline feasibility, and provides final governance sign-off.\n\n"
+                        "💡 *Let's start with **Stage 1: Ideation & Scoping** to align with the client and architect on project goals.*"
                     ),
                     timestamp="Just now",
                     question_context=q1
                 )
             ]
         )
+        conf = calculate_discovery_confidence(session)
+        session.confidence = conf
         sessions[sid] = session
         return session
     return sessions[session_id]
@@ -86,12 +98,26 @@ def read_root():
 def health_check():
     return {"status": "healthy", "service": "AI-BRD-Generator", "timestamp": datetime.now().isoformat()}
 
+@app.get("/api/ports")
+def get_persona_ports():
+    return {
+        "ports": {
+            "8081": {"persona": "CLIENT", "name": "Elena Vance", "role": "Client Business Lead", "title": "Client Portal", "badge": "🧑‍💼 Client (Elena Vance)", "default_tab": "tab-ideation"},
+            "8082": {"persona": "SOLUTIONS_ARCHITECT", "name": "Alex Morgan", "role": "Principal Solutions Architect", "title": "Solutions Architect Portal", "badge": "🏗️ Solutions Architect (Alex Morgan)", "default_tab": "tab-dual-review"},
+            "8083": {"persona": "PROJECT_MANAGER", "name": "Marcus Reed", "role": "Senior Delivery PM", "title": "Project Manager Portal", "badge": "👔 Project Manager (Marcus Reed)", "default_tab": "tab-pm-review"},
+            "8084": {"persona": "ADMIN", "name": "System Administrator", "role": "Enterprise Governance Admin", "title": "Admin & Governance Console", "badge": "🛡️ Admin & Governance", "default_tab": "admin_modal"},
+            "8088": {"persona": "UNIFIED", "name": "Multi-Persona Team", "role": "All Personas Collaboration Gateway", "title": "Unified Collaboration Gateway", "badge": "🌐 Unified Gateway", "default_tab": "tab-ideation"}
+        }
+    }
+
 @app.get("/api/session")
 def get_session_endpoint(session_id: Optional[str] = None):
     session = get_or_create_session(session_id)
     current_q = get_current_question(session)
     questions = get_discovery_questions()
     gates = getattr(session, "hitl_gates", None) or HITLGates()
+    conf = calculate_discovery_confidence(session)
+    wf = getattr(session, "workflow", None) or WorkflowState()
     return {
         "session_id": session.session_id,
         "current_question_index": session.current_question_index,
@@ -104,53 +130,83 @@ def get_session_endpoint(session_id: Optional[str] = None):
         "brd": session.brd.model_dump() if session.brd else None,
         "has_handoff": session.handoff_dossier is not None,
         "handoff_data": session.handoff_dossier,
-        "hitl_gates": gates.model_dump()
+        "hitl_gates": gates.model_dump(),
+        "workflow": wf.model_dump(),
+        "confidence": conf.model_dump()
     }
 
 class ChatInput(BaseModel):
     session_id: str
     message: str
     selected_option: Optional[str] = None
+    persona: Optional[str] = "CLIENT"  # "CLIENT", "SOLUTIONS_ARCHITECT", "PROJECT_MANAGER"
 
 @app.post("/api/chat")
 async def chat_endpoint(payload: ChatInput):
     session = get_or_create_session(payload.session_id)
+    active_persona = payload.persona or (session.workflow.active_persona if hasattr(session, "workflow") and session.workflow else "CLIENT")
+    if hasattr(session, "workflow") and session.workflow:
+        session.workflow.active_persona = active_persona
+
     answer_text = payload.selected_option if payload.selected_option else payload.message
+    user_display_text = payload.message or answer_text
+    current_q = get_current_question(session)
     
-    # Record user message
+    if current_q and current_q.options:
+        for opt in current_q.options:
+            if str(opt.value).strip().lower() == str(answer_text).strip().lower() or str(opt.label).strip().lower() == str(answer_text).strip().lower():
+                desc = f" — {opt.description}" if opt.description else ""
+                user_display_text = f"{opt.label}{desc}"
+                break
+    
+    # Badge based on active persona
+    badge_map = {
+        "CLIENT": "🧑‍💼 Client (Elena Vance)",
+        "SOLUTIONS_ARCHITECT": "🏗️ Solutions Architect (Alex Morgan)",
+        "PROJECT_MANAGER": "👔 Project Manager (Marcus Reed)"
+    }
+    
+    # Record user message with active persona badge
     session.messages.append(ChatMessage(
         sender="user",
-        content=answer_text,
+        persona=active_persona,
+        persona_badge=badge_map.get(active_persona, "🧑‍💼 Client"),
+        content=user_display_text,
         timestamp="Just now"
     ))
     
     # Process through discovery agent
-    reply_msg, is_complete = process_user_answer(session, answer_text)
+    reply_msg, is_complete = process_user_answer(session, answer_text, persona=active_persona)
     session.messages.append(reply_msg)
+    conf = calculate_discovery_confidence(session)
     
-    if is_complete:
-        # Compile handoff dossier
+    if is_complete or conf.score >= 98.0:
         compile_and_save_handoff_dossier(session)
-        
         was_first_completion = (session.brd is None)
         
-        # Generate/Update BRD & Project Plan via deterministic engine
         brd = generate_brd(session)
         session.brd = brd
         
+        if hasattr(session, "workflow") and session.workflow:
+            if session.workflow.stage in ["IDEATION", "DISCOVERY"] or session.workflow.current_stage in ["IDEATION", "DISCOVERY"]:
+                session.workflow.stage = "DUAL_REVIEW"
+                session.workflow.current_stage = "DUAL_REVIEW"
+            session.workflow.is_confidence_reached = True
+            
         if was_first_completion:
             session.messages.append(ChatMessage(
                 sender="agent",
+                persona="AI_AGENT",
+                persona_badge="🤖 AI Synthesis Agent",
                 content=(
-                    "🚀 **Agent 2 has successfully synthesized the Project Plan and BRD!**\n\n"
+                    "🚀 **Agent 2 has successfully synthesized the Draft Project Plan and BRD (Confidence >= 98%)!**\n\n"
                     f"• **Project Title:** {brd.project_title}\n"
                     f"• **Client / Account:** {brd.client_name}\n"
                     f"• **Delivery Tier:** {brd.delivery_tier} ({brd.total_duration_weeks:.1f} Weeks)\n"
                     f"• **Total Effort:** {brd.total_person_days:.1f} Person-Days ({brd.total_person_hours:.0f} Hours)\n"
                     f"• **Total Labour Cost:** ${brd.total_labour_cost_usd:,.2f} (@ ${brd.blended_hourly_rate:.2f}/hr blended rate)\n"
-                    f"• **Cloud Infra BoM:** ${brd.sizing_metrics.total_monthly_cloud_cost_usd:,.2f} / month ({session.answers.get('q_cloud', AnswerItem(question_id='q_cloud', question_title='Cloud', answer='Azure')).answer})\n"
-                    f"• **Assumption Gate:** {'✅ PASSED (All Approved)' if brd.assumption_gate_passed else '⚠️ ACTION REQUIRED (Review Gate)'}\n\n"
-                    "You can inspect the full BRD, 12-Discipline Resource Breakdown, 18-Phase Timeline, Component Tech Designs, Sizing Model, and Assumptions Gate on the right panel."
+                    f"• **Cloud Infra BoM:** ${brd.sizing_metrics.total_monthly_cloud_cost_usd:,.2f} / month ({session.answers.get('q_cloud', AnswerItem(question_id='q_cloud', question_title='Cloud', answer='Azure')).answer})\n\n"
+                    "👉 **Next Step (Stage 3: Dual Review):** Both **Elena Vance (Client)** and **Alex Morgan (Solutions Architect)** must review the draft BRD and either submit change requests or provide dual sign-off before it moves to Project Manager Marcus Reed."
                 ),
                 timestamp="Just now"
             ))
@@ -163,8 +219,596 @@ async def chat_endpoint(payload: ChatInput):
         "brd": session.brd.model_dump() if session.brd else None,
         "has_handoff": session.handoff_dossier is not None,
         "handoff_data": session.handoff_dossier,
+        "messages": [m.model_dump() for m in session.messages],
+        "workflow": session.workflow.model_dump() if hasattr(session, "workflow") and session.workflow else None,
+        "confidence": conf.model_dump()
+    }
+
+# --- 3-Persona Collaborative Workflow Endpoints ---
+class SwitchPersonaPayload(BaseModel):
+    session_id: str
+    persona: str  # "CLIENT", "SOLUTIONS_ARCHITECT", "PROJECT_MANAGER"
+
+@app.post("/api/workflow/switch-persona")
+def switch_persona_endpoint(payload: SwitchPersonaPayload):
+    session = get_or_create_session(payload.session_id)
+    p = payload.persona.upper().strip()
+    if p not in ["CLIENT", "SOLUTIONS_ARCHITECT", "PROJECT_MANAGER"]:
+        p = "CLIENT"
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+    session.workflow.active_persona = p
+    return {"status": "success", "active_persona": p, "workflow": session.workflow.model_dump()}
+
+class IdeatePayload(BaseModel):
+    session_id: str
+    client_idea: str
+    project_title: Optional[str] = None
+    target_tier: Optional[str] = "PoC"
+
+@app.post("/api/workflow/ideate")
+def ideate_workflow_endpoint(payload: IdeatePayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    p_title = payload.project_title or "Enterprise AI Platform"
+    client_text = payload.client_idea.strip()
+    
+    # 1. Solutions Architect evaluates feasibility and recommends cloud stack
+    arch_recommendation = (
+        f"Technical Feasibility: High (95%). Recommended Cloud: Microsoft Azure with Azure AI Document Intelligence "
+        f"and Azure OpenAI GPT-5 Thinking / GPT-4o. Microservice topology: 6 components (Ingestion, Search Index, "
+        f"Reasoning Engine, Metadata Store, Eval Harness, React Cockpit). Target tier: {payload.target_tier} with 6-week baseline."
+    )
+    
+    session.workflow.stage = "DISCOVERY"
+    session.workflow.ideation_client_idea = client_text
+    session.workflow.ideation_architect_feedback = arch_recommendation
+    session.workflow.ideation_agreed_project = p_title
+    
+    # Pre-seed initial answers from agreed ideation
+    session.answers["q_client"] = AnswerItem(
+        question_id="q_client",
+        question_title="Client & Engagement Name",
+        answer=p_title,
+        is_default=False
+    )
+    session.answers["q_problem"] = AnswerItem(
+        question_id="q_problem",
+        question_title="Problem Statement & Business Challenge",
+        answer=client_text,
+        is_default=False
+    )
+    session.answers["q_tier"] = AnswerItem(
+        question_id="q_tier",
+        question_title="Delivery Tier",
+        answer=payload.target_tier or "PoC",
+        is_default=False
+    )
+    
+    session.current_question_index = 3  # Move to next discovery questions
+    conf = calculate_discovery_confidence(session)
+    next_q = get_current_question(session)
+    
+    session.messages.append(ChatMessage(
+        sender="architect",
+        persona="SOLUTIONS_ARCHITECT",
+        persona_badge="🏗️ Solutions Architect (Alex Morgan)",
+        content=(
+            f"🏗️ **Alex Morgan (Solutions Architect):**\n\n"
+            f"> \"I reviewed the project idea: **'{client_text}'**.\n\n"
+            f"**Technical Assessment:**\n"
+            f"• **Feasibility:** 95% High Confidence\n"
+            f"• **Recommended Cloud:** Microsoft Azure (Azure AI Document Intelligence + Azure OpenAI)\n"
+            f"• **Delivery Tier:** {payload.target_tier} (6.0 Weeks)\n"
+            f"• **Security Baseline:** Enhanced (Private Endpoints & RBAC)\n\n"
+            f"Let's proceed to deep-dive discovery with the AI Interviewer!\""
+        ),
+        timestamp="Just now"
+    ))
+    
+    if next_q:
+        session.messages.append(ChatMessage(
+            sender="agent",
+            persona="AI_AGENT",
+            persona_badge="🤖 AI Discovery Agent",
+            content=(
+                f"🤝 **Project Scope Agreed!** Starting deep-dive discovery interview.\n\n"
+                f"---\n\n"
+                f"### 📋 Question {session.current_question_index + 1} of {len(STATIC_QUESTIONS)}: **{next_q.title}** *(Confidence: {conf.score}%)*\n\n"
+                f"**{next_q.prompt}**\n\n"
+                f"*(Example: {next_q.help_text})*"
+            ),
+            timestamp="Just now",
+            question_context=next_q
+        )
+    )
+    
+    return {
+        "status": "success",
+        "workflow": session.workflow.model_dump(),
+        "confidence": conf.model_dump(),
+        "current_question": next_q.model_dump() if next_q else None,
         "messages": [m.model_dump() for m in session.messages]
     }
+
+class DelegateArchitectPayload(BaseModel):
+    session_id: str
+    question_id: Optional[str] = None
+
+@app.post("/api/workflow/delegate-architect")
+def delegate_architect_endpoint(payload: DelegateArchitectPayload):
+    session = get_or_create_session(payload.session_id)
+    q = get_current_question(session)
+    if not q:
+        raise HTTPException(status_code=400, detail="No active question to delegate.")
+        
+    reply_msg, is_complete = process_user_answer(session, "ask architect", persona="SOLUTIONS_ARCHITECT")
+    session.messages.append(reply_msg)
+    conf = calculate_discovery_confidence(session)
+    
+    if is_complete or conf.score >= 98.0:
+        compile_and_save_handoff_dossier(session)
+        brd = generate_brd(session)
+        session.brd = brd
+        if hasattr(session, "workflow") and session.workflow:
+            session.workflow.stage = "DUAL_REVIEW"
+            session.workflow.is_confidence_reached = True
+            
+    return {
+        "status": "success",
+        "current_question": get_current_question(session).model_dump() if get_current_question(session) else None,
+        "answers": {k: v.model_dump() for k, v in session.answers.items()},
+        "has_brd": session.brd is not None,
+        "brd": session.brd.model_dump() if session.brd else None,
+        "workflow": session.workflow.model_dump() if hasattr(session, "workflow") and session.workflow else None,
+        "confidence": conf.model_dump(),
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
+class ResolveEscalationPayload(BaseModel):
+    session_id: str
+    question_id: str
+    answer: str
+    notes: Optional[str] = ""
+
+@app.get("/api/workflow/architect/briefing")
+def get_architect_briefing(session_id: str):
+    session = get_or_create_session(session_id)
+    client_name = session.answers.get("q_client", AnswerItem(question_id="q_client", question_title="Client", answer="Contract Intelligence Platform")).answer
+    problem_stmt = session.answers.get("q_problem", AnswerItem(question_id="q_problem", question_title="Problem", answer=session.workflow.ideation_client_idea or "Not specified")).answer
+    tier_name = session.answers.get("q_tier", AnswerItem(question_id="q_tier", question_title="Tier", answer="PoC")).answer
+    duration_name = session.answers.get("q_duration", AnswerItem(question_id="q_duration", question_title="Duration", answer="6.0 Weeks")).answer
+    legal_cats = session.answers.get("q_legal_categories", AnswerItem(question_id="q_legal_categories", question_title="Categories", answer="6 Legal Categories")).answer
+    
+    escalated = [e.model_dump() for e in (session.workflow.escalated_topics if hasattr(session, "workflow") and session.workflow else [])]
+    
+    return {
+        "client_overview": {
+            "project_title": client_name,
+            "problem_statement": problem_stmt,
+            "target_tier": tier_name,
+            "duration": duration_name,
+            "legal_categories": legal_cats,
+            "answers_count": len(session.answers),
+            "current_confidence": calculate_discovery_confidence(session).score
+        },
+        "escalated_topics": escalated,
+        "pending_count": len([e for e in escalated if e.get("status") == "PENDING_ARCHITECT"])
+    }
+
+@app.post("/api/workflow/architect/resolve-escalation")
+def resolve_architect_escalation(payload: ResolveEscalationPayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    q_id = payload.question_id
+    answer_val = payload.answer
+    
+    # Update answers
+    if q_id in session.answers:
+        session.answers[q_id].answer = answer_val
+        session.answers[q_id].notes = payload.notes or "Resolved by Solutions Architect (Alex Morgan)"
+    else:
+        session.answers[q_id] = AnswerItem(
+            question_id=q_id,
+            question_title=q_id,
+            answer=answer_val,
+            notes=payload.notes or "Resolved by Solutions Architect (Alex Morgan)"
+        )
+        
+    # Mark in escalation topics
+    for esc in session.workflow.escalated_topics:
+        if esc.question_id == q_id:
+            esc.status = "RESOLVED"
+            esc.architect_answer = answer_val
+            esc.architect_notes = payload.notes or ""
+            esc.resolved_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            
+    conf = calculate_discovery_confidence(session)
+    session.workflow.confidence_score = conf.score
+    
+    # Append resolution message to chat
+    session.messages.append(ChatMessage(
+        sender="architect",
+        persona="SOLUTIONS_ARCHITECT",
+        persona_badge="🏗️ Solutions Architect",
+        is_architect_input=True,
+        content=f"🏗️ **Alex Morgan (Principal Solutions Architect) — Resolved Escalation:**\n\n📌 **Topic:** `{q_id}`\n✅ **Architect Decision:** `{answer_val}`\n💬 **Notes:** {payload.notes or 'Architecture decision confirmed and applied to BRD.'}",
+        timestamp="Just now"
+    ))
+    
+    if conf.score >= 98.0:
+        compile_and_save_handoff_dossier(session)
+        brd = generate_brd(session)
+        session.brd = brd
+        session.workflow.stage = "DUAL_REVIEW"
+        session.workflow.is_confidence_reached = True
+        
+    return {
+        "status": "success",
+        "question_id": q_id,
+        "answer": answer_val,
+        "confidence": conf.model_dump(),
+        "workflow": session.workflow.model_dump(),
+        "has_brd": session.brd is not None,
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
+class DualReviewFeedbackPayload(BaseModel):
+    session_id: str
+    persona: str  # "CLIENT" or "SOLUTIONS_ARCHITECT"
+    feedback: str
+    adjustments: Optional[Dict[str, str]] = {}
+
+@app.post("/api/workflow/dual-review/feedback")
+def dual_review_feedback_endpoint(payload: DualReviewFeedbackPayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    p = payload.persona.upper().strip()
+    rev = session.workflow.client_review if p == "CLIENT" else session.workflow.architect_review
+    rev.satisfied = False
+    rev.status = "CHANGES_REQUESTED"
+    rev.feedback = payload.feedback
+    rev.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Reset approvals when revisions are requested
+    session.workflow.client_review.satisfied = False
+    session.workflow.architect_review.satisfied = False
+    session.workflow.dual_review_iterations += 1
+    
+    # Apply requested adjustments
+    for q_id, new_val in (payload.adjustments or {}).items():
+        if q_id in session.answers:
+            session.answers[q_id].answer = new_val
+        else:
+            session.answers[q_id] = AnswerItem(question_id=q_id, question_title=q_id, answer=new_val)
+            
+    # Re-generate BRD
+    brd = generate_brd(session)
+    session.brd = brd
+    
+    role_name = "Elena Vance (Client Business Lead)" if p == "CLIENT" else "Alex Morgan (Principal Solutions Architect)"
+    badge = "🧑‍💼 Client" if p == "CLIENT" else "🏗️ Solutions Architect"
+    
+    session.messages.append(ChatMessage(
+        sender="user" if p == "CLIENT" else "architect",
+        persona=p,
+        persona_badge=badge,
+        content=f"✍️ **Change Request Submitted by {role_name}:**\n> \"{payload.feedback}\"",
+        timestamp="Just now"
+    ))
+    
+    session.messages.append(ChatMessage(
+        sender="agent",
+        persona="AI_AGENT",
+        persona_badge="🤖 AI Synthesis Agent",
+        content=(
+            f"🔄 **BRD Updated based on {badge} Feedback (Iteration {session.workflow.dual_review_iterations})!**\n\n"
+            f"Adjusted parameters applied. New total effort: **{brd.total_person_days:.1f} Days (${brd.total_labour_cost_usd:,.2f})** "
+            f"across **{brd.total_duration_weeks:.1f} Weeks**. Both Client and Solutions Architect can review the revised plan."
+        ),
+        timestamp="Just now"
+    ))
+    
+    return {
+        "status": "success",
+        "brd": brd.model_dump(),
+        "workflow": session.workflow.model_dump(),
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
+class DualReviewApprovePayload(BaseModel):
+    session_id: str
+    persona: str  # "CLIENT" or "SOLUTIONS_ARCHITECT"
+    signature_name: Optional[str] = None
+    notes: Optional[str] = None
+
+@app.post("/api/workflow/dual-review/approve")
+def dual_review_approve_endpoint(payload: DualReviewApprovePayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    p = payload.persona.upper().strip()
+    if p == "CLIENT":
+        session.workflow.client_review.satisfied = True
+        session.workflow.client_review.status = "APPROVED"
+        session.workflow.client_review.signature_name = payload.signature_name or "Elena Vance (Client Business Lead)"
+        session.workflow.client_review.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        session.workflow.client_review.feedback = payload.notes
+        sender_role = "🧑‍💼 Client (Elena Vance)"
+    else:
+        session.workflow.architect_review.satisfied = True
+        session.workflow.architect_review.status = "APPROVED"
+        session.workflow.architect_review.signature_name = payload.signature_name or "Alex Morgan (Principal Solutions Architect)"
+        session.workflow.architect_review.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        session.workflow.architect_review.feedback = payload.notes
+        sender_role = "🏗️ Solutions Architect (Alex Morgan)"
+        
+    session.messages.append(ChatMessage(
+        sender="user" if p == "CLIENT" else "architect",
+        persona=p,
+        persona_badge=sender_role,
+        content=f"✅ **Sign-Off Approved by {sender_role}!**\n> \"{payload.notes or 'BRD scope and architectural design approved.'}\"",
+        timestamp="Just now"
+    ))
+    
+    # Check if BOTH Client and Solutions Architect have approved
+    is_dual_approved = session.workflow.client_review.satisfied and session.workflow.architect_review.satisfied
+    if is_dual_approved:
+        session.workflow.stage = "PM_REVIEW"
+        session.messages.append(ChatMessage(
+            sender="agent",
+            persona="AI_AGENT",
+            persona_badge="🤖 AI Governance Coordinator",
+            content=(
+                "🎉 **DUAL APPROVAL ACHIEVED!**\n\n"
+                "Both **Elena Vance (Client Lead)** and **Alex Morgan (Solutions Architect)** have approved the draft BRD.\n\n"
+                "👉 **Stage 4: Project Manager Review Gate Activated.**\n"
+                "**Marcus Reed (Senior Delivery PM)** is now reviewing the 18-phase timeline, 12-discipline resource loading ($30/hr rate), "
+                "statutory holiday calendar, and cloud budget for final delivery governance."
+            ),
+            timestamp="Just now"
+        ))
+        
+    return {
+        "status": "success",
+        "is_dual_approved": is_dual_approved,
+        "workflow": session.workflow.model_dump(),
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
+class PMQueryPayload(BaseModel):
+    session_id: str
+    topic: str
+    query_text: str
+    addressed_to: Optional[str] = "ALL"  # "CLIENT", "SOLUTIONS_ARCHITECT", "ALL"
+
+@app.post("/api/workflow/pm-review/query")
+def pm_review_query_endpoint(payload: PMQueryPayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    q_id = f"PMQ-{len(session.workflow.pm_queries) + 1:03d}"
+    query_item = PMQueryItem(
+        id=q_id,
+        topic=payload.topic,
+        query_text=payload.query_text,
+        addressed_to=payload.addressed_to or "ALL",
+        status="OPEN"
+    )
+    session.workflow.pm_queries.append(query_item)
+    session.workflow.pm_review.satisfied = False
+    session.workflow.pm_review.status = "CHANGES_REQUESTED"
+    
+    # Add to tripartite discussion
+    msg_id = f"TRIPARTY-{len(session.workflow.triparty_messages) + 1:03d}"
+    session.workflow.triparty_messages.append(TripartyMessage(
+        id=msg_id,
+        sender_persona="PROJECT_MANAGER",
+        sender_name="Marcus Reed (Senior Delivery PM)",
+        message=f"[{payload.topic}] {payload.query_text} (Addressed to: {payload.addressed_to})",
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+    
+    session.messages.append(ChatMessage(
+        sender="manager",
+        persona="PROJECT_MANAGER",
+        persona_badge="👔 Project Manager (Marcus Reed)",
+        is_pm_input=True,
+        content=(
+            f"👔 **Marcus Reed (Delivery PM) raised a Query / Change Request ({q_id}):**\n\n"
+            f"📌 **Topic:** {payload.topic}\n"
+            f"💬 **Query:** \"{payload.query_text}\"\n"
+            f"🎯 **Addressed To:** {payload.addressed_to}\n\n"
+            f"*(Client and Architect can respond in the Tripartite Discussion room to resolve and adjust the BRD)*"
+        ),
+        timestamp="Just now"
+    ))
+    
+    return {
+        "status": "success",
+        "query": query_item.model_dump(),
+        "workflow": session.workflow.model_dump(),
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
+class PMQueryRespondPayload(BaseModel):
+    session_id: str
+    query_id: str
+    persona: str  # "CLIENT" or "SOLUTIONS_ARCHITECT"
+    response_text: str
+
+@app.post("/api/workflow/pm-review/respond")
+def pm_review_respond_endpoint(payload: PMQueryRespondPayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    p = payload.persona.upper().strip()
+    target_q = next((q for q in session.workflow.pm_queries if q.id == payload.query_id), None)
+    if not target_q:
+        raise HTTPException(status_code=404, detail="Query not found")
+        
+    if p == "CLIENT":
+        target_q.client_response = payload.response_text
+        responder_name = "Elena Vance (Client Business Lead)"
+        badge = "🧑‍💼 Client"
+    else:
+        target_q.architect_response = payload.response_text
+        responder_name = "Alex Morgan (Principal Solutions Architect)"
+        badge = "🏗️ Solutions Architect"
+        
+    # Check if resolved
+    if target_q.addressed_to == p or (target_q.client_response and target_q.architect_response) or target_q.addressed_to == "ALL":
+        target_q.status = "RESOLVED"
+        
+    msg_id = f"TRIPARTY-{len(session.workflow.triparty_messages) + 1:03d}"
+    session.workflow.triparty_messages.append(TripartyMessage(
+        id=msg_id,
+        sender_persona=p,
+        sender_name=responder_name,
+        message=f"[Re: {target_q.topic}] {payload.response_text}",
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+    
+    session.messages.append(ChatMessage(
+        sender="user" if p == "CLIENT" else "architect",
+        persona=p,
+        persona_badge=badge,
+        content=f"💬 **Response to PM Query {payload.query_id} from {responder_name}:**\n> \"{payload.response_text}\"",
+        timestamp="Just now"
+    ))
+    
+    return {
+        "status": "success",
+        "query": target_q.model_dump(),
+        "workflow": session.workflow.model_dump(),
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
+class PMReplanPayload(BaseModel):
+    session_id: str
+    pm_notes: str
+    parameter_overrides: Optional[Dict[str, str]] = {}
+
+@app.post("/api/workflow/pm-review/replan-with-pm")
+def pm_replan_endpoint(payload: PMReplanPayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    for q_id, new_val in (payload.parameter_overrides or {}).items():
+        if q_id in session.answers:
+            session.answers[q_id].answer = new_val
+        else:
+            session.answers[q_id] = AnswerItem(question_id=q_id, question_title=q_id, answer=new_val)
+            
+    brd = generate_brd(session)
+    session.brd = brd
+    
+    # Track calculation ledger item
+    calc_id = f"CALC-PM-{len(session.brd.calculation_ledger) + 1:03d}"
+    ledger_entry = CalculationLedgerItem(
+        calculation_id=calc_id,
+        calculation_type="PM_GOVERNANCE_ADJUSTMENT",
+        inputs=payload.parameter_overrides or {},
+        formula=f"PM Consensus adjustment: {payload.pm_notes}",
+        result={
+            "total_person_days": brd.total_person_days,
+            "total_labour_cost_usd": brd.total_labour_cost_usd,
+            "total_duration_weeks": brd.total_duration_weeks
+        },
+        engine_version="1.0.0",
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+    session.brd.calculation_ledger.append(ledger_entry)
+    
+    session.messages.append(ChatMessage(
+        sender="manager",
+        persona="PROJECT_MANAGER",
+        persona_badge="👔 Project Manager (Marcus Reed)",
+        is_pm_input=True,
+        content=(
+            f"🔄 **PM Revisions Applied to BRD!**\n\n"
+            f"**PM Notes:** \"{payload.pm_notes}\"\n"
+            f"• Updated Effort: **{brd.total_person_days:.1f} Days (${brd.total_labour_cost_usd:,.2f})** across **{brd.total_duration_weeks:.1f} Weeks**\n"
+            f"• All 3 personas can review the updated calculations."
+        ),
+        timestamp="Just now"
+    ))
+    
+    return {
+        "status": "success",
+        "brd": brd.model_dump(),
+        "workflow": session.workflow.model_dump(),
+        "calculation_ledger": [item.model_dump() for item in brd.calculation_ledger],
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
+class PMApprovePayload(BaseModel):
+    session_id: str
+    signature_name: Optional[str] = None
+    notes: Optional[str] = None
+
+@app.post("/api/workflow/pm-review/approve")
+def pm_review_approve_endpoint(payload: PMApprovePayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    session.workflow.pm_review.satisfied = True
+    session.workflow.pm_review.status = "APPROVED"
+    session.workflow.pm_review.signature_name = payload.signature_name or "Marcus Reed (Senior Delivery PM)"
+    session.workflow.pm_review.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    session.workflow.pm_review.feedback = payload.notes or "Project plan, budget, and 18-phase schedule approved for execution."
+    
+    session.workflow.stage = "FINAL_APPROVED"
+    session.workflow.final_signoff_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Update HITL Gates
+    session.hitl_gates.client_business_approved = True
+    session.hitl_gates.architect_tech_approved = True
+    session.hitl_gates.manager_estimate_approved = True
+    session.hitl_gates.gate1_requirements_approved = True
+    session.hitl_gates.gate2_solution_approved = True
+    session.hitl_gates.gate3_estimate_approved = True
+    session.hitl_gates.gate4_brd_approved = True
+    
+    if session.brd:
+        session.brd.hitl_gates = session.hitl_gates
+        
+    session.messages.append(ChatMessage(
+        sender="manager",
+        persona="PROJECT_MANAGER",
+        persona_badge="👔 Project Manager (Marcus Reed)",
+        is_pm_input=True,
+        content=(
+            f"🏆 **FINAL PROJECT SIGN-OFF GRANTED BY MARCUS REED (DELIVERY PM)!**\n\n"
+            f"> \"{payload.notes or 'All governance gates passed. Timeline, budget, and architectural safeguards verified.'}\"\n\n"
+            f"📜 **Official 3-Persona Tripartite Signatures Certified:**\n"
+            f"1️⃣ 🧑‍💼 **Client Business Lead:** {session.workflow.client_review.signature_name} (Signed: {session.workflow.client_review.timestamp})\n"
+            f"2️⃣ 🏗️ **Solutions Architect:** {session.workflow.architect_review.signature_name} (Signed: {session.workflow.architect_review.timestamp})\n"
+            f"3️⃣ 👔 **Delivery Project Manager:** {session.workflow.pm_review.signature_name} (Signed: {session.workflow.pm_review.timestamp})\n\n"
+            f"🎉 The **Final Approved BRD Document, Financial Model, Jira Backlog, and Presentation Deck** are now locked and shared with all 3 personas."
+        ),
+        timestamp="Just now"
+    ))
+    
+    return {
+        "status": "success",
+        "stage": "FINAL_APPROVED",
+        "workflow": session.workflow.model_dump(),
+        "hitl_gates": session.hitl_gates.model_dump(),
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
 
 from backend.models import (
     ProjectSession, ChatMessage, AnswerItem, BRDDocument,
@@ -442,6 +1086,19 @@ def export_docx_endpoint(session_id: str):
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         filename=filename
     )
+
+@app.get("/api/handoff")
+def get_handoff_endpoint(session_id: str):
+    session = get_or_create_session(session_id)
+    if not session.handoff_dossier:
+        compile_and_save_handoff_dossier(session)
+    dossier_path = f"admin_data/handoff_{session.session_id[:8]}.json"
+    return {
+        "status": "success",
+        "session_id": session.session_id,
+        "handoff_dossier": session.handoff_dossier,
+        "file_path": dossier_path if os.path.exists(dossier_path) else None
+    }
 
 @app.get("/api/export-pptx")
 def export_pptx_endpoint(session_id: str):
@@ -1084,6 +1741,401 @@ def load_project_endpoint(project_id: str):
         "messages": [m.model_dump() for m in session.messages]
     }
 
+# =======================================================
+# 3-PERSONA COLLABORATIVE WORKFLOW ENDPOINTS
+# =======================================================
+
+class PersonaSwitchPayload(BaseModel):
+    session_id: str
+    persona: str  # "CLIENT", "SOLUTIONS_ARCHITECT", "PROJECT_MANAGER"
+
+@app.post("/api/workflow/switch-persona")
+def switch_persona_endpoint(payload: PersonaSwitchPayload):
+    session = get_or_create_session(payload.session_id)
+    if hasattr(session, "workflow") and session.workflow:
+        session.workflow.active_persona = payload.persona
+    return {
+        "status": "success",
+        "active_persona": payload.persona,
+        "workflow": session.workflow.model_dump() if hasattr(session, "workflow") and session.workflow else {}
+    }
+
+class IdeationPayload(BaseModel):
+    session_id: str
+    project_title: str
+    client_idea: str
+    target_tier: str = "PoC"
+    cloud_preference: str = "Microsoft Azure"
+
+@app.post("/api/workflow/ideate")
+def ideation_commit_endpoint(payload: IdeationPayload):
+    session = get_or_create_session(payload.session_id)
+    
+    # Prepopulate core ideation parameters into discovery answers
+    session.answers["q_client"] = AnswerItem(
+        question_id="q_client",
+        question_title="Client Account & Engagement Title",
+        answer=payload.project_title,
+        hitl_confirmed=True
+    )
+    session.answers["q_problem"] = AnswerItem(
+        question_id="q_problem",
+        question_title="Business Problem Statement",
+        answer=payload.client_idea,
+        hitl_confirmed=True
+    )
+    session.answers["q_tier"] = AnswerItem(
+        question_id="q_tier",
+        question_title="Target Delivery Tier",
+        answer=payload.target_tier,
+        hitl_confirmed=True
+    )
+    session.answers["q_cloud"] = AnswerItem(
+        question_id="q_cloud",
+        question_title="Primary Cloud Platform",
+        answer=payload.cloud_preference,
+        hitl_confirmed=True
+    )
+    
+    # Fast forward question index to question 4 (duration)
+    session.current_question_index = 4
+    
+    if hasattr(session, "workflow") and session.workflow:
+        session.workflow.stage = "DISCOVERY"
+        session.workflow.current_stage = "DISCOVERY"
+        session.workflow.ideation_notes = f"Title: {payload.project_title}\nScope: {payload.client_idea}\nCloud: {payload.cloud_preference}"
+    
+    conf = calculate_discovery_confidence(session)
+    next_q = get_current_question(session)
+    
+    # Add collaborative kickoff messages
+    session.messages.append(ChatMessage(
+        sender="client",
+        persona="CLIENT",
+        persona_badge="🧑‍💼 Client (Elena Vance)",
+        content=f"💡 **Project Vision Aligned:** *\"{payload.project_title}\"*\n\n> {payload.client_idea}",
+        timestamp="Just now"
+    ))
+    session.messages.append(ChatMessage(
+        sender="architect",
+        persona="SOLUTIONS_ARCHITECT",
+        persona_badge="🏗️ Solutions Architect (Alex Morgan)",
+        content=(
+            f"🏗️ **Architectural Scoping Feasibility Confirmed!**\n\n"
+            f"• **Target Hyperscaler:** {payload.cloud_preference}\n"
+            f"• **Architecture Decomposition:** 6 Microservices (Ingestion, Vector Index, Reasoning Engine, DB, Eval Harness, UI)\n"
+            f"• **Delivery Tier:** {payload.target_tier} (Standardized rate @ $30/hr)\n\n"
+            f"Discovery agent is now initiating deep-dive parameter interview starting with question 5."
+        ),
+        timestamp="Just now"
+    ))
+    
+    if next_q:
+        session.messages.append(ChatMessage(
+            sender="agent",
+            persona="AI_AGENT",
+            persona_badge="🤖 BRD Discovery Agent",
+            content=(
+                f"### 📋 Question {session.current_question_index + 1} of {len(STATIC_QUESTIONS)}: **{next_q.title}**\n\n"
+                f"**{next_q.prompt}**\n\n"
+                f"*(Example: {next_q.help_text})*"
+            ),
+            timestamp="Just now",
+            question_context=next_q
+        ))
+
+    return {
+        "session_id": session.session_id,
+        "current_question_index": session.current_question_index,
+        "total_questions": len(STATIC_QUESTIONS),
+        "current_question": next_q.model_dump() if next_q else None,
+        "answers": {k: v.model_dump() for k, v in session.answers.items()},
+        "messages": [m.model_dump() for m in session.messages],
+        "workflow": session.workflow.model_dump() if hasattr(session, "workflow") and session.workflow else {},
+        "confidence": conf.model_dump()
+    }
+
+class DelegateArchitectPayload(BaseModel):
+    session_id: str
+
+@app.post("/api/workflow/delegate-architect")
+def delegate_architect_endpoint(payload: DelegateArchitectPayload):
+    session = get_or_create_session(payload.session_id)
+    cur_q = get_current_question(session)
+    if not cur_q:
+        raise HTTPException(status_code=400, detail="No active question to delegate")
+        
+    rec = get_architect_technical_advice(cur_q.id, cur_q.title)
+    
+    # Post architect advice message
+    session.messages.append(ChatMessage(
+        sender="architect",
+        persona="SOLUTIONS_ARCHITECT",
+        persona_badge="🏗️ Solutions Architect (Alex Morgan)",
+        content=f"🏗️ **Alex Morgan's Technical Recommendation for {cur_q.title}:**\n\n{rec['quote']}\n\n👉 *Applied: `{rec['label']}`*",
+        timestamp="Just now"
+    ))
+    
+    # Process answer with architect's advice value
+    reply_msg, is_complete = process_user_answer(session, rec["value"], persona="SOLUTIONS_ARCHITECT")
+    session.messages.append(reply_msg)
+    conf = calculate_discovery_confidence(session)
+    
+    if is_complete or conf.score >= 98.0:
+        compile_and_save_handoff_dossier(session)
+        session.brd = generate_brd(session)
+        if hasattr(session, "workflow") and session.workflow:
+            if session.workflow.stage in ["IDEATION", "DISCOVERY"] or session.workflow.current_stage in ["IDEATION", "DISCOVERY"]:
+                session.workflow.stage = "DUAL_REVIEW"
+                session.workflow.current_stage = "DUAL_REVIEW"
+            session.workflow.is_confidence_reached = True
+
+    return {
+        "session_id": session.session_id,
+        "current_question_index": session.current_question_index,
+        "total_questions": len(STATIC_QUESTIONS),
+        "current_question": get_current_question(session).model_dump() if get_current_question(session) else None,
+        "answers": {k: v.model_dump() for k, v in session.answers.items()},
+        "messages": [m.model_dump() for m in session.messages],
+        "workflow": session.workflow.model_dump() if hasattr(session, "workflow") and session.workflow else {},
+        "confidence": conf.model_dump(),
+        "brd": session.brd.model_dump() if session.brd else None
+    }
+
+class DualReviewFeedbackPayload(BaseModel):
+    session_id: str
+    persona: str  # "CLIENT" | "SOLUTIONS_ARCHITECT"
+    feedback: str
+
+@app.post("/api/workflow/dual-review/feedback")
+def dual_review_feedback_endpoint(payload: DualReviewFeedbackPayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    wf = session.workflow
+    wf.review_iteration += 1
+    
+    is_client = (payload.persona == "CLIENT")
+    target_rev = wf.client_review if is_client else wf.architect_review
+    target_rev.status = "CHANGES_REQUESTED"
+    target_rev.feedback = payload.feedback
+    target_rev.feedback_history.append(payload.feedback)
+    
+    author_tag = "Elena Vance (Client Lead)" if is_client else "Alex Morgan (Principal Architect)"
+    author_badge = "🧑‍💼 Client Review" if is_client else "🏗️ Architect Review"
+    
+    session.messages.append(ChatMessage(
+        sender="client" if is_client else "architect",
+        persona=payload.persona,
+        persona_badge=author_badge,
+        content=f"✍️ **Change Request from {author_tag} (Iteration #{wf.review_iteration}):**\n\n> {payload.feedback}",
+        timestamp="Just now"
+    ))
+    
+    # Auto-adjust BRD synthesis based on feedback
+    if session.brd:
+        if "timeline" in payload.feedback.lower() or "week" in payload.feedback.lower():
+            session.brd.executive_summary += f"\n• Updated in Iteration #{wf.review_iteration}: Schedule and timeline adjusted per {payload.persona} review."
+        if "cloud" in payload.feedback.lower() or "bedrock" in payload.feedback.lower() or "azure" in payload.feedback.lower():
+            session.brd.executive_summary += f"\n• Updated in Iteration #{wf.review_iteration}: Hyperscaler BoM configuration refined."
+            
+        session.messages.append(ChatMessage(
+            sender="agent",
+            persona="AI_AGENT",
+            persona_badge="🤖 AI Synthesis Agent",
+            content=f"🔄 **BRD and Execution Plan re-synthesized for Iteration #{wf.review_iteration}** reflecting adjustments requested by {author_tag}.",
+            timestamp="Just now"
+        ))
+
+    return {
+        "status": "success",
+        "session_id": session.session_id,
+        "workflow": wf.model_dump(),
+        "brd": session.brd.model_dump() if session.brd else None,
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
+class DualReviewApprovePayload(BaseModel):
+    session_id: str
+    persona: str  # "CLIENT" | "SOLUTIONS_ARCHITECT"
+
+@app.post("/api/workflow/dual-review/approve")
+def dual_review_approve_endpoint(payload: DualReviewApprovePayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    wf = session.workflow
+    now_str = datetime.now().isoformat()
+    
+    if payload.persona == "CLIENT":
+        wf.client_review.status = "APPROVED"
+        wf.client_review.approved_at = now_str
+        session.messages.append(ChatMessage(
+            sender="client",
+            persona="CLIENT",
+            persona_badge="🧑‍💼 Client (Elena Vance)",
+            content="✅ **Client Sign-Off Confirmed:** Elena Vance has approved the scope, timeline, and deliverables in the BRD.",
+            timestamp="Just now"
+        ))
+    else:
+        wf.architect_review.status = "APPROVED"
+        wf.architect_review.approved_at = now_str
+        session.messages.append(ChatMessage(
+            sender="architect",
+            persona="SOLUTIONS_ARCHITECT",
+            persona_badge="🏗️ Solutions Architect (Alex Morgan)",
+            content="✅ **Architect Sign-Off Confirmed:** Alex Morgan has approved the technical architecture, microservices decomposition, and cloud sizing BoM.",
+            timestamp="Just now"
+        ))
+        
+    if wf.client_review.status == "APPROVED" and wf.architect_review.status == "APPROVED":
+        wf.stage = "PM_REVIEW"
+        wf.current_stage = "PM_REVIEW"
+        wf.active_persona = "PROJECT_MANAGER"
+        session.messages.append(ChatMessage(
+            sender="agent",
+            persona="AI_AGENT",
+            persona_badge="🤖 Governance Workflow",
+            content=(
+                "🎉 **Dual Sign-Off Achieved!**\n\n"
+                "Both **Elena Vance (Client)** and **Alex Morgan (Solutions Architect)** have approved the plan.\n"
+                "👉 **The engagement has transitioned to Stage 4: Project Manager Marcus Reed** for commercial governance, holiday scheduling, and final sign-off."
+            ),
+            timestamp="Just now"
+        ))
+
+    return {
+        "status": "success",
+        "session_id": session.session_id,
+        "workflow": wf.model_dump(),
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
+class PMQueryPayload(BaseModel):
+    session_id: str
+    topic: str
+    addressed_to: str = "ALL"  # "CLIENT", "SOLUTIONS_ARCHITECT", "ALL"
+    text: str
+
+@app.post("/api/workflow/pm-review/query")
+def pm_query_endpoint(payload: PMQueryPayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    wf = session.workflow
+    now_str = datetime.now().isoformat()
+    
+    query_item = PMQueryItem(
+        query_id=f"PM-Q-{len(wf.pm_review.queries) + 1:02d}",
+        topic=payload.topic,
+        addressed_to=payload.addressed_to,
+        text=payload.text,
+        timestamp=now_str
+    )
+    wf.pm_review.queries.append(query_item)
+    wf.pm_review.status = "CHANGES_REQUESTED"
+    
+    # Add to tripartite discussion stream
+    tri_msg = TripartyMessage(
+        message_id=str(uuid.uuid4())[:8],
+        persona="PROJECT_MANAGER",
+        author_name="Marcus Reed (Senior Delivery PM)",
+        text=f"📢 **Governance Query [{query_item.query_id} - {payload.topic}]:** {payload.text} *(Addressed to: {payload.addressed_to})*",
+        timestamp=now_str
+    )
+    wf.pm_review.triparty_messages.append(tri_msg)
+    
+    session.messages.append(ChatMessage(
+        sender="manager",
+        persona="PROJECT_MANAGER",
+        persona_badge="👔 Delivery PM (Marcus Reed)",
+        content=f"📢 **Delivery Lead Query [{query_item.query_id}]:** {payload.text}",
+        timestamp="Just now"
+    ))
+
+    return {
+        "status": "success",
+        "session_id": session.session_id,
+        "workflow": wf.model_dump(),
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
+class PMResponsePayload(BaseModel):
+    session_id: str
+    persona: str  # "CLIENT" | "SOLUTIONS_ARCHITECT" | "PROJECT_MANAGER"
+    response: str
+    query_id: Optional[str] = None
+
+@app.post("/api/workflow/pm-review/respond")
+def pm_respond_endpoint(payload: PMResponsePayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    wf = session.workflow
+    now_str = datetime.now().isoformat()
+    
+    name_map = {
+        "CLIENT": "Elena Vance (Client Business Lead)",
+        "SOLUTIONS_ARCHITECT": "Alex Morgan (Principal Architect)",
+        "PROJECT_MANAGER": "Marcus Reed (Delivery PM)"
+    }
+    
+    tri_msg = TripartyMessage(
+        message_id=str(uuid.uuid4())[:8],
+        persona=payload.persona,
+        author_name=name_map.get(payload.persona, "Team Member"),
+        text=payload.response,
+        timestamp=now_str,
+        related_query_id=payload.query_id
+    )
+    wf.pm_review.triparty_messages.append(tri_msg)
+    
+    return {
+        "status": "success",
+        "session_id": session.session_id,
+        "workflow": wf.model_dump()
+    }
+
+class PMApprovePayload(BaseModel):
+    session_id: str
+    notes: Optional[str] = "Final PM Approval confirmed."
+
+@app.post("/api/workflow/pm-review/approve")
+def pm_approve_endpoint(payload: PMApprovePayload):
+    session = get_or_create_session(payload.session_id)
+    if not hasattr(session, "workflow") or not session.workflow:
+        session.workflow = WorkflowState()
+        
+    wf = session.workflow
+    now_str = datetime.now().isoformat()
+    
+    wf.pm_review.status = "APPROVED"
+    wf.stage = "FINAL_APPROVED"
+    wf.current_stage = "FINAL_APPROVED"
+    
+    # Mark all queries resolved
+    for q in wf.pm_review.queries:
+        q.is_resolved = True
+        
+    session.messages.append(ChatMessage(
+        sender="manager",
+        persona="PROJECT_MANAGER",
+        persona_badge="👔 Senior Delivery PM (Marcus Reed)",
+        content="🏆 **Final PM Governance Sign-Off Granted:** Marcus Reed has officially verified 12-discipline resource loading, budget limits (@ $30/hr), and statutory milestones. Deliverables released for distribution!",
+        timestamp="Just now"
+    ))
+
+    return {
+        "status": "success",
+        "session_id": session.session_id,
+        "workflow": wf.model_dump(),
+        "messages": [m.model_dump() for m in session.messages]
+    }
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=8088, reload=True)
+    from run_multi_port import start_all_persona_servers
+    start_all_persona_servers()

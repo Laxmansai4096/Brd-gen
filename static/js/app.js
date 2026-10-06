@@ -1,5 +1,36 @@
 let currentSessionId = localStorage.getItem("brd_session_id") || "";
 let currentSessionData = null;
+let activePersona = "CLIENT"; // "CLIENT" | "SOLUTIONS_ARCHITECT" | "PROJECT_MANAGER"
+
+const PERSONA_CONFIG = {
+  CLIENT: {
+    name: "Elena Vance",
+    role: "Client Business Lead",
+    avatar: "EV",
+    class: "client",
+    tag: "🧑‍💼 Client (Elena)",
+    pillId: "pillClient",
+    tip: "Typing as: <strong>Elena Vance (Client Business Lead)</strong>"
+  },
+  SOLUTIONS_ARCHITECT: {
+    name: "Alex Morgan",
+    role: "Principal Solutions Architect",
+    avatar: "AM",
+    class: "architect",
+    tag: "🏗️ Architect (Alex)",
+    pillId: "pillArchitect",
+    tip: "Typing as: <strong>Alex Morgan (Principal Solutions Architect)</strong>"
+  },
+  PROJECT_MANAGER: {
+    name: "Marcus Reed",
+    role: "Senior Delivery PM",
+    avatar: "MR",
+    class: "pm",
+    tag: "👔 PM (Marcus)",
+    pillId: "pillPM",
+    tip: "Typing as: <strong>Marcus Reed (Senior Delivery PM)</strong>"
+  }
+};
 
 let isChatExpanded = false;
 
@@ -20,11 +51,193 @@ function toggleChatExpand() {
   }
 }
 
+// Persona Switcher
+async function switchActivePersona(persona) {
+  if (!PERSONA_CONFIG[persona]) return;
+  activePersona = persona;
+  const cfg = PERSONA_CONFIG[persona];
+  
+  // Update Switcher Pills
+  document.querySelectorAll(".persona-pill").forEach(p => p.classList.remove("active"));
+  const activePill = document.getElementById(cfg.pillId);
+  if (activePill) activePill.classList.add("active");
+  
+  // Update Left Sidebar Profile
+  const avatarEl = document.getElementById("sidebarAvatar");
+  if (avatarEl) avatarEl.innerHTML = `${cfg.avatar}<span class="status-online-dot" title="Active Session"></span>`;
+  const nameEl = document.getElementById("sidebarProfileName");
+  if (nameEl) nameEl.textContent = cfg.name;
+  const roleEl = document.getElementById("sidebarProfileRole");
+  if (roleEl) roleEl.textContent = cfg.role;
+  
+  // Update Chat Header Persona Tag
+  const chatBadge = document.getElementById("chatActivePersonaBadge");
+  if (chatBadge) {
+    chatBadge.className = `msg-persona-tag msg-persona-${cfg.class}`;
+    chatBadge.textContent = cfg.tag;
+  }
+  
+  // Update Chat Input Tip
+  const tipEl = document.getElementById("chatPersonaTip");
+  if (tipEl) tipEl.innerHTML = cfg.tip;
+
+  // Render Persona Hero
+  renderPersonaHero();
+
+  if (persona === "SOLUTIONS_ARCHITECT") {
+    loadArchitectBriefing();
+  }
+
+  // Sync to Backend
+  if (currentSessionId) {
+    try {
+      await fetch("/api/workflow/switch-persona", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: currentSessionId, persona: persona })
+      });
+    } catch (err) {
+      console.warn("Could not sync persona to backend:", err);
+    }
+  }
+}
+
+// Render Persona-Specific Hero Banner
+function renderPersonaHero() {
+  const iconEl = document.getElementById("personaHeroIcon");
+  const tagEl = document.getElementById("personaHeroTag");
+  const titleEl = document.getElementById("personaHeroTitle");
+  const descEl = document.getElementById("personaHeroDesc");
+  const actionsEl = document.getElementById("personaHeroActions");
+  const port = window.location.port || "8088";
+
+  // Apply body mode class
+  document.body.classList.remove("persona-client-mode", "persona-architect-mode", "persona-pm-mode", "persona-admin-mode");
+
+  if (port === "8084" || activePersona === "ADMIN") {
+    document.body.classList.add("persona-admin-mode");
+    if (iconEl) iconEl.innerHTML = "🛡️";
+    if (tagEl) tagEl.textContent = `🛡️ Enterprise Admin Console (Port ${port}) — Governance & Master Config`;
+    if (titleEl) titleEl.textContent = "Global Working Hours, Rate Cards & System Parameters";
+    if (descEl) descEl.textContent = "Manage statutory holiday calendars, blended hourly rate cards, master assumption rules, and multi-cloud AI endpoints.";
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button class="persona-action-btn primary" onclick="openAdminModal()"><span>📅</span> Working Calendars & Rates</button>
+        <button class="persona-action-btn" onclick="openSettingsModal()"><span>☁️</span> Cloud AI Gateway</button>
+        <button class="persona-action-btn" onclick="switchTab('tab-assumptions')"><span>📋</span> Master Assumptions</button>
+      `;
+    }
+  } else if (activePersona === "CLIENT") {
+    document.body.classList.add("persona-client-mode");
+    if (iconEl) iconEl.innerHTML = "🧑‍💼";
+    if (tagEl) tagEl.textContent = `🧑‍💼 Client Portal (Port ${port}) — Elena Vance (Client Business Lead)`;
+    if (titleEl) titleEl.textContent = "Start Your Project & Define Business Requirements";
+    if (descEl) descEl.textContent = "Define business objectives, answer friendly discovery questions, or consult Solutions Architect Alex Morgan for technical decisions.";
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button class="persona-action-btn primary" onclick="switchTab('tab-ideation')"><span>💡</span> 1. Ideation Studio</button>
+        <button class="persona-action-btn" onclick="switchTab('tab-brd')"><span>💬</span> 2. Discovery Chat</button>
+        <button class="persona-action-btn" onclick="switchTab('tab-dual-review')"><span>✍️</span> 3. Client Sign-off</button>
+      `;
+    }
+  } else if (activePersona === "SOLUTIONS_ARCHITECT") {
+    document.body.classList.add("persona-architect-mode");
+    if (iconEl) iconEl.innerHTML = "🏗️";
+    if (tagEl) tagEl.textContent = `🏗️ Solutions Architect Portal (Port ${port}) — Alex Morgan (Principal Architect)`;
+    if (titleEl) titleEl.textContent = "Multi-Cloud Topology, Sizing BoM & Technical Oversight";
+    if (descEl) descEl.textContent = "Architect microservices decomposition (C001-C006), verify cloud infrastructure BoM ($645/mo), and resolve technical delegations from Elena.";
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button class="persona-action-btn primary" onclick="switchTab('tab-components')"><span>🏗️</span> Components C001-C006</button>
+        <button class="persona-action-btn" onclick="switchTab('tab-sizing')"><span>☁️</span> Sizing & BoM ($645/mo)</button>
+        <button class="persona-action-btn" onclick="switchTab('tab-dual-review')"><span>✅</span> Architect Sign-off</button>
+      `;
+    }
+  } else if (activePersona === "PROJECT_MANAGER") {
+    document.body.classList.add("persona-pm-mode");
+    if (iconEl) iconEl.innerHTML = "👔";
+    if (tagEl) tagEl.textContent = `👔 Project Manager Portal (Port ${port}) — Marcus Reed (Senior Delivery PM)`;
+    if (titleEl) titleEl.textContent = "18-Phase WBS, Calendar Feasibility & Final Sign-Off";
+    if (descEl) descEl.textContent = "Review 18-phase timeline, 12-discipline resource loading, statutory holiday impacts, and resolve team queries in Tripartite Discussion.";
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button class="persona-action-btn primary" onclick="switchTab('tab-pm-review')"><span>💬</span> Tripartite Consensus</button>
+        <button class="persona-action-btn" onclick="switchTab('tab-phases')"><span>📊</span> 18-Phase Roadmap</button>
+        <button class="persona-action-btn" onclick="switchTab('tab-daywise')"><span>📅</span> Day-Wise Calendar</button>
+      `;
+    }
+  }
+}
+
+// Multi-Port Persona Auto-Configuration
+function configurePortPersona() {
+  const port = window.location.port || "8088";
+  const badgeEl = document.getElementById("portCurrentBadge");
+  
+  // Highlight current port nav button
+  document.querySelectorAll(".port-nav-btn").forEach(btn => btn.classList.remove("active-current-port"));
+  const currentNav = document.getElementById(`navPort${port}`);
+  if (currentNav) currentNav.classList.add("active-current-port");
+
+  if (port === "8081") {
+    // Client Lead Portal
+    activePersona = "CLIENT";
+    if (badgeEl) {
+      badgeEl.className = "port-badge-indicator client-port";
+      badgeEl.innerHTML = `<span class="port-pulse-dot"></span> 🧑‍💼 Port 8081: Client Interface (Elena Vance - Client Lead)`;
+    }
+    document.title = "🧑‍💼 Client Portal (Port 8081) | Elena Vance";
+    switchActivePersona("CLIENT");
+    switchTab("tab-ideation");
+  } else if (port === "8082") {
+    // Solutions Architect Portal
+    activePersona = "SOLUTIONS_ARCHITECT";
+    if (badgeEl) {
+      badgeEl.className = "port-badge-indicator architect-port";
+      badgeEl.innerHTML = `<span class="port-pulse-dot"></span> 🏗️ Port 8082: Solutions Architect Interface (Alex Morgan)`;
+    }
+    document.title = "🏗️ Solutions Architect Portal (Port 8082) | Alex Morgan";
+    switchActivePersona("SOLUTIONS_ARCHITECT");
+    switchTab("tab-dual-review");
+  } else if (port === "8083") {
+    // Project Manager Portal
+    activePersona = "PROJECT_MANAGER";
+    if (badgeEl) {
+      badgeEl.className = "port-badge-indicator pm-port";
+      badgeEl.innerHTML = `<span class="port-pulse-dot"></span> 👔 Port 8083: Project Manager Interface (Marcus Reed)`;
+    }
+    document.title = "👔 Project Manager Portal (Port 8083) | Marcus Reed";
+    switchActivePersona("PROJECT_MANAGER");
+    switchTab("tab-pm-review");
+  } else if (port === "8084") {
+    // Admin & Governance Console
+    activePersona = "ADMIN";
+    if (badgeEl) {
+      badgeEl.className = "port-badge-indicator admin-port";
+      badgeEl.innerHTML = `<span class="port-pulse-dot"></span> 🛡️ Port 8084: Enterprise Admin & Governance Console`;
+    }
+    document.title = "🛡️ Admin & Governance Console (Port 8084)";
+    renderPersonaHero();
+    setTimeout(() => {
+      openAdminModal();
+    }, 450);
+  } else {
+    // Unified Gateway (8088 or others)
+    if (badgeEl) {
+      badgeEl.className = "port-badge-indicator";
+      badgeEl.innerHTML = `<span class="port-pulse-dot"></span> 🌐 Port ${port}: Unified Team Collaboration Gateway`;
+    }
+    document.title = `🌐 Unified AI BRD Platform (Port ${port})`;
+    renderPersonaHero();
+  }
+}
+
 // Initialize app on load
 document.addEventListener("DOMContentLoaded", async () => {
   await loadSettings();
   await initSession();
   await loadProjectHistory();
+  configurePortPersona();
 });
 
 // Load Settings from Server
@@ -90,8 +303,13 @@ async function initSession() {
       currentSessionId = currentSessionData.session_id;
       localStorage.setItem("brd_session_id", currentSessionId);
       
+      if (currentSessionData.workflow && currentSessionData.workflow.active_persona) {
+        activePersona = currentSessionData.workflow.active_persona;
+      }
+
       renderChatMessages();
       updateProgressCounter();
+      updateWorkflowUI(currentSessionData);
       
       if (currentSessionData.brd) {
         renderBRDWorkbench(currentSessionData.brd);
@@ -125,7 +343,8 @@ function renderChatMessages() {
   
   msgs.forEach((m) => {
     const msgDiv = document.createElement("div");
-    msgDiv.className = `chat-msg ${m.sender}`;
+    const sender = m.sender || "agent";
+    msgDiv.className = `chat-msg ${sender}`;
     
     let formattedText = m.content
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -133,9 +352,30 @@ function renderChatMessages() {
       .replace(/`([^`]+)`/g, "<code>$1</code>")
       .replace(/\n\n/g, "</p><p>")
       .replace(/\n/g, "<br>");
+
+    let personaHeader = "";
+    if (m.persona_name || m.persona) {
+      const pRole = m.persona_role || (m.persona === "SOLUTIONS_ARCHITECT" ? "Principal Architect" : m.persona === "PROJECT_MANAGER" ? "Senior Delivery PM" : "Client Business Lead");
+      const pCls = (m.persona === "SOLUTIONS_ARCHITECT" ? "architect" : (m.persona === "PROJECT_MANAGER" ? "pm" : "client"));
+      const pTag = (m.persona === "SOLUTIONS_ARCHITECT" ? "🏗️ Architect (Alex)" : (m.persona === "PROJECT_MANAGER" ? "👔 PM (Marcus)" : "🧑‍💼 Client (Elena)"));
+      personaHeader = `
+        <div class="msg-author-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 0.74rem;">
+          <span class="msg-persona-tag msg-persona-${pCls}">${escapeHtml(m.persona_name ? `${pTag} — ${m.persona_name}` : pTag)}</span>
+          <span style="color: #94a3b8; font-size: 0.68rem;">${m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+        </div>
+      `;
+    } else if (sender === "agent") {
+      personaHeader = `
+        <div class="msg-author-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 0.74rem;">
+          <span class="msg-persona-tag msg-persona-agent">🤖 BRD Discovery Agent</span>
+          <span style="color: #94a3b8; font-size: 0.68rem;">${m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+        </div>
+      `;
+    }
       
     let innerHTML = `
       <div class="msg-content">
+        ${personaHeader}
         <p>${formattedText}</p>
       </div>
     `;
@@ -148,25 +388,28 @@ function renderChatMessages() {
 }
 
 function renderQuickSuggestions() {
-  const dropdownSelect = document.getElementById("chatDropdownSelect");
-  const customWrapper = document.getElementById("customInputWrapper");
   const customInput = document.getElementById("chatCustomInput");
-  
-  if (!dropdownSelect) return;
+  const quickTray = document.getElementById("quickOptionsTray");
   
   const curQ = currentSessionData ? currentSessionData.current_question : null;
   if (!curQ) {
-    dropdownSelect.style.display = "none";
-    if (customWrapper) customWrapper.style.display = "none";
+    if (quickTray) quickTray.style.display = "none";
+    if (customInput) {
+      customInput.placeholder = "Discovery completed. Type any message, refinement, or feedback...";
+      customInput.value = "";
+    }
     return;
   }
   
-  // Reset visibility
-  dropdownSelect.style.display = "block";
-  if (customWrapper) customWrapper.style.display = "none";
-  if (customInput) customInput.value = "";
+  if (customInput) {
+    customInput.placeholder = `Type custom answer for ${curQ.title} (or click an option above)...`;
+    customInput.value = "";
+  }
   
-  dropdownSelect.innerHTML = "";
+  if (!quickTray) return;
+  
+  quickTray.innerHTML = "";
+  quickTray.style.display = "flex";
   
   let optionsList = [];
   
@@ -191,64 +434,70 @@ function renderQuickSuggestions() {
   }
   
   if (optionsList.length > 0) {
-    optionsList.forEach((opt) => {
-      const op = document.createElement("option");
-      op.value = opt.value;
-      const desc = opt.description ? ` — ${opt.description}` : '';
-      op.textContent = `${opt.label}${desc}`;
-      if (opt.value === curQ.default_value) {
-        op.selected = true;
-      }
-      dropdownSelect.appendChild(op);
+    optionsList.forEach((opt, idx) => {
+      const fullText = opt.description ? `${opt.label} — ${opt.description}` : opt.label;
+      const isDefault = (opt.value === curQ.default_value) || (fullText === curQ.default_value) || (opt.label === curQ.default_value) || (idx === 0 && !curQ.default_value);
+
+      const chip = document.createElement("div");
+      chip.className = `quick-option-chip ${isDefault ? 'active' : ''}`;
+      chip.title = "Click to select, Double-click or ⚡ to submit immediately";
+      chip.innerHTML = `
+        <span class="chip-label">${escapeHtml(opt.label)}</span>
+        <button class="chip-instant-btn" title="Submit instantly" onclick="event.stopPropagation(); sendMessageWithText(${JSON.stringify(fullText)})">⚡</button>
+      `;
+      
+      // Single click: put in custom input and highlight
+      chip.onclick = () => {
+        document.querySelectorAll('.quick-option-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        if (customInput) {
+          customInput.value = fullText;
+          customInput.focus();
+        }
+      };
+      
+      // Double click: immediately submit
+      chip.ondblclick = (e) => {
+        e.preventDefault();
+        sendMessageWithText(fullText);
+      };
+      
+      quickTray.appendChild(chip);
     });
-  } else {
-    // If no explicit options, add the default value as an option
-    const defOp = document.createElement("option");
-    defOp.value = curQ.default_value || "";
-    defOp.textContent = `${curQ.default_value || "Recommended Default"} (Default)`;
-    defOp.selected = true;
-    dropdownSelect.appendChild(defOp);
+  } else if (curQ.default_value) {
+    const chip = document.createElement("div");
+    chip.className = "quick-option-chip active";
+    chip.title = "Click to select, Double-click or ⚡ to submit immediately";
+    chip.innerHTML = `
+      <span class="chip-label">${escapeHtml(curQ.default_value)} (Recommended)</span>
+      <button class="chip-instant-btn" title="Submit instantly" onclick="event.stopPropagation(); sendMessageWithText(${JSON.stringify(curQ.default_value)})">⚡</button>
+    `;
+    chip.onclick = () => {
+      if (customInput) {
+        customInput.value = curQ.default_value;
+        customInput.focus();
+      }
+    };
+    chip.ondblclick = () => sendMessageWithText(curQ.default_value);
+    quickTray.appendChild(chip);
   }
-  
-  // ALWAYS ADD THE FINAL OPTION: Custom Input (Anti-Gravity / User custom answer)
-  const customOp = document.createElement("option");
-  customOp.value = "__CUSTOM__";
-  customOp.textContent = `✏️ Custom Input (Type your own answer / anti gravity)...`;
-  customOp.style.color = "var(--primary)";
-  customOp.style.fontWeight = "600";
-  dropdownSelect.appendChild(customOp);
-  
-  dropdownSelect.focus();
-}
 
-function handleDropdownChange() {
-  const dropdownSelect = document.getElementById("chatDropdownSelect");
-  const customWrapper = document.getElementById("customInputWrapper");
-  const customInput = document.getElementById("chatCustomInput");
-  
-  if (!dropdownSelect) return;
-  
-  if (dropdownSelect.value === "__CUSTOM__") {
-    dropdownSelect.style.display = "none";
-    if (customWrapper) customWrapper.style.display = "flex";
-    if (customInput) {
-      const curQ = currentSessionData ? currentSessionData.current_question : null;
-      customInput.placeholder = curQ ? `Type custom answer for ${curQ.title}...` : "Type your custom answer...";
-      customInput.value = "";
-      customInput.focus();
-    }
-  }
-}
-
-function cancelCustomInput() {
-  const dropdownSelect = document.getElementById("chatDropdownSelect");
-  const customWrapper = document.getElementById("customInputWrapper");
-  
-  if (customWrapper) customWrapper.style.display = "none";
-  if (dropdownSelect) {
-    dropdownSelect.style.display = "block";
-    dropdownSelect.selectedIndex = 0;
-    dropdownSelect.focus();
+  // Add Direct "Ask Solutions Architect" Delegation Button for Client Persona
+  if (curQ && activePersona === "CLIENT") {
+    const delegateBtn = document.createElement("div");
+    delegateBtn.className = "quick-option-chip";
+    delegateBtn.style.background = "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)";
+    delegateBtn.style.color = "#ffffff";
+    delegateBtn.style.borderColor = "#60a5fa";
+    delegateBtn.style.fontWeight = "700";
+    delegateBtn.style.boxShadow = "0 2px 8px rgba(59, 130, 246, 0.35)";
+    delegateBtn.title = "Ask Solutions Architect Alex Morgan to analyze this and provide technical recommendations";
+    delegateBtn.innerHTML = `
+      <span class="chip-label" style="color: #ffffff;">🏗️ Ask Solutions Architect (Alex)</span>
+      <button class="chip-instant-btn" style="background: rgba(255,255,255,0.2); color: #ffffff;" title="Delegate instantly to Architect" onclick="event.stopPropagation(); delegateCurrentQuestionToArchitect()">➔</button>
+    `;
+    delegateBtn.onclick = () => delegateCurrentQuestionToArchitect();
+    quickTray.appendChild(delegateBtn);
   }
 }
 
@@ -262,43 +511,37 @@ function handleCustomInputKeyDown(e) {
 function updateProgressCounter() {
   const el = document.getElementById("progressCounter");
   if (!el || !currentSessionData) return;
-  const cur = (currentSessionData.current_question_index || 0) + 1;
-  const total = currentSessionData.total_questions || 22;
-  el.textContent = cur <= total ? `Question ${cur} of ${total}` : `Discovery Complete (${total}/${total})`;
-}
+  
+  const dossier = (currentSessionData.confidence && currentSessionData.confidence.summary_dossier) || {};
+  const confirmed = dossier.confirmed_domains_count !== undefined 
+    ? (dossier.confirmed_domains_count + (dossier.escalated_domains_count || 0))
+    : Object.keys(currentSessionData.answers || {}).length;
+  const total = dossier.total_domains || 32;
+  const completionRate = dossier.completion_rate !== undefined 
+    ? dossier.completion_rate 
+    : Math.min(100, Math.round((confirmed / total) * 100));
+  const isGatePassed = dossier.is_gate_passed || (currentSessionData.confidence && currentSessionData.confidence.is_ready_for_brd) || completionRate >= 95.0;
 
-function handleDropdownKeyDown(e) {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    sendUserMessage();
+  if (isGatePassed || currentSessionData.has_brd) {
+    el.className = "progress-counter gate-passed";
+    el.innerHTML = `<span>🎯</span> <strong>Gate Passed (95%+ Ready)</strong> — ${confirmed}/${total} Domains (${completionRate}%)`;
+  } else {
+    el.className = "progress-counter";
+    el.innerHTML = `<span>📊</span> <strong>Domain Coverage:</strong> ${confirmed} / ${total} (${completionRate}%) <span class="gate-target-pill">Gate: 95%</span>`;
   }
 }
 
 function sendUserMessage() {
-  const dropdownSelect = document.getElementById("chatDropdownSelect");
-  const customWrapper = document.getElementById("customInputWrapper");
   const customInput = document.getElementById("chatCustomInput");
   
   let answer = "";
-  
-  if (customWrapper && customWrapper.style.display !== "none") {
+  if (customInput) {
     answer = customInput.value.trim();
-    if (!answer && currentSessionData && currentSessionData.current_question) {
-      answer = currentSessionData.current_question.default_value;
-    }
-  } else if (dropdownSelect && dropdownSelect.style.display !== "none") {
-    if (dropdownSelect.value === "__CUSTOM__") {
-      answer = customInput ? customInput.value.trim() : "";
-      if (!answer && currentSessionData && currentSessionData.current_question) {
-        answer = currentSessionData.current_question.default_value;
-      }
-    } else {
-      answer = dropdownSelect.value;
-    }
   }
   
   if (!answer && currentSessionData && currentSessionData.current_question) {
-    answer = currentSessionData.current_question.default_value;
+    const curQ = currentSessionData.current_question;
+    answer = curQ.default_value || (curQ.options && curQ.options.length > 0 ? (curQ.options[0].description ? `${curQ.options[0].label} — ${curQ.options[0].description}` : curQ.options[0].label) : "");
   }
   
   if (!answer) return;
@@ -307,16 +550,47 @@ function sendUserMessage() {
   sendMessageWithText(answer);
 }
 
-async function sendMessageWithText(text) {
+async function sendMessageWithText(text, displayText) {
   if (!text) return;
+  
+  // Resolve display text if not provided
+  if (!displayText) {
+    displayText = text;
+    if (currentSessionData && currentSessionData.current_question && currentSessionData.current_question.options) {
+      const match = currentSessionData.current_question.options.find(o => o.value === text);
+      if (match) {
+        const desc = match.description ? ` — ${match.description}` : '';
+        displayText = `${match.label}${desc}`;
+      }
+    }
+  }
+
   try {
+    // Add optimistic user message to chat immediately with full display text
+    const container = document.getElementById("chatHistory");
+    const cfg = PERSONA_CONFIG[activePersona] || PERSONA_CONFIG.CLIENT;
+    if (container) {
+      const userDiv = document.createElement("div");
+      userDiv.className = "chat-msg user";
+      const pHeader = `
+        <div class="msg-author-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 0.74rem;">
+          <span class="msg-persona-tag msg-persona-${cfg.class}">${escapeHtml(cfg.tag + " — " + cfg.name)}</span>
+          <span style="color: #94a3b8; font-size: 0.68rem;">Just now</span>
+        </div>
+      `;
+      userDiv.innerHTML = `<div class="msg-content">${pHeader}<p>${escapeHtml(displayText)}</p></div>`;
+      container.appendChild(userDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         session_id: currentSessionId,
-        message: text,
-        selected_option: text
+        message: displayText || text,
+        selected_option: text,
+        persona: activePersona
       })
     });
     
@@ -324,6 +598,7 @@ async function sendMessageWithText(text) {
       currentSessionData = await res.json();
       renderChatMessages();
       updateProgressCounter();
+      updateWorkflowUI(currentSessionData);
       
       if (currentSessionData.brd) {
         renderBRDWorkbench(currentSessionData.brd);
@@ -398,18 +673,94 @@ function renderBRDWorkbench(brd) {
   // Tab 1: BRD Document
   document.getElementById("brdTitle").textContent = `${brd.client_name} — ${brd.project_title}`;
   document.getElementById("brdBadgeTier").textContent = `${brd.delivery_tier.toUpperCase()} TIER (${brd.tier_kind})`;
-  document.getElementById("brdExecSummary").textContent = brd.executive_summary;
-  document.getElementById("brdProblemText").textContent = brd.problem_statement;
-  document.getElementById("brdSixSentences").textContent = brd.solution_summary_six_sentences;
+  
+  // Executive Summary - point by point formatted rendering
+  const execSummaryEl = document.getElementById("brdExecSummary");
+  if (execSummaryEl) {
+    if (brd.executive_summary) {
+      const summarySentences = brd.executive_summary
+        .split(/(?<=[.!?])\s+(?=[A-Z0-9*])/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+      
+      if (summarySentences.length > 1) {
+        execSummaryEl.innerHTML = `<ul style="padding-left: 20px; font-size: 0.90rem; color: var(--text-main); line-height: 1.8; margin: 0; display: flex; flex-direction: column; gap: 6px;">` +
+          summarySentences.map(s => `<li>${s.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--text-heading);">$1</strong>')}</li>`).join("") +
+          `</ul>`;
+      } else {
+        execSummaryEl.innerHTML = brd.executive_summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      }
+    } else {
+      execSummaryEl.textContent = "Complete the discovery interview to synthesize the full executive BRD.";
+    }
+  }
+
+  // Business Problem
+  const problemEl = document.getElementById("brdProblemText");
+  if (problemEl) {
+    if (brd.problem_statement) {
+      problemEl.innerHTML = `<div style="background: rgba(56, 189, 248, 0.05); border-left: 4px solid var(--primary); padding: 10px 14px; border-radius: 4px; font-weight: 500; color: var(--text-heading); margin-bottom: 12px;">${brd.problem_statement.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`;
+    } else {
+      problemEl.innerHTML = "";
+    }
+  }
+
+  // Solution Narrative - Six Sentences Point-by-Point Cards
+  const sixSentencesEl = document.getElementById("brdSixSentences");
+  if (sixSentencesEl) {
+    if (brd.solution_summary_six_sentences) {
+      const sentences = brd.solution_summary_six_sentences
+        .split(/(?<=[.!?])\s+(?=[A-Z0-9*])/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      const sentenceLabels = [
+        "1. Architectural Baseline & Cloud Foundation",
+        "2. Ingestion & Multi-Source Knowledge Capture",
+        "3. Semantic Retrieval & Grounding Engine",
+        "4. Generative AI Reasoning & Policy Execution",
+        "5. Structured Persistence & Automated Handoff",
+        "6. Evaluation Harness & Continuous Quality Gates"
+      ];
+
+      if (sentences.length > 1) {
+        sixSentencesEl.innerHTML = `<div style="display: flex; flex-direction: column; gap: 10px;">` +
+          sentences.map((sent, idx) => {
+            const label = sentenceLabels[idx] || `Step ${idx + 1}`;
+            return `
+              <div style="background: #ffffff; border: 1px solid var(--border-color); border-left: 4px solid var(--primary); border-radius: 6px; padding: 10px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  ${label}
+                </div>
+                <div style="font-size: 0.88rem; color: var(--text-main); line-height: 1.55;">
+                  ${sent.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--text-heading);">$1</strong>')}
+                </div>
+              </div>
+            `;
+          }).join("") +
+          `</div>`;
+      } else {
+        sixSentencesEl.innerHTML = brd.solution_summary_six_sentences.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      }
+    } else {
+      sixSentencesEl.textContent = "";
+    }
+  }
   
   const impactsList = document.getElementById("brdImpactsList");
-  impactsList.innerHTML = (brd.business_impacts || []).map(imp => `<li>${imp}</li>`).join("");
+  impactsList.innerHTML = (brd.business_impacts || []).map(imp => {
+    // Highlight label if it has a colon
+    const formatted = imp.includes(":") 
+      ? `<strong>${imp.split(":")[0]}:</strong> ${imp.substring(imp.indexOf(":") + 1)}`
+      : imp;
+    return `<li style="margin-bottom: 4px;">${formatted}</li>`;
+  }).join("");
   
   const inScopeList = document.getElementById("brdInScopeList");
-  inScopeList.innerHTML = (brd.in_scope || []).map(s => `<li>${s}</li>`).join("");
+  inScopeList.innerHTML = (brd.in_scope || []).map(s => `<li style="margin-bottom: 6px;">${s}</li>`).join("");
   
   const outScopeList = document.getElementById("brdOutScopeList");
-  outScopeList.innerHTML = (brd.out_of_scope || []).map(s => `<li>${s}</li>`).join("");
+  outScopeList.innerHTML = (brd.out_of_scope || []).map(s => `<li style="margin-bottom: 6px;">${s}</li>`).join("");
   
   document.getElementById("brdDataFlow").textContent = brd.data_flow_narrative;
 
@@ -2624,4 +2975,605 @@ function filterProjectFolders(query) {
     (p.cloud_platform && p.cloud_platform.toLowerCase().includes(q))
   );
   renderProjectFolders(filtered);
+}
+
+// ==========================================
+// 3-PERSONA COLLABORATIVE WORKFLOW LOGIC
+// ==========================================
+
+function updateWorkflowUI(data) {
+  if (!data) return;
+  const wf = data.workflow || {
+    current_stage: "DISCOVERY",
+    active_persona: "CLIENT",
+    client_review: { status: "PENDING", feedback: "" },
+    architect_review: { status: "PENDING", feedback: "" },
+    pm_review: { status: "PENDING", queries: [], triparty_messages: [] },
+    review_iteration: 0
+  };
+
+  const conf = data.confidence || {
+    score: 10,
+    is_ready_for_brd: false,
+    dimensions: {},
+    summary: "Discovery initial phase."
+  };
+
+  // 1. Confidence Gauge Update
+  const score = Math.min(100, Math.max(0, Math.round(conf.score || 0)));
+  const fillEl = document.getElementById("confidenceFill");
+  const scoreText = document.getElementById("confidenceScoreText");
+  const threshTag = document.getElementById("confidenceThresholdTag");
+
+  if (fillEl) {
+    fillEl.style.width = `${score}%`;
+    if (score >= 98) {
+      fillEl.style.background = "linear-gradient(90deg, #10b981 0%, #059669 100%)";
+    } else if (score >= 60) {
+      fillEl.style.background = "linear-gradient(90deg, #38bdf8 0%, #2563eb 100%)";
+    } else {
+      fillEl.style.background = "linear-gradient(90deg, #f59e0b 0%, #d97706 100%)";
+    }
+  }
+  if (scoreText) scoreText.textContent = `${score}%`;
+  if (threshTag) {
+    if (score >= 98) {
+      threshTag.textContent = "✓ 98% Reached (BRD Ready)";
+      threshTag.style.background = "rgba(16, 185, 129, 0.15)";
+      threshTag.style.color = "#10b981";
+      threshTag.style.borderColor = "rgba(16, 185, 129, 0.3)";
+    } else {
+      threshTag.textContent = "98% Goal";
+      threshTag.style.background = "rgba(56, 189, 248, 0.15)";
+      threshTag.style.color = "#0284c7";
+      threshTag.style.borderColor = "rgba(56, 189, 248, 0.3)";
+    }
+  }
+
+  // 2. Stepper Stage Highlight
+  const stages = [
+    { key: "IDEATION", id: "stepIdeation" },
+    { key: "DISCOVERY", id: "stepDiscovery" },
+    { key: "DUAL_REVIEW", id: "stepDualReview" },
+    { key: "PM_REVIEW", id: "stepPMReview" },
+    { key: "FINAL_APPROVED", id: "stepFinalBRD" }
+  ];
+  
+  const curStage = wf.current_stage || "DISCOVERY";
+  let curIndex = stages.findIndex(s => s.key === curStage);
+  if (curIndex === -1) curIndex = 1;
+
+  stages.forEach((s, idx) => {
+    const el = document.getElementById(s.id);
+    if (!el) return;
+    el.classList.remove("active", "completed");
+    if (idx === curIndex) {
+      el.classList.add("active");
+    } else if (idx < curIndex) {
+      el.classList.add("completed");
+    }
+  });
+
+  // 3. Stage 3 Dual Review Updates
+  const dualIterBadge = document.getElementById("dualReviewIterBadge");
+  if (dualIterBadge) dualIterBadge.textContent = `Iteration #${wf.review_iteration || 0}`;
+
+  const cRev = wf.client_review || {};
+  const aRev = wf.architect_review || {};
+
+  const cBadge = document.getElementById("clientReviewStatusBadge");
+  if (cBadge) {
+    cBadge.textContent = cRev.status || "PENDING REVIEW";
+    cBadge.className = `badge ${cRev.status === "APPROVED" ? "badge-success" : cRev.status === "CHANGES_REQUESTED" ? "badge-danger" : "badge-info"}`;
+  }
+
+  const aBadge = document.getElementById("architectReviewStatusBadge");
+  if (aBadge) {
+    aBadge.textContent = aRev.status || "PENDING REVIEW";
+    aBadge.className = `badge ${aRev.status === "APPROVED" ? "badge-success" : aRev.status === "CHANGES_REQUESTED" ? "badge-danger" : "badge-info"}`;
+  }
+
+  // Dual review checklists sync from BRD
+  if (data.brd) {
+    const b = data.brd;
+    const cProb = document.getElementById("clientReviewProblemStatus");
+    if (cProb) cProb.textContent = b.problem_statement ? "✓ In Scope" : "Pending";
+    const cDur = document.getElementById("clientReviewDurationStatus");
+    if (cDur) cDur.textContent = `${b.total_duration_weeks.toFixed(1)} Weeks (${b.delivery_tier})`;
+    
+    const aCloud = document.getElementById("archReviewCloudStatus");
+    if (aCloud) aCloud.textContent = `${b.cloud_platform} (${b.primary_model || "Foundation AI"})`;
+    const aComp = document.getElementById("archReviewComponentsStatus");
+    if (aComp) aComp.textContent = `${b.architectural_components ? b.architectural_components.length : 6} Decomposed Microservices`;
+    const aBom = document.getElementById("archReviewBomStatus");
+    if (aBom) aBom.textContent = `${b.currency_symbol || "$"}${Math.round((b.sizing_metrics.total_monthly_cloud_cost_usd || 645) * (b.currency_exchange_rate || 1)).toLocaleString()} / month`;
+  }
+
+  // 4. Stage 4 PM Governance & Consensus Updates
+  const pmRev = wf.pm_review || {};
+  const pmGate = document.getElementById("pmGateStatus");
+  if (pmGate) {
+    pmGate.textContent = pmRev.status || "REVIEW PENDING";
+    pmGate.style.color = pmRev.status === "APPROVED" ? "var(--success)" : pmRev.status === "CHANGES_REQUESTED" ? "var(--danger)" : "#d97706";
+  }
+
+  if (data.brd) {
+    const b = data.brd;
+    const rate = b.currency_exchange_rate || 1.0;
+    const sym = b.currency_symbol || "$";
+    const convertedCost = b.total_labour_cost_converted || (b.total_labour_cost_usd * rate);
+    
+    const pmCost = document.getElementById("pmMetricCost");
+    if (pmCost) pmCost.textContent = `${sym}${Math.round(convertedCost).toLocaleString()}`;
+    const pmDays = document.getElementById("pmMetricDays");
+    if (pmDays) pmDays.textContent = `${b.total_person_days.toFixed(1)} d`;
+    const pmDur = document.getElementById("pmMetricDuration");
+    if (pmDur) pmDur.textContent = `${b.total_duration_weeks.toFixed(1)} Weeks`;
+  }
+
+  // Render Tripartite stream
+  const tripartyContainer = document.getElementById("tripartyMessagesStream");
+  if (tripartyContainer && pmRev.triparty_messages) {
+    tripartyContainer.innerHTML = "";
+    if (pmRev.triparty_messages.length === 0) {
+      tripartyContainer.innerHTML = `
+        <div style="text-align: center; color: #94a3b8; font-size: 0.82rem; padding: 24px;">
+          🤝 Tripartite consensus room is ready. Delivery PM Marcus Reed, Client Elena Vance, and Architect Alex Morgan can negotiate deliverables, staffing, and risk mitigations here.
+        </div>
+      `;
+    } else {
+      pmRev.triparty_messages.forEach(msg => {
+        const msgEl = document.createElement("div");
+        const pCls = msg.persona === "SOLUTIONS_ARCHITECT" ? "architect" : msg.persona === "PROJECT_MANAGER" ? "pm" : "client";
+        const pTag = msg.persona === "SOLUTIONS_ARCHITECT" ? "🏗️ Architect" : msg.persona === "PROJECT_MANAGER" ? "👔 PM" : "🧑‍💼 Client";
+        
+        msgEl.className = `triparty-msg ${pCls}`;
+        msgEl.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span class="msg-persona-tag msg-persona-${pCls}">${escapeHtml(pTag + " (" + msg.author_name + ")")}</span>
+            <span style="font-size: 0.68rem; color: #94a3b8;">${msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+          </div>
+          <div style="font-size: 0.84rem; color: #1e293b; line-height: 1.5;">${escapeHtml(msg.text)}</div>
+        `;
+        tripartyContainer.appendChild(msgEl);
+      });
+      tripartyContainer.scrollTop = tripartyContainer.scrollHeight;
+    }
+  }
+
+  // 5. Stage 5 Signatures & Certificate Updates
+  if (data.brd) {
+    const certTitle = document.getElementById("certProjectTitle");
+    if (certTitle) certTitle.textContent = `${data.brd.client_name} — ${data.brd.project_title}`;
+  }
+
+  const certClientTime = document.getElementById("certClientTimestamp");
+  if (certClientTime) {
+    certClientTime.textContent = cRev.approved_at ? `✓ Approved on ${new Date(cRev.approved_at).toLocaleDateString()}` : "Pending Approval";
+    certClientTime.style.color = cRev.approved_at ? "#86efac" : "#fca5a5";
+  }
+
+  const certArchTime = document.getElementById("certArchitectTimestamp");
+  if (certArchTime) {
+    certArchTime.textContent = aRev.approved_at ? `✓ Approved on ${new Date(aRev.approved_at).toLocaleDateString()}` : "Pending Approval";
+    certArchTime.style.color = aRev.approved_at ? "#86efac" : "#fca5a5";
+  }
+
+  const certPMTime = document.getElementById("certPMTimestamp");
+  if (certPMTime) {
+    certPMTime.textContent = pmRev.approved_at ? `✓ Sealed on ${new Date(pmRev.approved_at).toLocaleDateString()}` : "Pending Governance Sign-Off";
+    certPMTime.style.color = pmRev.approved_at ? "#86efac" : "#fca5a5";
+  }
+}
+
+// Stage 1: Idea Template Selection
+function selectIdeaTemplate(el, title, idea, tier) {
+  document.querySelectorAll(".idea-template-card").forEach(c => c.classList.remove("selected"));
+  if (el) el.classList.add("selected");
+
+  const titleInput = document.getElementById("ideationProjectTitle");
+  if (titleInput) titleInput.value = title;
+  const ideaInput = document.getElementById("ideationClientIdea");
+  if (ideaInput) ideaInput.value = idea;
+  const tierSelect = document.getElementById("ideationTargetTier");
+  if (tierSelect) {
+    for (let opt of tierSelect.options) {
+      if (opt.value === tier || opt.text.includes(tier)) {
+        tierSelect.value = opt.value;
+        break;
+      }
+    }
+  }
+  updateIdeationArchitectPreview();
+}
+
+function updateIdeationArchitectPreview() {
+  const tier = document.getElementById("ideationTargetTier") ? document.getElementById("ideationTargetTier").value : "PoC";
+  const cloud = document.getElementById("ideationCloudSelect") ? document.getElementById("ideationCloudSelect").value : "Microsoft Azure";
+  const adviceEl = document.getElementById("ideationArchitectAdviceText");
+  const badgeEl = document.getElementById("ideationFeasibilityBadge");
+
+  if (adviceEl) {
+    adviceEl.innerHTML = `
+      • <strong>Selected Hyperscaler:</strong> ${escapeHtml(cloud)} with tailored native AI pipelines.<br>
+      • <strong>Target Tier & WBS:</strong> ${escapeHtml(tier)} sizing configured with 12 engineering disciplines.<br>
+      • <strong>Microservices Decomposition:</strong> 6 decoupled components with bounding-box coordinate lineage.<br>
+      • <strong>Security Architecture:</strong> Enhanced zero-trust envelope with RBAC & CMEK encryption.
+    `;
+  }
+  if (badgeEl) badgeEl.textContent = "96% High Feasibility";
+}
+
+async function commitIdeationAndStartDiscovery() {
+  const title = document.getElementById("ideationProjectTitle") ? document.getElementById("ideationProjectTitle").value.trim() : "Custom AI Solution";
+  const idea = document.getElementById("ideationClientIdea") ? document.getElementById("ideationClientIdea").value.trim() : "";
+  const tier = document.getElementById("ideationTargetTier") ? document.getElementById("ideationTargetTier").value : "PoC";
+  const cloud = document.getElementById("ideationCloudSelect") ? document.getElementById("ideationCloudSelect").value : "Microsoft Azure";
+
+  try {
+    const res = await fetch("/api/workflow/ideate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        project_title: title,
+        client_idea: idea,
+        target_tier: tier,
+        cloud_preference: cloud
+      })
+    });
+
+    if (res.ok) {
+      currentSessionData = await res.json();
+      renderChatMessages();
+      updateProgressCounter();
+      updateWorkflowUI(currentSessionData);
+      switchTab("tab-brd");
+      
+      const chatInput = document.getElementById("chatCustomInput");
+      if (chatInput) chatInput.focus();
+    }
+  } catch (err) {
+    console.error("Ideation start failed:", err);
+  }
+}
+
+// Stage 2: Delegate Question to Architect
+async function delegateCurrentQuestionToArchitect() {
+  try {
+    const res = await fetch("/api/workflow/delegate-architect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: currentSessionId })
+    });
+
+    if (res.ok) {
+      currentSessionData = await res.json();
+      renderChatMessages();
+      updateProgressCounter();
+      updateWorkflowUI(currentSessionData);
+    }
+  } catch (err) {
+    console.error("Delegation to architect failed:", err);
+  }
+}
+
+// Stage 3: Dual Review Feedback & Sign-Off
+async function submitDualReviewFeedback(persona) {
+  const inputId = persona === "CLIENT" ? "clientFeedbackInput" : "architectFeedbackInput";
+  const inputEl = document.getElementById(inputId);
+  const feedback = inputEl ? inputEl.value.trim() : "";
+
+  if (!feedback) {
+    alert("Please enter your feedback or change request before submitting.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/workflow/dual-review/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        persona: persona,
+        feedback: feedback
+      })
+    });
+
+    if (res.ok) {
+      currentSessionData = await res.json();
+      if (inputEl) inputEl.value = "";
+      renderChatMessages();
+      updateWorkflowUI(currentSessionData);
+      if (currentSessionData.brd) {
+        renderBRDWorkbench(currentSessionData.brd);
+      }
+      alert(`Feedback recorded for ${persona === "CLIENT" ? "Elena Vance" : "Alex Morgan"}. Plan re-synthesized!`);
+    }
+  } catch (err) {
+    console.error("Dual review feedback error:", err);
+  }
+}
+
+async function submitDualReviewApproval(persona) {
+  try {
+    const res = await fetch("/api/workflow/dual-review/approve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        persona: persona
+      })
+    });
+
+    if (res.ok) {
+      currentSessionData = await res.json();
+      renderChatMessages();
+      updateWorkflowUI(currentSessionData);
+      
+      const wf = currentSessionData.workflow;
+      if (wf && wf.current_stage === "PM_REVIEW") {
+        alert("🎉 Both Client and Solutions Architect have approved! Project automatically transitioned to Marcus Reed (PM) for Stage 4 Governance.");
+        switchTab("tab-pm-review");
+      } else {
+        alert(`✓ Approval confirmed for ${persona === "CLIENT" ? "Client Elena Vance" : "Solutions Architect Alex Morgan"}. Waiting for peer sign-off.`);
+      }
+    }
+  } catch (err) {
+    console.error("Dual review approval error:", err);
+  }
+}
+
+// Stage 4: Project Manager Governance & Tripartite Discussion
+async function submitPMQuery() {
+  const topic = document.getElementById("pmQueryTopic") ? document.getElementById("pmQueryTopic").value.trim() : "Governance Milestone";
+  const target = document.getElementById("pmQueryAddressedTo") ? document.getElementById("pmQueryAddressedTo").value : "ALL";
+  const text = document.getElementById("pmQueryText") ? document.getElementById("pmQueryText").value.trim() : "";
+
+  if (!text) {
+    alert("Please enter the query or requested modification.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/workflow/pm-review/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        topic: topic,
+        addressed_to: target,
+        text: text
+      })
+    });
+
+    if (res.ok) {
+      currentSessionData = await res.json();
+      const txtEl = document.getElementById("pmQueryText");
+      if (txtEl) txtEl.value = "";
+      renderChatMessages();
+      updateWorkflowUI(currentSessionData);
+    }
+  } catch (err) {
+    console.error("PM query submission error:", err);
+  }
+}
+
+async function sendTripartyReply() {
+  const replyInput = document.getElementById("tripartyReplyInput");
+  const text = replyInput ? replyInput.value.trim() : "";
+  if (!text) return;
+
+  try {
+    const res = await fetch("/api/workflow/pm-review/respond", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        persona: activePersona,
+        response: text
+      })
+    });
+
+    if (res.ok) {
+      currentSessionData = await res.json();
+      if (replyInput) replyInput.value = "";
+      renderChatMessages();
+      updateWorkflowUI(currentSessionData);
+    }
+  } catch (err) {
+    console.error("Triparty reply error:", err);
+  }
+}
+
+async function submitPMApproval() {
+  try {
+    const res = await fetch("/api/workflow/pm-review/approve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        notes: "Approved by Marcus Reed following tripartite milestone and commercial alignment."
+      })
+    });
+
+    if (res.ok) {
+      currentSessionData = await res.json();
+      renderChatMessages();
+      updateWorkflowUI(currentSessionData);
+      alert("🏆 Project BRD officially signed and sealed by Project Manager Marcus Reed! Advancing to Final Approved Distribution Suite.");
+      switchTab("tab-export");
+    }
+  } catch (err) {
+    console.error("PM approval error:", err);
+  }
+}
+
+function approveAndLockPlan() {
+  switchTab("tab-dual-review");
+}
+
+// 1-Click PM Governance Query Presets
+function applyPmQueryTemplate(type) {
+  const topicInput = document.getElementById("pmQueryTopic");
+  const targetSelect = document.getElementById("pmQueryAddressedTo");
+  const textInput = document.getElementById("pmQueryText");
+
+  if (!topicInput || !targetSelect || !textInput) return;
+
+  if (type === "timeline") {
+    topicInput.value = "Phase 8 Verification Buffer & Timeline Compression Risk";
+    targetSelect.value = "ALL";
+    textInput.value = "Auditing the 18-phase schedule: Can we ensure a 3-day buffer in Phase 8 (Model Verification) before moving to Phase 11 UAT? Client Elena to confirm business blackout dates, and Architect Alex to confirm automated eval test harness readiness.";
+  } else if (type === "cloud_cost") {
+    topicInput.value = "Cloud Monthly BoM Optimization ($645/mo Baseline)";
+    targetSelect.value = "SOLUTIONS_ARCHITECT";
+    textInput.value = "Architect Alex: Verify if Azure AI Search standard partition tier meets our 50,000 document vector indexing requirements without auto-scaling beyond our $800/mo infrastructure cap.";
+  } else if (type === "staffing") {
+    topicInput.value = "Lead AI Engineer & Prompt Specialist Allocation";
+    targetSelect.value = "ALL";
+    textInput.value = "Confirming that Senior AI Engineer (23.2d) and Prompt Engineer (14.5d) are dedicated during Weeks 2-4 for multi-pass reasoning engine stabilization.";
+  }
+}
+
+// Direct 1-Click Jira Backlog CSV Downloader
+function downloadJiraDirect() {
+  if (!currentSessionId) {
+    alert("Please complete project discovery first to generate the Jira backlog.");
+    return;
+  }
+  window.open(`/api/export/jira-csv?session_id=${currentSessionId}`, "_blank");
+}
+
+// Interactive Live Sizing Recalculation Preview
+function simulateLiveSizing() {
+  const docsInput = document.getElementById("simDocsCount");
+  const reqsInput = document.getElementById("simReqsCount");
+  const resultEl = document.getElementById("simResultText");
+  if (!docsInput || !reqsInput || !resultEl) return;
+
+  const docs = parseInt(docsInput.value) || 50000;
+  const reqs = parseInt(reqsInput.value) || 2000;
+
+  // Formula: Base $450 (Search + Azure OpenAI) + Storage ($20/50k) + Token Volume ($175/2k reqs)
+  const estMonthly = Math.round(450 + (docs / 50000) * 20 + (reqs / 2000) * 175);
+  resultEl.textContent = `$${estMonthly.toLocaleString()} / month`;
+}
+
+// Architect Escalation Queue & Client Briefing Loader
+async function loadArchitectBriefing() {
+  if (!currentSessionId) return;
+  try {
+    const res = await fetch(`/api/workflow/architect/briefing?session_id=${currentSessionId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    
+    // 1. Render Client Overview Summary
+    const overviewEl = document.getElementById("archClientOverviewText");
+    if (overviewEl && data.client_overview) {
+      const co = data.client_overview;
+      overviewEl.innerHTML = `
+        <strong>Project:</strong> ${escapeHtml(co.project_title || 'Untitled')} &nbsp;|&nbsp; 
+        <strong>Tier:</strong> <span class="badge badge-success">${escapeHtml(co.target_tier || 'PoC')}</span> &nbsp;|&nbsp; 
+        <strong>Timeline:</strong> ${escapeHtml(co.duration || '6.0 wks')} &nbsp;|&nbsp; 
+        <strong>Categories:</strong> ${escapeHtml(co.legal_categories || 'Standard')} &nbsp;|&nbsp; 
+        <strong>Confidence:</strong> ${co.current_confidence || 0}%<br>
+        <span style="color: #64748b; font-size: 0.8rem;">Problem Statement: ${escapeHtml(co.problem_statement || 'Scoping in progress')}</span>
+      `;
+    }
+
+    // 2. Render Pending Escalated Questions Cards
+    const countBadge = document.getElementById("archEscalationCountBadge");
+    if (countBadge) {
+      countBadge.textContent = `${data.pending_count || 0} Pending Topics`;
+      countBadge.className = (data.pending_count > 0) ? "badge badge-warning" : "badge badge-success";
+    }
+
+    const streamEl = document.getElementById("archEscalatedCardsStream");
+    if (streamEl) {
+      if (!data.escalated_topics || data.escalated_topics.length === 0) {
+        streamEl.innerHTML = `
+          <div style="background: #ffffff; border: 1px dashed var(--border-color); border-radius: 6px; padding: 14px; text-align: center; color: #64748b; font-size: 0.84rem;">
+            <span>✨</span> No escalated technical questions pending from Client Elena Vance. All questions are aligned!
+          </div>
+        `;
+        return;
+      }
+
+      streamEl.innerHTML = data.escalated_topics.map((item, idx) => {
+        const isResolved = item.status === "RESOLVED";
+        const optionsHtml = (item.options || []).map(opt => `
+          <button class="persona-action-btn" style="font-size: 0.74rem; padding: 3px 8px; margin: 2px;" 
+            onclick="resolveArchitectEscalation('${escapeHtml(item.question_id)}', '${escapeHtml(opt.value)}')">
+            ${escapeHtml(opt.label || opt.value)}
+          </button>
+        `).join("");
+
+        return `
+          <div style="background: ${isResolved ? '#f0fdf4' : '#ffffff'}; border: 1px solid ${isResolved ? '#86efac' : 'var(--border-color)'}; border-left: 4px solid ${isResolved ? '#16a34a' : '#0284c7'}; border-radius: var(--radius-sm); padding: 12px 14px; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+              <div>
+                <span style="font-size: 0.72rem; font-weight: 700; color: #0284c7; text-transform: uppercase;">Topic #${idx+1}: ${escapeHtml(item.topic_title)}</span>
+                <h5 style="margin: 2px 0 0 0; font-size: 0.88rem; color: #0f172a;">${escapeHtml(item.question_text)}</h5>
+              </div>
+              <span class="badge ${isResolved ? 'badge-success' : 'badge-warning'}" style="font-size: 0.7rem;">
+                ${isResolved ? '✓ Resolved' : '⏳ Action Required'}
+              </span>
+            </div>
+            
+            <div style="font-size: 0.78rem; color: #475569; margin-bottom: 8px; line-height: 1.45;">
+              <strong>🔍 Why This Is Needed:</strong> ${escapeHtml(item.why_needed)}<br>
+              <strong>💡 Client Context:</strong> ${escapeHtml(item.client_context)}
+            </div>
+
+            ${isResolved ? `
+              <div style="font-size: 0.8rem; color: #15803d; font-weight: 600; background: rgba(22, 163, 74, 0.08); padding: 4px 8px; border-radius: 4px;">
+                ✓ Architect Decision: <code>${escapeHtml(item.architect_answer || item.default_recommendation)}</code>
+              </div>
+            ` : `
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                  <button class="persona-action-btn primary" style="font-size: 0.76rem; padding: 4px 10px;"
+                    onclick="resolveArchitectEscalation('${escapeHtml(item.question_id)}', '${escapeHtml(item.default_recommendation)}')">
+                    <span>⚡</span> Accept Recommended: ${escapeHtml(item.default_recommendation)}
+                  </button>
+                  <span style="font-size: 0.72rem; color: #64748b;">or pick alternative:</span>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                  ${optionsHtml}
+                </div>
+              </div>
+            `}
+          </div>
+        `;
+      }).join("");
+    }
+  } catch (err) {
+    console.error("Failed to load architect briefing:", err);
+  }
+}
+
+async function resolveArchitectEscalation(questionId, answer, notes) {
+  if (!currentSessionId) return;
+  try {
+    const res = await fetch("/api/workflow/architect/resolve-escalation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        question_id: questionId,
+        answer: answer,
+        notes: notes || "Confirmed by Solutions Architect Alex Morgan"
+      })
+    });
+
+    if (res.ok) {
+      currentSessionData = await res.json();
+      renderChatMessages();
+      loadArchitectBriefing();
+      updateWorkflowUI(currentSessionData);
+    }
+  } catch (err) {
+    console.error("Resolve escalation error:", err);
+  }
 }

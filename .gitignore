@@ -4,7 +4,11 @@ BRD/node_modules/
 __pycache__/
 *.py[cod]
 *.class
+.env
 *.env
+admin_data/*.env
+admin_data/.env
+
 .venv/
 venv/
 ENV/

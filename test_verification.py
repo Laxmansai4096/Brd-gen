@@ -1,7 +1,7 @@
 import httpx
 import json
 
-BASE_URL = "http://127.0.0.1:8088"
+BASE_URL = "http://127.0.0.1:8081"
 
 def test_flow():
     # 1. Start fresh session

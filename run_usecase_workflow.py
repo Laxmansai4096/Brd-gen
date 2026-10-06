@@ -3,7 +3,7 @@ import json
 import time
 import os
 
-BASE_URL = "http://127.0.0.1:8088"
+BASE_URL = "http://127.0.0.1:8081"
 
 def run_usecase():
     print(f"Connecting to Project Planner MVP at {BASE_URL}...")
@@ -85,7 +85,7 @@ def run_usecase():
     else:
         print(f"Deck export returned status code {export_res.status_code}")
         
-    print("\n Use case execution complete on localhost:8088!")
+    print("\n Use case execution complete on localhost:8081!")
 
 if __name__ == "__main__":
     run_usecase()

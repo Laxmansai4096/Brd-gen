@@ -12,11 +12,10 @@ if hasattr(sys.stdout, "reconfigure"):
         pass
 
 PORTS = [
-    {"port": 8081, "persona": "CLIENT", "name": "Elena Vance (Client Business Lead)", "desc": "Client Ideation, Discovery & Dual Review Portal"},
-    {"port": 8082, "persona": "SOLUTIONS_ARCHITECT", "name": "Alex Morgan (Principal Architect)", "desc": "Technical Architecture, Sizing BoM & Dual Review Portal"},
-    {"port": 8083, "persona": "PROJECT_MANAGER", "name": "Marcus Reed (Senior Delivery PM)", "desc": "Project Governance, Tripartite Discussion & Final Approval Portal"},
-    {"port": 8084, "persona": "ADMIN", "name": "System Administrator", "desc": "Enterprise Admin & Governance Console (Calendars, Rates, Master Settings)"},
-    {"port": 8088, "persona": "UNIFIED", "name": "Multi-Persona Team", "desc": "Unified Gateway & Central API Server"}
+    {"port": 8081, "persona": "CLIENT", "name": "Client Business Lead", "desc": "Client Ideation, Discovery & Dual Review Portal"},
+    {"port": 8082, "persona": "SOLUTIONS_ARCHITECT", "name": "Principal Solutions Architect", "desc": "Technical Architecture, Sizing BoM & Dual Review Portal"},
+    {"port": 8083, "persona": "PROJECT_MANAGER", "name": "Senior Delivery PM", "desc": "Project Governance, Tripartite Discussion & Final Approval Portal"},
+    {"port": 8084, "persona": "ADMIN", "name": "System Administrator", "desc": "Enterprise Admin & Governance Console (Calendars, Rates, Master Settings)"}
 ]
 
 def run_server_for_port(port: int):

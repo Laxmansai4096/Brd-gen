@@ -86,19 +86,22 @@ STATIC_QUESTIONS: List[QuestionItem] = [
     ),
     QuestionItem(
         id="q_legal_categories",
-        title="In-Scope Business & Legal Categories",
-        prompt="Which contract categories are in scope for clause extraction and principle assessment?",
+        title="In-Scope Functional Domains & Capabilities",
+        prompt="Which functional domains, capabilities, or business categories are in scope for this AI solution?",
         type="dropdown",
         options=[
-            QuestionOption(value="Lease, Vendor, Service, Facilities, Technology, Marketing", label="6 Core Categories (Recommended)", description="Lease, Vendor, Service, Facilities, Technology, Marketing"),
-            QuestionOption(value="Lease, Vendor, Service", label="3 Commercial Categories", description="Lease, Vendor, and Service contracts only"),
-            QuestionOption(value="Technology, Facilities, Marketing", label="3 Operational Categories", description="Technology, Facilities, and Marketing contracts only"),
-            QuestionOption(value="Enterprise Procurement, NDAs, Master Service Agreements", label="Enterprise Procurement & MSAs", description="Procurement, NDAs, and MSAs")
+            QuestionOption(value="Lease, Vendor, Service, Facilities, Technology, Marketing", label="Contract Risk & Document Intelligence (Recommended)", description="Clause extraction and compliance scoring across 6 contract categories"),
+            QuestionOption(value="Customer Support, IT Helpdesk, Knowledge Retrieval, Automated Triage", label="Conversational AI & Enterprise Copilot", description="Multi-turn user assistance, intelligent search, and ticket automation"),
+            QuestionOption(value="Transaction Monitoring, Fraud Detection, KYC Verification, AML Alerts", label="Financial Crime, AML & Predictive ML", description="Real-time transaction scoring, behavioral anomaly alerts, and KYC verification"),
+            QuestionOption(value="Clinical Documentation, EHR Summarization, ICD/CPT Coding, Lab Triage", label="Healthcare & Clinical AI Assistant", description="Clinical note summarization, medical coding, and diagnostic triage"),
+            QuestionOption(value="Multi-Agent Task Routing, Autonomous Tool Calling, Code Synthesis, RPA", label="Autonomous Multi-Agent Workflow System", description="Cross-system action orchestration, dynamic tool selection, and execution"),
+            QuestionOption(value="Enterprise Knowledge Base, Semantic Search, Policy Q&A, Research Synthesis", label="Enterprise RAG & Knowledge Hub", description="Vector-indexed organizational documentation and verifiable QA"),
+            QuestionOption(value="Enterprise Procurement, NDAs, Master Service Agreements", label="Enterprise Procurement & MSAs", description="Procurement, NDAs, and vendor agreements")
         ],
         default_value="Lease, Vendor, Service, Facilities, Technology, Marketing",
         category="Scope",
         priority="High",
-        help_text="6 standard categories: Lease, Vendor, Service, Facilities, Technology, Marketing."
+        help_text="Defines the business domains or capabilities handled by the AI platform (Contract Risk, Copilot, AML, Clinical, Agentic, or RAG)."
     ),
     QuestionItem(
         id="q_duration",
@@ -403,18 +406,19 @@ STATIC_QUESTIONS: List[QuestionItem] = [
     QuestionItem(
         id="q_foundation_llm",
         title="Foundation LLM Architecture",
-        prompt="Which foundation model reasoning tier will interpret open-textured legal clauses?",
+        prompt="Which foundation model reasoning tier will power the AI solution?",
         type="dropdown",
         options=[
-            QuestionOption(value="Azure OpenAI Reasoning (GPT-5 Thinking/Reasoning)", label="Azure OpenAI Reasoning Tier (GPT-5 Thinking/Reasoning)", description="Optimized for multi-pass interpretation of open-textured negotiated legal clauses"),
+            QuestionOption(value="Azure OpenAI Reasoning (GPT-5 Thinking/Reasoning)", label="Azure OpenAI Reasoning Tier (GPT-5 Thinking/Reasoning)", description="Optimized for multi-pass reasoning, synthesis, and deep verification"),
             QuestionOption(value="Azure OpenAI GPT-4o Standard", label="Azure OpenAI GPT-4o Standard", description="General-purpose high-speed multimodal reasoning"),
-            QuestionOption(value="Anthropic Claude 3.5 Sonnet", label="Anthropic Claude 3.5 Sonnet", description="Long-context legal extraction engine"),
-            QuestionOption(value="Google Gemini 2.5 Pro", label="Google Gemini 2.5 Pro", description="Deep multi-document reasoning")
+            QuestionOption(value="Anthropic Claude 3.5 Sonnet", label="Anthropic Claude 3.5 Sonnet", description="Long-context retrieval, coding, and structured extraction engine"),
+            QuestionOption(value="Google Gemini 2.5 Pro", label="Google Gemini 2.5 Pro", description="Deep multi-document reasoning and native multimodal comprehension"),
+            QuestionOption(value="Open-Source Meta Llama 3.3 (Self-Hosted / vLLM)", label="Open-Source Meta Llama 3.3 (Self-Hosted / vLLM)", description="Private on-premise or cloud-hosted open weights for strict data sovereignty")
         ],
         default_value="Azure OpenAI Reasoning (GPT-5 Thinking/Reasoning)",
         category="AI & RAG",
         priority="High",
-        help_text="Azure OpenAI reasoning tier interprets open-textured negotiated legal clauses."
+        help_text="Selects the primary foundation model family and reasoning profile for generation and synthesis."
     ),
     QuestionItem(
         id="q_grounding_mode",
@@ -422,7 +426,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="What grounding boundary controls model retrieval access?",
         type="dropdown",
         options=[
-            QuestionOption(value="Work (Tenant Data Only)", label="Work (Tenant Data Only, Public Web Disabled)", description="Grounding strictly locked to tenant contract corpus; zero public web search via M365 Copilot / Azure AI Agent services"),
+            QuestionOption(value="Work (Tenant Data Only)", label="Work (Tenant Data Only, Public Web Disabled)", description="Grounding strictly locked to enterprise tenant corpus; zero public web leakage"),
             QuestionOption(value="Hybrid (Tenant Data + Selective Public Web)", label="Hybrid (Tenant Data + Selective Public Web)", description="Enables external regulatory lookup alongside internal documents")
         ],
         default_value="Work (Tenant Data Only)",
@@ -432,17 +436,21 @@ STATIC_QUESTIONS: List[QuestionItem] = [
     ),
     QuestionItem(
         id="q_doc_processing",
-        title="Document Processing & Layout Complexity",
-        prompt="What document intelligence technology parses layout-aware structures across ~600 sample contracts?",
+        title="Data Ingestion & Multimodal Processing Pipeline",
+        prompt="What data processing or multimodal ingestion technology parses incoming input streams?",
         type="dropdown",
         options=[
-            QuestionOption(value="Azure AI Document Intelligence Layout API", label="Azure AI Document Intelligence (Layout-Aware API)", description="Extracts text, tables, bounding-box coordinates across ~600 sample contracts"),
+            QuestionOption(value="Azure AI Document Intelligence Layout API", label="Document & Layout Intelligence (Layout API)", description="Extracts text, tables, and bounding-box coordinates from PDF/scanned documents"),
+            QuestionOption(value="Multi-Turn Conversational & Streaming API Pipeline", label="Conversational & Streaming Text/Audio Intake", description="WebSockets / SSE streaming pipeline for low-latency dialogue and voice interactions"),
+            QuestionOption(value="Semantic Chunking & Dense/Hybrid Vector Ingestion", label="Enterprise Knowledge Base & Vector Indexing", description="Document chunking, dense embeddings, and hybrid BM25 index creation"),
+            QuestionOption(value="Real-Time Event Stream & Tabular Feature Pipeline", label="Real-Time Event Bus & Feature Store", description="Kafka / Event Hub streams and database CDC for predictive ML & fraud detection"),
+            QuestionOption(value="Computer Vision & Multimodal Image Processing", label="Multimodal Vision & Object Detection Engine", description="Image analysis, OCR bounding boxes, and visual defect inspection"),
             QuestionOption(value="Standard OCR Text Extraction", label="Standard OCR Text Extraction", description="Basic flat-text extraction without coordinate bounding boxes")
         ],
         default_value="Azure AI Document Intelligence Layout API",
         category="AI & RAG",
         priority="High",
-        help_text="Recovers bounding-box coordinates for 100% source clause traceability."
+        help_text="Specifies the ingestion pipeline: Document OCR, Conversational stream, Vector embeddings, or Event stream."
     ),
     QuestionItem(
         id="q_named_users",
@@ -779,11 +787,11 @@ def is_answer_generic(ans_text: str, q: QuestionItem) -> Tuple[bool, str]:
         return False, ""
         
     # 4. Domain-specific checks
-    if q.id == "q_problem" and len(clean.split()) < 4 and not any(k in raw_lower for k in ["contract", "intelligence", "support", "invoice", "extraction", "search", "compliance", "procurement"]):
+    if q.id == "q_problem" and len(clean.split()) < 4 and not any(k in raw_lower for k in ["contract", "intelligence", "support", "invoice", "extraction", "search", "compliance", "procurement", "fraud", "aml", "agent", "assistant", "model", "ai"]):
         return True, "specific business pain points, impacted user roles, and core objectives"
         
     if q.id == "q_legal_categories" and len(clean.split(',')) < 2 and len(clean.split()) < 2:
-        return True, "the in-scope contract categories (e.g. Lease, Vendor, Service, Facilities, Technology, Marketing)"
+        return True, "the in-scope functional capabilities or business domains (e.g. Contract Risk, Customer Support, AML, RAG, or Agentic Workflows)"
         
     return False, ""
 
@@ -1082,11 +1090,46 @@ def extract_and_fill_domains_from_text(session: ProjectSession, text: str) -> Li
         session.answers["q_reqs_per_day"] = AnswerItem(question_id="q_reqs_per_day", question_title="Daily Queries", answer=req_count)
         filled_keys.append("q_reqs_per_day")
         
-    # 5. Legal Categories
-    if any(k in raw for k in ["lease", "vendor", "facilities", "marketing", "6 categories", "six categories"]):
+    # 5. Capabilities & Functional Domains
+    if any(k in raw for k in ["customer", "support", "ticket", "helpdesk", "deflection", "chatbot"]):
         session.answers["q_legal_categories"] = AnswerItem(
             question_id="q_legal_categories",
-            question_title="In-Scope Business & Legal Categories",
+            question_title="In-Scope Functional Domains & Capabilities",
+            answer="Customer Support, IT Helpdesk, Knowledge Retrieval, Automated Triage"
+        )
+        filled_keys.append("q_legal_categories")
+    elif any(k in raw for k in ["fraud", "aml", "anti-money", "kyc", "fintech"]):
+        session.answers["q_legal_categories"] = AnswerItem(
+            question_id="q_legal_categories",
+            question_title="In-Scope Functional Domains & Capabilities",
+            answer="Transaction Monitoring, Fraud Detection, KYC Verification, AML Alerts"
+        )
+        filled_keys.append("q_legal_categories")
+    elif any(k in raw for k in ["clinical", "medical", "patient", "doctor", "health", "ehr"]):
+        session.answers["q_legal_categories"] = AnswerItem(
+            question_id="q_legal_categories",
+            question_title="In-Scope Functional Domains & Capabilities",
+            answer="Clinical Documentation, EHR Summarization, ICD/CPT Coding, Lab Triage"
+        )
+        filled_keys.append("q_legal_categories")
+    elif any(k in raw for k in ["agent", "agentic", "tool", "workflow", "autonomous", "rpa"]):
+        session.answers["q_legal_categories"] = AnswerItem(
+            question_id="q_legal_categories",
+            question_title="In-Scope Functional Domains & Capabilities",
+            answer="Multi-Agent Task Routing, Autonomous Tool Calling, Code Synthesis, RPA"
+        )
+        filled_keys.append("q_legal_categories")
+    elif any(k in raw for k in ["rag", "search", "knowledge", "wiki", "retrieval"]):
+        session.answers["q_legal_categories"] = AnswerItem(
+            question_id="q_legal_categories",
+            question_title="In-Scope Functional Domains & Capabilities",
+            answer="Enterprise Knowledge Base, Semantic Search, Policy Q&A, Research Synthesis"
+        )
+        filled_keys.append("q_legal_categories")
+    elif any(k in raw for k in ["lease", "vendor", "facilities", "marketing", "6 categories", "six categories", "contract"]):
+        session.answers["q_legal_categories"] = AnswerItem(
+            question_id="q_legal_categories",
+            question_title="In-Scope Functional Domains & Capabilities",
             answer="Lease, Vendor, Service, Facilities, Technology, Marketing"
         )
         filled_keys.append("q_legal_categories")
@@ -1136,7 +1179,28 @@ def extract_and_fill_domains_from_text(session: ProjectSession, text: str) -> Li
         filled_keys.append("q_components_count")
 
     # 10. Foundation LLM
-    if "gpt-5" in raw or "reasoning" in raw or "thinking" in raw or "openai" in raw:
+    if any(k in raw for k in ["claude", "anthropic", "sonnet"]):
+        session.answers["q_foundation_llm"] = AnswerItem(
+            question_id="q_foundation_llm",
+            question_title="Foundation LLM Architecture",
+            answer="Anthropic Claude 3.5 Sonnet"
+        )
+        filled_keys.append("q_foundation_llm")
+    elif any(k in raw for k in ["gemini", "vertex"]):
+        session.answers["q_foundation_llm"] = AnswerItem(
+            question_id="q_foundation_llm",
+            question_title="Foundation LLM Architecture",
+            answer="Google Gemini 2.5 Pro"
+        )
+        filled_keys.append("q_foundation_llm")
+    elif any(k in raw for k in ["llama", "vllm", "open source"]):
+        session.answers["q_foundation_llm"] = AnswerItem(
+            question_id="q_foundation_llm",
+            question_title="Foundation LLM Architecture",
+            answer="Open-Source Meta Llama 3.3 (Self-Hosted / vLLM)"
+        )
+        filled_keys.append("q_foundation_llm")
+    elif "gpt-5" in raw or "reasoning" in raw or "thinking" in raw or "openai" in raw:
         session.answers["q_foundation_llm"] = AnswerItem(
             question_id="q_foundation_llm",
             question_title="Foundation LLM Architecture",
@@ -1144,11 +1208,39 @@ def extract_and_fill_domains_from_text(session: ProjectSession, text: str) -> Li
         )
         filled_keys.append("q_foundation_llm")
 
-    # 11. Document Processing
-    if "layout" in raw or "ocr" in raw or "document intelligence" in raw:
+    # 11. Ingestion & Processing Pipeline
+    if any(k in raw for k in ["stream", "chat", "voice", "audio", "websocket", "sse"]):
         session.answers["q_doc_processing"] = AnswerItem(
             question_id="q_doc_processing",
-            question_title="Document Processing & Layout Complexity",
+            question_title="Data Ingestion & Multimodal Processing Pipeline",
+            answer="Multi-Turn Conversational & Streaming API Pipeline"
+        )
+        filled_keys.append("q_doc_processing")
+    elif any(k in raw for k in ["vector", "embedding", "chunk", "rag", "retrieval"]):
+        session.answers["q_doc_processing"] = AnswerItem(
+            question_id="q_doc_processing",
+            question_title="Data Ingestion & Multimodal Processing Pipeline",
+            answer="Semantic Chunking & Dense/Hybrid Vector Ingestion"
+        )
+        filled_keys.append("q_doc_processing")
+    elif any(k in raw for k in ["kafka", "event", "cdc", "feature", "tabular"]):
+        session.answers["q_doc_processing"] = AnswerItem(
+            question_id="q_doc_processing",
+            question_title="Data Ingestion & Multimodal Processing Pipeline",
+            answer="Real-Time Event Stream & Tabular Feature Pipeline"
+        )
+        filled_keys.append("q_doc_processing")
+    elif any(k in raw for k in ["vision", "image", "camera", "video", "multimodal"]):
+        session.answers["q_doc_processing"] = AnswerItem(
+            question_id="q_doc_processing",
+            question_title="Data Ingestion & Multimodal Processing Pipeline",
+            answer="Computer Vision & Multimodal Image Processing"
+        )
+        filled_keys.append("q_doc_processing")
+    elif "layout" in raw or "ocr" in raw or "document intelligence" in raw:
+        session.answers["q_doc_processing"] = AnswerItem(
+            question_id="q_doc_processing",
+            question_title="Data Ingestion & Multimodal Processing Pipeline",
             answer="Azure AI Document Intelligence Layout API"
         )
         filled_keys.append("q_doc_processing")
@@ -1282,12 +1374,28 @@ def check_requires_follow_up(user_input: str, q: QuestionItem) -> Tuple[bool, st
 
 def check_answer_ambiguity(answer_text: str, q: QuestionItem) -> Tuple[bool, str, List[str]]:
     text = answer_text.strip().lower()
+
+    # 1. If user answer matches one of the defined options (e.g. 'None', 'N/A', 'Not Applicable'), it is fully confirmed!
+    if q.options:
+        for opt in q.options:
+            val_lower = str(opt.value).strip().lower()
+            lbl_lower = str(opt.label).strip().lower()
+            if text == val_lower or text == lbl_lower or text in val_lower or val_lower in text:
+                return False, "", []
+    if q.default_value and text == str(q.default_value).strip().lower():
+        return False, "", []
+
+    # 2. Allow explicit N/A or None for questions where absence of component is valid
+    if text in ["na", "n/a", "none", "not applicable", "zero", "0"]:
+        if any(keyword in q.id for keyword in ["grounding", "rag", "integration", "onprem", "hadr", "compliance", "security", "buffer"]):
+            return False, "", []
+
     if q.type == "number":
         if text.replace('.', '', 1).isdigit():
             return False, "", []
         return True, f"Please enter a valid numeric value for **{q.title}**.", [q.default_value]
         
-    if len(text) < 2 or text in ["na", "none", "unknown", "none_unknown", "idk", "not sure", "dunno", "maybe", "whatever", "later"] or text in GREETING_WORDS:
+    if len(text) < 2 or text in ["unknown", "none_unknown", "idk", "not sure", "dunno", "maybe", "whatever", "later"] or text in GREETING_WORDS:
         return True, f"Your answer '{answer_text}' is too brief or ambiguous for **{q.title}**.", [q.default_value]
     return False, "", []
 
@@ -1306,7 +1414,7 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
     
     if is_architect_delegation and q:
         clean_id = q.id.replace("_clarification", "")
-        # Construct rich context for Solutions Architect Alex Morgan
+        # Construct rich context for Solutions Architect
         advice = get_architect_technical_advice(clean_id, q.title)
         adv_val = advice["value"]
         adv_quote = advice["quote"]
@@ -1315,7 +1423,7 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
         client_name = session.answers.get("q_client", AnswerItem(question_id="q_client", question_title="Client", answer="Contract Intelligence Platform")).answer
         tier_name = session.answers.get("q_tier", AnswerItem(question_id="q_tier", question_title="Tier", answer="PoC")).answer
         duration_name = session.answers.get("q_duration", AnswerItem(question_id="q_duration", question_title="Duration", answer="6.0 Weeks")).answer
-        client_context = f"Client Elena Vance | Project: {client_name} | Tier: {tier_name} | Timeline: {duration_name}"
+        client_context = f"Client Lead | Project: {client_name} | Tier: {tier_name} | Timeline: {duration_name}"
         
         why_needed = q.help_text or q.why_it_matters or f"Needed to calibrate technical architecture, sizing BoM, and engineering person-days for {q.title}."
         
@@ -1351,7 +1459,7 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
             is_default=False,
             ambiguity_count=0,
             hitl_confirmed=True,
-            notes=f"Escalated to Solutions Architect (Alex Morgan) — {why_needed}"
+            notes=f"Escalated to Solutions Architect — {why_needed}"
         )
         
         comp = evaluate_domain_completeness(session)
@@ -1359,7 +1467,7 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
         next_q = get_current_question(session)
         
         arch_msg_content = (
-            f"🏗️ **Alex Morgan (Principal Solutions Architect) — Escalation Briefing:**\n\n"
+            f"🏗️ **Principal Solutions Architect — Escalation Briefing:**\n\n"
             f"📌 **Topic:** `{q.title}` *(Ref: {esc_id})*\n"
             f"🔍 **Why This Is Needed:** {why_needed}\n"
             f"💡 **Context Provided:** {client_context}\n\n"
@@ -1372,7 +1480,7 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
             persona_badge="🏗️ Solutions Architect",
             is_architect_input=True,
             content=arch_msg_content,
-            timestamp="Just now"
+            timestamp=datetime.now().strftime("%I:%M %p")
         ))
         
         if comp["is_gate_passed"] or not next_q:
@@ -1380,7 +1488,7 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
                 sender="agent",
                 persona="AI_AGENT",
                 content=f"🎯 **Discovery Complete with {conf.score}% Confidence!** All 32 architectural & business domains confirmed across Client and Architect. Synthesizing full BRD for Dual-Review...",
-                timestamp="Just now"
+                timestamp=datetime.now().strftime("%I:%M %p")
             )
             return msg, True
         else:
@@ -1391,8 +1499,8 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
                 header = f"### 📋 Domain {domain_idx} of 32: **{next_q.title}** *(Domain Coverage: {comp['confirmed_count'] + comp['escalated_count']}/32 • {comp['completion_rate']}% | Gate: 95%)*"
                 
             content = (
-                f"✅ **Escalated '{q.title}' to Architect Alex Morgan with technical context.**\n"
-                f"*Continuing client discovery interview for Elena Vance...*\n\n"
+                f"✅ **Escalated '{q.title}' to Solutions Architect with technical context.**\n"
+                f"*Continuing client discovery interview...*\n\n"
                 f"---\n\n"
                 f"{header}\n\n"
                 f"**{next_q.prompt}**\n\n"
@@ -1402,7 +1510,7 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
                 sender="agent",
                 persona="AI_AGENT",
                 content=content,
-                timestamp="Just now",
+                timestamp=datetime.now().strftime("%I:%M %p"),
                 question_context=next_q
             )
             return msg, False
@@ -1524,10 +1632,70 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
             elif "option c" in clarification_answer.lower():
                 final_synthesized_requirement = "Build an automated Document Intelligence pipeline to extract clauses, score risks, and validate regulatory compliance across enterprise documents."
             else:
-                if len(clarification_answer.split()) >= 6:
-                    final_synthesized_requirement = f"Enterprise AI Solution: {clarification_answer}"
+                short_tokens = [w for w in clarification_answer.lower().split() if w.strip()]
+                is_generic_audience = any(clarification_answer.lower() == g for g in [
+                    "regular customers", "customers", "users", "clients", "employees", "everyone", "people", 
+                    "internal", "external", "all", "consumer", "consumers", "end users", "public"
+                ])
+                is_too_brief = len(short_tokens) < 4
+                
+                # If user input is underspecified (e.g. only named the user group 'regular customers' without functionality or systems)
+                if (is_generic_audience or is_too_brief) and "option" not in clarification_answer.lower():
+                    session.clarification_state["target_audience"] = clarification_answer
+                    session.clarification_state["step"] = session.clarification_state.get("step", 1) + 1
+                    
+                    prompt_audience = clarification_answer
+                    clarification_content = (
+                        f"Got it — target users are **{prompt_audience}**.\n\n"
+                        f"To define the exact requirement without making assumptions or hallucinating details:\n\n"
+                        f"1️⃣ **What primary task, pain point, or service should the AI handle for {prompt_audience}?** *(e.g., answering support questions, checking order status, account self-service)*\n"
+                        f"2️⃣ **What channels or systems will they use?** *(e.g., Web chat widget, Mobile App, WhatsApp, CRM)*\n\n"
+                        f"*(Please describe your exact use case or select one of the tailored options below:)*"
+                    )
+                    
+                    tailored_options = [
+                        QuestionOption(
+                            value=f"24/7 conversational support agent for {prompt_audience} to answer product questions, handle FAQs, and route escalations to support staff.",
+                            label=f"Customer Support & Inquiries for {prompt_audience.title()}",
+                            description=f"Automated 24/7 support resolving common queries and routing escalations"
+                        ),
+                        QuestionOption(
+                            value=f"Self-service assistant enabling {prompt_audience} to check order status, update account details, and process service requests.",
+                            label=f"Self-Service Account & Order Management for {prompt_audience.title()}",
+                            description=f"Direct self-service for accounts, orders, and standard requests"
+                        ),
+                        QuestionOption(
+                            value=f"Intelligent conversational guide assisting {prompt_audience} with personalized product recommendations and purchasing guidance.",
+                            label=f"Product Guidance & Recommendation for {prompt_audience.title()}",
+                            description=f"Conversational advisory assisting with discovery and purchasing"
+                        )
+                    ]
+                    
+                    msg = ChatMessage(
+                        sender="agent",
+                        persona="AI_AGENT",
+                        content=clarification_content,
+                        timestamp=datetime.now().strftime("%I:%M %p"),
+                        question_context=QuestionItem(
+                            id=f"{clean_target_id}_clarification",
+                            title=f"Clarification: {q.title}",
+                            prompt=clarification_content,
+                            type="dropdown",
+                            options=tailored_options,
+                            default_value=tailored_options[0].value,
+                            category=q.category,
+                            priority=q.priority,
+                            help_text="Select a blueprint or provide your exact functional requirements."
+                        ),
+                        hitl_options=[{"label": opt.label, "value": opt.value} for opt in tailored_options]
+                    )
+                    return msg, False
                 else:
-                    final_synthesized_requirement = f"Enterprise AI Solution targeting {clarification_answer}, automating key business interactions and integrating with enterprise knowledge sources."
+                    target_audience = session.clarification_state.get("target_audience")
+                    if target_audience and target_audience.lower() not in clarification_answer.lower():
+                        final_synthesized_requirement = f"AI Solution for {target_audience}: {clarification_answer}"
+                    else:
+                        final_synthesized_requirement = clarification_answer
 
         session.clarification_state = None
         session.answers[clean_target_id] = AnswerItem(
@@ -1548,7 +1716,7 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
                 sender="agent",
                 persona="AI_AGENT",
                 content=f"🎯 **Discovery Complete with {conf.score}% Confidence!** All 32 architectural & business domains confirmed across Client and Architect. Synthesizing full BRD for Dual-Review...",
-                timestamp="Just now"
+                timestamp=datetime.now().strftime("%I:%M %p")
             )
             return msg, True
         else:
@@ -1569,7 +1737,7 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
                 sender="agent",
                 persona="AI_AGENT",
                 content=content,
-                timestamp="Just now",
+                timestamp=datetime.now().strftime("%I:%M %p"),
                 question_context=next_q
             )
             return msg, False
@@ -1918,4 +2086,346 @@ def auto_discover_from_document_text(text: str, filename: str, session: ProjectS
         "personas": personas,
         "integrations": integrations,
         "confidence_score": 92.5
+    }
+
+def get_brd_template_sheet(session: ProjectSession) -> Dict[str, Any]:
+    """
+    Returns the comprehensive Universal Enterprise AI BRD Document Template Sheet with standard fields,
+    subfields, topics, subtopics, completion status, and 95% gate calculation.
+    Supports all AI archetypes: Conversational AI, Enterprise RAG, Document Intelligence,
+    Predictive ML/AML, Autonomous Multi-Agent Systems, and Computer Vision.
+    """
+    ans = session.answers
+    brd = session.brd
+
+    # Topic 1: Business Objectives & Functional Scope (Client Business Lead)
+    t1_fields = [
+        {
+            "id": "client_name",
+            "question_id": "q_client",
+            "title": "Enterprise Account & Client",
+            "owner": "CLIENT",
+            "is_key": True,
+            "status": "FILLED" if "q_client" in ans and ans["q_client"].answer else "PENDING",
+            "value": ans["q_client"].answer.split("|")[0].strip() if "q_client" in ans and "|" in ans["q_client"].answer else (ans["q_client"].answer if "q_client" in ans else None),
+            "subtopic": "Account Identification",
+            "description": "Enterprise client or organization name sponsoring the AI initiative"
+        },
+        {
+            "id": "project_title",
+            "question_id": "q_client",
+            "title": "Initiative & AI Solution Title",
+            "owner": "CLIENT",
+            "is_key": True,
+            "status": "FILLED" if "q_client" in ans and ans["q_client"].answer else "PENDING",
+            "value": ans["q_client"].answer.split("|")[-1].strip() if "q_client" in ans and "|" in ans["q_client"].answer else (ans.get("q_client").answer if "q_client" in ans else None),
+            "subtopic": "Solution Identity",
+            "description": "Descriptive title for the AI system, assistant, copilot, or platform"
+        },
+        {
+            "id": "problem_statement",
+            "question_id": "q_problem",
+            "title": "Business Problem & AI Opportunity",
+            "owner": "CLIENT",
+            "is_key": True,
+            "status": "FILLED" if "q_problem" in ans and len(ans["q_problem"].answer or "") > 15 else "PENDING",
+            "value": ans["q_problem"].answer if "q_problem" in ans else None,
+            "subtopic": "Strategic Context",
+            "description": "Operational bottlenecks, user friction, manual overhead, and business challenge"
+        },
+        {
+            "id": "delivery_tier",
+            "question_id": "q_tier",
+            "title": "Target Delivery Tier",
+            "owner": "CLIENT",
+            "is_key": True,
+            "status": "FILLED" if "q_tier" in ans and ans["q_tier"].answer else "PENDING",
+            "value": ans["q_tier"].answer if "q_tier" in ans else "PoC",
+            "subtopic": "Delivery Scope",
+            "description": "Target release maturity: PoC, Pilot, MVP, or Full Production Grade"
+        },
+        {
+            "id": "target_personas",
+            "question_id": "q_personas_count",
+            "title": "Target User Personas",
+            "owner": "CLIENT",
+            "is_key": True,
+            "status": "FILLED" if "q_personas_count" in ans and ans["q_personas_count"].answer else "PENDING",
+            "value": f"{ans['q_personas_count'].answer} Active Personas" if "q_personas_count" in ans else None,
+            "subtopic": "Stakeholder Model",
+            "description": "Target end-users, operators, administrators, and customer roles"
+        },
+        {
+            "id": "functional_scope",
+            "question_id": "q_legal_categories",
+            "title": "In-Scope Capabilities & Domains",
+            "owner": "CLIENT",
+            "is_key": True,
+            "status": "FILLED" if "q_legal_categories" in ans and ans["q_legal_categories"].answer else "PENDING",
+            "value": ans["q_legal_categories"].answer if "q_legal_categories" in ans else None,
+            "subtopic": "Functional Boundaries",
+            "description": "In-scope AI functional domains, capability modules, or business categories"
+        }
+    ]
+
+    # Topic 2: AI Solution Architecture & Systems Engineering (Solutions Architect)
+    t2_fields = [
+        {
+            "id": "cloud_platform",
+            "question_id": "q_cloud",
+            "title": "Primary Hyperscaler Cloud",
+            "owner": "SOLUTIONS_ARCHITECT",
+            "is_key": True,
+            "status": "FILLED" if "q_cloud" in ans and ans["q_cloud"].answer else "PENDING",
+            "value": ans["q_cloud"].answer if "q_cloud" in ans else None,
+            "subtopic": "Infrastructure Tier",
+            "description": "Microsoft Azure, AWS, Google Cloud Platform, or Hybrid On-Premise"
+        },
+        {
+            "id": "tech_components",
+            "question_id": "q_components_count",
+            "title": "Modular Architecture Components",
+            "owner": "SOLUTIONS_ARCHITECT",
+            "is_key": True,
+            "status": "FILLED" if "q_components_count" in ans and ans["q_components_count"].answer else "PENDING",
+            "value": f"{ans['q_components_count'].answer} Canonical Blocks" if "q_components_count" in ans else "6 Blocks",
+            "subtopic": "Architecture Blueprint",
+            "description": "Data Ingestion, Vector/Index, LLM Reasoning, Database/State, API/Telemetry, Security"
+        },
+        {
+            "id": "foundation_model",
+            "question_id": "q_foundation_llm",
+            "title": "Foundation Model & Reasoning Tier",
+            "owner": "SOLUTIONS_ARCHITECT",
+            "is_key": True,
+            "status": "FILLED" if ("q_foundation_llm" in ans and ans["q_foundation_llm"].answer) or ("q_cloud" in ans and ans["q_cloud"].answer) else "PENDING",
+            "value": (
+                ans["q_foundation_llm"].answer if "q_foundation_llm" in ans and ans["q_foundation_llm"].answer
+                else ("Anthropic Claude 3.5 Sonnet" if "q_cloud" in ans and "AWS" in (ans["q_cloud"].answer or "")
+                else ("Google Gemini 2.5 Pro" if "q_cloud" in ans and "Google" in (ans["q_cloud"].answer or "")
+                else ("Azure OpenAI Reasoning (GPT-5 Thinking/Reasoning)" if "q_cloud" in ans and "Azure" in (ans["q_cloud"].answer or "")
+                else None)))
+            ),
+            "subtopic": "Model & Reasoning Strategy",
+            "description": "Selected LLM/SLM reasoning tier, thinking budget, and inference orchestration"
+        },
+        {
+            "id": "grounding_mode",
+            "question_id": "q_grounding_mode",
+            "title": "Knowledge Grounding & Retrieval Strategy",
+            "owner": "SOLUTIONS_ARCHITECT",
+            "is_key": True,
+            "status": "FILLED" if "q_grounding_mode" in ans and ans["q_grounding_mode"].answer else "PENDING",
+            "value": ans["q_grounding_mode"].answer if "q_grounding_mode" in ans else None,
+            "subtopic": "Context & Retrieval",
+            "description": "Tenant data isolation, hybrid BM25 + dense vector indexing, API tool grounding"
+        },
+        {
+            "id": "doc_processing",
+            "question_id": "q_doc_processing",
+            "title": "Data Ingestion & Processing Pipeline",
+            "owner": "SOLUTIONS_ARCHITECT",
+            "is_key": False,
+            "status": "FILLED" if "q_doc_processing" in ans and ans["q_doc_processing"].answer else "PENDING",
+            "value": ans["q_doc_processing"].answer if "q_doc_processing" in ans else "Document / Multi-Modal Stream Pipeline",
+            "subtopic": "Data Intake & Processing",
+            "description": "Document parsing, conversational streaming, tabular CDC, or multimodal intake"
+        },
+        {
+            "id": "security_posture",
+            "question_id": "q_security",
+            "title": "Security, Governance & AI Guardrails",
+            "owner": "SOLUTIONS_ARCHITECT",
+            "is_key": True,
+            "status": "FILLED" if "q_security" in ans and ans["q_security"].answer else "PENDING",
+            "value": ans["q_security"].answer if "q_security" in ans else None,
+            "subtopic": "Cybersecurity & Governance",
+            "description": "Data encryption, zero-trust RBAC, PII redaction, audit logging & EU AI Act guardrails"
+        }
+    ]
+
+    # Topic 3: Scale, Sizing & Operational Constraints (Joint Client & Architect)
+    t3_fields = [
+        {
+            "id": "duration_weeks",
+            "question_id": "q_duration",
+            "title": "Reference Execution Duration",
+            "owner": "JOINT",
+            "is_key": True,
+            "status": "FILLED" if "q_duration" in ans and ans["q_duration"].answer else "PENDING",
+            "value": f"{ans['q_duration'].answer} Weeks" if "q_duration" in ans else None,
+            "subtopic": "Schedule & Timeline",
+            "description": "Reference project delivery timeline in calendar weeks"
+        },
+        {
+            "id": "start_date",
+            "question_id": "q_start_date",
+            "title": "Target Kick-Off Date",
+            "owner": "JOINT",
+            "is_key": False,
+            "status": "FILLED" if "q_start_date" in ans and ans["q_start_date"].answer else "PENDING",
+            "value": ans["q_start_date"].answer if "q_start_date" in ans else None,
+            "subtopic": "Schedule & Timeline",
+            "description": "Target project kick-off date mapped against statutory working calendar"
+        },
+        {
+            "id": "named_users",
+            "question_id": "q_named_users",
+            "title": "Total Entitled User Base",
+            "owner": "CLIENT",
+            "is_key": True,
+            "status": "FILLED" if "q_named_users" in ans and ans["q_named_users"].answer else "PENDING",
+            "value": ans["q_named_users"].answer if "q_named_users" in ans else None,
+            "subtopic": "User Concurrency & Sizing",
+            "description": "Total licensed or registered user base entitled to access the AI system"
+        },
+        {
+            "id": "concurrent_users",
+            "question_id": "q_concurrent_users",
+            "title": "Peak Concurrent Users",
+            "owner": "SOLUTIONS_ARCHITECT",
+            "is_key": True,
+            "status": "FILLED" if "q_concurrent_users" in ans and ans["q_concurrent_users"].answer else "PENDING",
+            "value": ans["q_concurrent_users"].answer if "q_concurrent_users" in ans else None,
+            "subtopic": "User Concurrency & Sizing",
+            "description": "Simultaneous peak active user or agent sessions"
+        },
+        {
+            "id": "daily_requests",
+            "question_id": "q_daily_requests",
+            "title": "Daily Request Throughput (RPS)",
+            "owner": "SOLUTIONS_ARCHITECT",
+            "is_key": True,
+            "status": "FILLED" if "q_daily_requests" in ans and ans["q_daily_requests"].answer else "PENDING",
+            "value": ans["q_daily_requests"].answer if "q_daily_requests" in ans else None,
+            "subtopic": "Transaction Throughput",
+            "description": "Daily transactions, query volume, and peak inference throughput"
+        },
+        {
+            "id": "geography",
+            "question_id": "q_geography",
+            "title": "Deployment Geography & Working Calendar",
+            "owner": "JOINT",
+            "is_key": True,
+            "status": "FILLED" if "q_geography" in ans and ans["q_geography"].answer else "PENDING",
+            "value": ans["q_geography"].answer if "q_geography" in ans else None,
+            "subtopic": "Regulatory & Working Calendar",
+            "description": "Deployment hosting region and statutory working holiday schedule"
+        },
+        {
+            "id": "buffer_strategy",
+            "question_id": "q_buffer_strategy",
+            "title": "Contingency Buffer & Standby Resourcing",
+            "owner": "JOINT",
+            "is_key": True,
+            "status": "FILLED" if "q_buffer_strategy" in ans and ans["q_buffer_strategy"].answer else "PENDING",
+            "value": ans["q_buffer_strategy"].answer if "q_buffer_strategy" in ans else None,
+            "subtopic": "Risk & Resourcing Buffer",
+            "description": "Shadow resourcing and contingency buffer allocation to guarantee delivery schedule"
+        }
+    ]
+
+    # Topic 4: Calculated Financial Estimates & Resource Allocation (Agentic Synthesis Engine)
+    t4_fields = [
+        {
+            "id": "person_days",
+            "title": "Total Engineering Effort",
+            "owner": "AGENT",
+            "is_key": False,
+            "status": "FILLED" if brd else "PENDING",
+            "value": f"{brd.total_person_days:.1f} Person-Days ({brd.total_person_hours:.0f} hrs)" if brd else "Calculated upon 95% Gate",
+            "subtopic": "Effort & Loading",
+            "description": "Deterministic effort back-solved from task graph and role loading"
+        },
+        {
+            "id": "labour_cost",
+            "title": "Total Labor Investment",
+            "owner": "AGENT",
+            "is_key": False,
+            "status": "FILLED" if brd else "PENDING",
+            "value": f"${brd.total_labour_cost_usd:,.2f} (@ ${brd.blended_hourly_rate:.2f}/hr)" if brd else "Calculated upon 95% Gate",
+            "subtopic": "Commercial Model",
+            "description": "Deterministic blended engineering rate across 12 disciplines"
+        },
+        {
+            "id": "cloud_bom",
+            "title": "Monthly Cloud & Token BoM",
+            "owner": "AGENT",
+            "is_key": False,
+            "status": "FILLED" if brd else "PENDING",
+            "value": f"${brd.sizing_metrics.total_monthly_cloud_cost_usd:,.2f} / month" if brd else "Calculated upon 95% Gate",
+            "subtopic": "Cloud Sizing",
+            "description": "Hyperscaler hosting, storage, vector database, and token inference budget"
+        },
+        {
+            "id": "canonical_reqs",
+            "title": "Formal Requirements Catalog",
+            "owner": "AGENT",
+            "is_key": False,
+            "status": "FILLED" if brd else "PENDING",
+            "value": f"{len(brd.canonical_requirements)} Formal Requirements" if brd else "17 Canonical Requirements",
+            "subtopic": "Requirements Catalog",
+            "description": "17 Functional & Non-Functional traceable requirements with MoSCoW tags"
+        }
+    ]
+
+    topics = [
+        {
+            "id": "topic_business",
+            "title": "1. Business Objectives & Functional Scope",
+            "icon": "📌",
+            "primary_persona": "Client Business Lead",
+            "description": "Business problem, AI opportunity, user personas, and target capabilities defined by the Client",
+            "fields": t1_fields
+        },
+        {
+            "id": "topic_architecture",
+            "title": "2. AI Solution Architecture & Systems Engineering",
+            "icon": "🏗️",
+            "primary_persona": "Solutions Architect",
+            "description": "Hyperscaler cloud, modular blocks, foundation models, grounding, and security guardrails",
+            "fields": t2_fields
+        },
+        {
+            "id": "topic_sizing",
+            "title": "3. Scale, Sizing & Operational Constraints",
+            "icon": "☁️",
+            "primary_persona": "Joint (Client + Architect)",
+            "description": "User concurrency, RPS transaction volumes, statutory calendar, and contingency buffer",
+            "fields": t3_fields
+        },
+        {
+            "id": "topic_estimates",
+            "title": "4. Calculated Financial Estimates & Resource Allocation",
+            "icon": "💰",
+            "primary_persona": "Agentic Synthesis Engine",
+            "description": "Deterministic person-days, labor costs, 12 disciplines, and cloud BoM",
+            "fields": t4_fields
+        }
+    ]
+
+    all_inputs = t1_fields + t2_fields + t3_fields
+    filled_count = sum(1 for f in all_inputs if f["status"] == "FILLED")
+    key_fields = [f for f in all_inputs if f["is_key"]]
+    key_filled = sum(1 for f in key_fields if f["status"] == "FILLED")
+    
+    # Calculate percentage based on key fields (17 total key required fields)
+    completion_rate = round((key_filled / len(key_fields)) * 100, 1) if key_fields else 0.0
+    
+    # Check 95% Gate (all 17 key fields required to reach 100% and satisfy >= 95% gate)
+    is_gate_passed = (completion_rate >= 95.0) and (key_filled == len(key_fields))
+    
+    missing_key = [f["title"] for f in key_fields if f["status"] != "FILLED"]
+
+    return {
+        "topics": topics,
+        "total_fields": len(all_inputs),
+        "filled_fields": filled_count,
+        "key_fields_total": len(key_fields),
+        "key_fields_filled": key_filled,
+        "missing_key_fields": missing_key,
+        "completion_rate": completion_rate,
+        "is_gate_passed": is_gate_passed,
+        "gate_threshold": 95.0,
+        "has_synthesized_brd": brd is not None
     }

@@ -19,7 +19,7 @@ def test_multi_persona_end_to_end_workflow():
     session_id = res.json()['session_id']
     print(f"1. Session initialized: {session_id}")
     
-    # 2. Stage 1: Ideation (Elena Vance + Alex Morgan)
+    # 2. Stage 1: Ideation (Client Lead + Solutions Architect)
     ideate_res = client.post('/api/workflow/ideate', json={
         "session_id": session_id,
         "client_idea": "Automated invoice audit and fraud detection platform with ERP sync",
@@ -29,7 +29,7 @@ def test_multi_persona_end_to_end_workflow():
     assert ideate_res.status_code == 200
     ideate_data = ideate_res.json()
     assert ideate_data["workflow"]["stage"] == "DISCOVERY"
-    print("2. Stage 1 Ideation completed: Elena Vance & Alex Morgan aligned on PoC scope.")
+    print("2. Stage 1 Ideation completed: Client Lead & Solutions Architect aligned on PoC scope.")
     
     # 3. Stage 2: Dynamic Discovery & Delegation to Solutions Architect
     # Answer discovery questions to progress confidence across the 32 domains
@@ -47,7 +47,7 @@ def test_multi_persona_end_to_end_workflow():
                 "question_id": q_id
             })
             assert del_res.status_code == 200
-            print(f"   Delegated question {q_id} to Solutions Architect (Alex Morgan).")
+            print(f"   Delegated question {q_id} to Solutions Architect.")
         else:
             opt_val = cur_q.get('default_value') or (cur_q.get('options', [{}])[0].get('value')) or "Standard business requirements"
             chat_res = client.post('/api/chat', json={
@@ -57,7 +57,7 @@ def test_multi_persona_end_to_end_workflow():
                 "persona": "CLIENT"
             })
             assert chat_res.status_code == 200
-            print(f"   Elena (Client) answered {q_id}: {opt_val}")
+            print(f"   Client answered {q_id}: {opt_val}")
             
     # Check that Confidence is >= 98% and BRD draft is generated
     sess_after_disc = client.get(f'/api/session?session_id={session_id}').json()
@@ -66,7 +66,7 @@ def test_multi_persona_end_to_end_workflow():
     print(f"3. Discovery Complete! Confidence: {sess_after_disc['confidence']['score']}% (Threshold >= 98% passed). Draft BRD generated.")
     
     # 4. Stage 3: Dual Review & Iteration (Client & Architect)
-    # 4a. Alex Morgan requests technical change
+    # 4a. Solutions Architect requests technical change
     change_res = client.post('/api/workflow/dual-review/feedback', json={
         "session_id": session_id,
         "persona": "SOLUTIONS_ARCHITECT",
@@ -83,7 +83,7 @@ def test_multi_persona_end_to_end_workflow():
     app_client = client.post('/api/workflow/dual-review/approve', json={
         "session_id": session_id,
         "persona": "CLIENT",
-        "signature_name": "Elena Vance (Client Business Lead)",
+        "signature_name": "Client Business Lead",
         "notes": "Business scope and ROI expectations approved."
     })
     assert app_client.status_code == 200
@@ -91,16 +91,16 @@ def test_multi_persona_end_to_end_workflow():
     app_arch = client.post('/api/workflow/dual-review/approve', json={
         "session_id": session_id,
         "persona": "SOLUTIONS_ARCHITECT",
-        "signature_name": "Alex Morgan (Principal Solutions Architect)",
+        "signature_name": "Principal Solutions Architect",
         "notes": "Architectural feasibility and cloud BoM approved."
     })
     assert app_arch.status_code == 200
     assert app_arch.json()["is_dual_approved"] is True
     assert app_arch.json()["workflow"]["stage"] == "PM_REVIEW"
-    print("4b. Dual Approval achieved! Handed off to Project Manager (Marcus Reed).")
+    print("4b. Dual Approval achieved! Handed off to Senior Delivery PM.")
     
     # 5. Stage 4: PM Governance & Tripartite Discussion
-    # 5a. Marcus Reed raises query
+    # 5a. PM raises query
     pm_q_res = client.post('/api/workflow/pm-review/query', json={
         "session_id": session_id,
         "topic": "Statutory Holidays & ERP Test Environment",
@@ -109,7 +109,7 @@ def test_multi_persona_end_to_end_workflow():
     })
     assert pm_q_res.status_code == 200
     q_id = pm_q_res.json()["query"]["id"]
-    print(f"5a. PM Marcus Reed raised governance query: {q_id}")
+    print(f"5a. PM raised governance query: {q_id}")
     
     # 5b. Client clarifies
     resp_c = client.post('/api/workflow/pm-review/respond', json={
@@ -144,7 +144,7 @@ def test_multi_persona_end_to_end_workflow():
     # 5e. PM Grants Final Approval
     pm_app_res = client.post('/api/workflow/pm-review/approve', json={
         "session_id": session_id,
-        "signature_name": "Marcus Reed (Senior Delivery PM)",
+        "signature_name": "Senior Delivery PM",
         "notes": "18-Phase timeline, $30/hr blended rates, and governance gates approved."
     })
     assert pm_app_res.status_code == 200

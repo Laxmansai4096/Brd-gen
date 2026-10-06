@@ -20,7 +20,7 @@ from backend.agent_discovery import (
     STATIC_QUESTIONS, process_user_answer, get_current_question,
     get_discovery_questions, compile_and_save_handoff_dossier,
     calculate_discovery_confidence, get_architect_technical_advice,
-    auto_discover_from_document_text
+    auto_discover_from_document_text, get_brd_template_sheet
 )
 from backend.agent_planner import generate_brd
 from backend.pptx_generator import create_presentation_deck
@@ -62,9 +62,9 @@ def get_or_create_session(session_id: Optional[str] = None) -> ProjectSession:
                 stage="IDEATION",
                 active_persona="CLIENT",
                 confidence_score=0.0,
-                client_review=PersonaReview(persona="CLIENT", signature_name="Elena Vance (Client Business Lead)"),
-                architect_review=PersonaReview(persona="SOLUTIONS_ARCHITECT", signature_name="Alex Morgan (Principal Solutions Architect)"),
-                pm_review=PersonaReview(persona="PROJECT_MANAGER", signature_name="Marcus Reed (Senior Delivery PM)")
+                client_review=PersonaReview(persona="CLIENT", signature_name="Client Business Lead"),
+                architect_review=PersonaReview(persona="SOLUTIONS_ARCHITECT", signature_name="Principal Solutions Architect"),
+                pm_review=PersonaReview(persona="PROJECT_MANAGER", signature_name="Senior Delivery PM")
             ),
             messages=[
                 ChatMessage(
@@ -74,9 +74,9 @@ def get_or_create_session(session_id: Optional[str] = None) -> ProjectSession:
                     content=(
                         "👋 **Hello! Welcome to the 3-Persona AI Project Discovery & Estimation Accelerator.**\n\n"
                         "Our collaborative team consists of:\n"
-                        "• 🧑‍💼 **Elena Vance (Client Business Lead)**: Defines business problem, user pain points, and delivery objectives.\n"
-                        "• 🏗️ **Alex Morgan (Principal Solutions Architect)**: Advises on cloud hyperscaler, security posture, and RAG pipelines.\n"
-                        "• 👔 **Marcus Reed (Senior Delivery PM)**: Reviews resourcing, timeline feasibility, and provides final governance sign-off.\n\n"
+                        "• 🧑‍💼 **Client Business Lead**: Defines business problem, user pain points, and delivery objectives.\n"
+                        "• 🏗️ **Principal Solutions Architect**: Advises on cloud hyperscaler, security posture, and RAG pipelines.\n"
+                        "• 👔 **Senior Delivery PM**: Reviews resourcing, timeline feasibility, and provides final governance sign-off.\n\n"
                         "💡 *Let's start with **Stage 1: Ideation & Scoping** to align with the client and architect on project goals.*"
                     ),
                     timestamp="Just now",
@@ -102,11 +102,10 @@ def health_check():
 def get_persona_ports():
     return {
         "ports": {
-            "8081": {"persona": "CLIENT", "name": "Elena Vance", "role": "Client Business Lead", "title": "Client Portal", "badge": "🧑‍💼 Client (Elena Vance)", "default_tab": "tab-ideation"},
-            "8082": {"persona": "SOLUTIONS_ARCHITECT", "name": "Alex Morgan", "role": "Principal Solutions Architect", "title": "Solutions Architect Portal", "badge": "🏗️ Solutions Architect (Alex Morgan)", "default_tab": "tab-dual-review"},
-            "8083": {"persona": "PROJECT_MANAGER", "name": "Marcus Reed", "role": "Senior Delivery PM", "title": "Project Manager Portal", "badge": "👔 Project Manager (Marcus Reed)", "default_tab": "tab-pm-review"},
-            "8084": {"persona": "ADMIN", "name": "System Administrator", "role": "Enterprise Governance Admin", "title": "Admin & Governance Console", "badge": "🛡️ Admin & Governance", "default_tab": "admin_modal"},
-            "8088": {"persona": "UNIFIED", "name": "Multi-Persona Team", "role": "All Personas Collaboration Gateway", "title": "Unified Collaboration Gateway", "badge": "🌐 Unified Gateway", "default_tab": "tab-ideation"}
+            "8081": {"persona": "CLIENT", "name": "Client Business Lead", "role": "Client Business Lead", "title": "Client Portal", "badge": "🧑‍💼 Client", "default_tab": "tab-ideation"},
+            "8082": {"persona": "SOLUTIONS_ARCHITECT", "name": "Principal Solutions Architect", "role": "Principal Solutions Architect", "title": "Solutions Architect Portal", "badge": "🏗️ Solutions Architect", "default_tab": "tab-dual-review"},
+            "8083": {"persona": "PROJECT_MANAGER", "name": "Senior Delivery PM", "role": "Senior Delivery PM", "title": "Project Manager Portal", "badge": "👔 Project Manager", "default_tab": "tab-pm-review"},
+            "8084": {"persona": "ADMIN", "name": "System Administrator", "role": "Enterprise Governance Admin", "title": "Admin & Governance Console", "badge": "🛡️ Admin & Governance", "default_tab": "admin_modal"}
         }
     }
 
@@ -132,7 +131,8 @@ def get_session_endpoint(session_id: Optional[str] = None):
         "handoff_data": session.handoff_dossier,
         "hitl_gates": gates.model_dump(),
         "workflow": wf.model_dump(),
-        "confidence": conf.model_dump()
+        "confidence": conf.model_dump(),
+        "template_sheet": get_brd_template_sheet(session)
     }
 
 class ChatInput(BaseModel):
@@ -161,9 +161,9 @@ async def chat_endpoint(payload: ChatInput):
     
     # Badge based on active persona
     badge_map = {
-        "CLIENT": "🧑‍💼 Client (Elena Vance)",
-        "SOLUTIONS_ARCHITECT": "🏗️ Solutions Architect (Alex Morgan)",
-        "PROJECT_MANAGER": "👔 Project Manager (Marcus Reed)"
+        "CLIENT": "🧑‍💼 Client Business Lead",
+        "SOLUTIONS_ARCHITECT": "🏗️ Principal Solutions Architect",
+        "PROJECT_MANAGER": "👔 Senior Delivery PM"
     }
     
     # Record user message with active persona badge
@@ -206,7 +206,7 @@ async def chat_endpoint(payload: ChatInput):
                     f"• **Total Effort:** {brd.total_person_days:.1f} Person-Days ({brd.total_person_hours:.0f} Hours)\n"
                     f"• **Total Labour Cost:** ${brd.total_labour_cost_usd:,.2f} (@ ${brd.blended_hourly_rate:.2f}/hr blended rate)\n"
                     f"• **Cloud Infra BoM:** ${brd.sizing_metrics.total_monthly_cloud_cost_usd:,.2f} / month ({session.answers.get('q_cloud', AnswerItem(question_id='q_cloud', question_title='Cloud', answer='Azure')).answer})\n\n"
-                    "👉 **Next Step (Stage 3: Dual Review):** Both **Elena Vance (Client)** and **Alex Morgan (Solutions Architect)** must review the draft BRD and either submit change requests or provide dual sign-off before it moves to Project Manager Marcus Reed."
+                    "👉 **Next Step (Stage 3: Dual Review):** Both **Client Business Lead** and **Principal Solutions Architect** must review the draft BRD and either submit change requests or provide dual sign-off before it moves to Senior Delivery PM."
                 ),
                 timestamp="Just now"
             ))
@@ -221,8 +221,14 @@ async def chat_endpoint(payload: ChatInput):
         "handoff_data": session.handoff_dossier,
         "messages": [m.model_dump() for m in session.messages],
         "workflow": session.workflow.model_dump() if hasattr(session, "workflow") and session.workflow else None,
-        "confidence": conf.model_dump()
+        "confidence": conf.model_dump(),
+        "template_sheet": get_brd_template_sheet(session)
     }
+
+@app.get("/api/brd-template-sheet")
+def get_brd_template_sheet_endpoint(session_id: Optional[str] = Query(None)):
+    session = get_or_create_session(session_id)
+    return get_brd_template_sheet(session)
 
 # --- 3-Persona Collaborative Workflow Endpoints ---
 class SwitchPersonaPayload(BaseModel):
@@ -294,9 +300,9 @@ def ideate_workflow_endpoint(payload: IdeatePayload):
     session.messages.append(ChatMessage(
         sender="architect",
         persona="SOLUTIONS_ARCHITECT",
-        persona_badge="🏗️ Solutions Architect (Alex Morgan)",
+        persona_badge="🏗️ Solutions Architect",
         content=(
-            f"🏗️ **Alex Morgan (Solutions Architect):**\n\n"
+            f"🏗️ **Solutions Architect:**\n\n"
             f"> \"I reviewed the project idea: **'{client_text}'**.\n\n"
             f"**Technical Assessment:**\n"
             f"• **Feasibility:** 95% High Confidence\n"
@@ -410,13 +416,13 @@ def resolve_architect_escalation(payload: ResolveEscalationPayload):
     # Update answers
     if q_id in session.answers:
         session.answers[q_id].answer = answer_val
-        session.answers[q_id].notes = payload.notes or "Resolved by Solutions Architect (Alex Morgan)"
+        session.answers[q_id].notes = payload.notes or "Resolved by Solutions Architect"
     else:
         session.answers[q_id] = AnswerItem(
             question_id=q_id,
             question_title=q_id,
             answer=answer_val,
-            notes=payload.notes or "Resolved by Solutions Architect (Alex Morgan)"
+            notes=payload.notes or "Resolved by Solutions Architect"
         )
         
     # Mark in escalation topics
@@ -436,7 +442,7 @@ def resolve_architect_escalation(payload: ResolveEscalationPayload):
         persona="SOLUTIONS_ARCHITECT",
         persona_badge="🏗️ Solutions Architect",
         is_architect_input=True,
-        content=f"🏗️ **Alex Morgan (Principal Solutions Architect) — Resolved Escalation:**\n\n📌 **Topic:** `{q_id}`\n✅ **Architect Decision:** `{answer_val}`\n💬 **Notes:** {payload.notes or 'Architecture decision confirmed and applied to BRD.'}",
+        content=f"🏗️ **Principal Solutions Architect — Resolved Escalation:**\n\n📌 **Topic:** `{q_id}`\n✅ **Architect Decision:** `{answer_val}`\n💬 **Notes:** {payload.notes or 'Architecture decision confirmed and applied to BRD.'}",
         timestamp="Just now"
     ))
     
@@ -492,7 +498,7 @@ def dual_review_feedback_endpoint(payload: DualReviewFeedbackPayload):
     brd = generate_brd(session)
     session.brd = brd
     
-    role_name = "Elena Vance (Client Business Lead)" if p == "CLIENT" else "Alex Morgan (Principal Solutions Architect)"
+    role_name = "Client Business Lead" if p == "CLIENT" else "Principal Solutions Architect"
     badge = "🧑‍💼 Client" if p == "CLIENT" else "🏗️ Solutions Architect"
     
     session.messages.append(ChatMessage(
@@ -538,17 +544,17 @@ def dual_review_approve_endpoint(payload: DualReviewApprovePayload):
     if p == "CLIENT":
         session.workflow.client_review.satisfied = True
         session.workflow.client_review.status = "APPROVED"
-        session.workflow.client_review.signature_name = payload.signature_name or "Elena Vance (Client Business Lead)"
+        session.workflow.client_review.signature_name = payload.signature_name or "Client Business Lead"
         session.workflow.client_review.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         session.workflow.client_review.feedback = payload.notes
-        sender_role = "🧑‍💼 Client (Elena Vance)"
+        sender_role = "🧑‍💼 Client Business Lead"
     else:
         session.workflow.architect_review.satisfied = True
         session.workflow.architect_review.status = "APPROVED"
-        session.workflow.architect_review.signature_name = payload.signature_name or "Alex Morgan (Principal Solutions Architect)"
+        session.workflow.architect_review.signature_name = payload.signature_name or "Principal Solutions Architect"
         session.workflow.architect_review.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         session.workflow.architect_review.feedback = payload.notes
-        sender_role = "🏗️ Solutions Architect (Alex Morgan)"
+        sender_role = "🏗️ Principal Solutions Architect"
         
     session.messages.append(ChatMessage(
         sender="user" if p == "CLIENT" else "architect",
@@ -568,9 +574,9 @@ def dual_review_approve_endpoint(payload: DualReviewApprovePayload):
             persona_badge="🤖 AI Governance Coordinator",
             content=(
                 "🎉 **DUAL APPROVAL ACHIEVED!**\n\n"
-                "Both **Elena Vance (Client Lead)** and **Alex Morgan (Solutions Architect)** have approved the draft BRD.\n\n"
+                "Both **Client Business Lead** and **Solutions Architect** have approved the draft BRD.\n\n"
                 "👉 **Stage 4: Project Manager Review Gate Activated.**\n"
-                "**Marcus Reed (Senior Delivery PM)** is now reviewing the 18-phase timeline, 12-discipline resource loading ($30/hr rate), "
+                "**Senior Delivery PM** is now reviewing the 18-phase timeline, 12-discipline resource loading ($30/hr rate), "
                 "statutory holiday calendar, and cloud budget for final delivery governance."
             ),
             timestamp="Just now"
@@ -612,7 +618,7 @@ def pm_review_query_endpoint(payload: PMQueryPayload):
     session.workflow.triparty_messages.append(TripartyMessage(
         id=msg_id,
         sender_persona="PROJECT_MANAGER",
-        sender_name="Marcus Reed (Senior Delivery PM)",
+        sender_name="Senior Delivery PM",
         message=f"[{payload.topic}] {payload.query_text} (Addressed to: {payload.addressed_to})",
         timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ))
@@ -620,10 +626,10 @@ def pm_review_query_endpoint(payload: PMQueryPayload):
     session.messages.append(ChatMessage(
         sender="manager",
         persona="PROJECT_MANAGER",
-        persona_badge="👔 Project Manager (Marcus Reed)",
+        persona_badge="👔 Senior Delivery PM",
         is_pm_input=True,
         content=(
-            f"👔 **Marcus Reed (Delivery PM) raised a Query / Change Request ({q_id}):**\n\n"
+            f"👔 **Delivery PM raised a Query / Change Request ({q_id}):**\n\n"
             f"📌 **Topic:** {payload.topic}\n"
             f"💬 **Query:** \"{payload.query_text}\"\n"
             f"🎯 **Addressed To:** {payload.addressed_to}\n\n"
@@ -658,11 +664,11 @@ def pm_review_respond_endpoint(payload: PMQueryRespondPayload):
         
     if p == "CLIENT":
         target_q.client_response = payload.response_text
-        responder_name = "Elena Vance (Client Business Lead)"
+        responder_name = "Client Business Lead"
         badge = "🧑‍💼 Client"
     else:
         target_q.architect_response = payload.response_text
-        responder_name = "Alex Morgan (Principal Solutions Architect)"
+        responder_name = "Principal Solutions Architect"
         badge = "🏗️ Solutions Architect"
         
     # Check if resolved
@@ -733,7 +739,7 @@ def pm_replan_endpoint(payload: PMReplanPayload):
     session.messages.append(ChatMessage(
         sender="manager",
         persona="PROJECT_MANAGER",
-        persona_badge="👔 Project Manager (Marcus Reed)",
+        persona_badge="👔 Senior Delivery PM",
         is_pm_input=True,
         content=(
             f"🔄 **PM Revisions Applied to BRD!**\n\n"
@@ -765,7 +771,7 @@ def pm_review_approve_endpoint(payload: PMApprovePayload):
         
     session.workflow.pm_review.satisfied = True
     session.workflow.pm_review.status = "APPROVED"
-    session.workflow.pm_review.signature_name = payload.signature_name or "Marcus Reed (Senior Delivery PM)"
+    session.workflow.pm_review.signature_name = payload.signature_name or "Senior Delivery PM"
     session.workflow.pm_review.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     session.workflow.pm_review.feedback = payload.notes or "Project plan, budget, and 18-phase schedule approved for execution."
     
@@ -787,10 +793,10 @@ def pm_review_approve_endpoint(payload: PMApprovePayload):
     session.messages.append(ChatMessage(
         sender="manager",
         persona="PROJECT_MANAGER",
-        persona_badge="👔 Project Manager (Marcus Reed)",
+        persona_badge="👔 Senior Delivery PM",
         is_pm_input=True,
         content=(
-            f"🏆 **FINAL PROJECT SIGN-OFF GRANTED BY MARCUS REED (DELIVERY PM)!**\n\n"
+            f"🏆 **FINAL PROJECT SIGN-OFF GRANTED BY SENIOR DELIVERY PM!**\n\n"
             f"> \"{payload.notes or 'All governance gates passed. Timeline, budget, and architectural safeguards verified.'}\"\n\n"
             f"📜 **Official 3-Persona Tripartite Signatures Certified:**\n"
             f"1️⃣ 🧑‍💼 **Client Business Lead:** {session.workflow.client_review.signature_name} (Signed: {session.workflow.client_review.timestamp})\n"
@@ -1812,14 +1818,14 @@ def ideation_commit_endpoint(payload: IdeationPayload):
     session.messages.append(ChatMessage(
         sender="client",
         persona="CLIENT",
-        persona_badge="🧑‍💼 Client (Elena Vance)",
+        persona_badge="🧑‍💼 Client Business Lead",
         content=f"💡 **Project Vision Aligned:** *\"{payload.project_title}\"*\n\n> {payload.client_idea}",
         timestamp="Just now"
     ))
     session.messages.append(ChatMessage(
         sender="architect",
         persona="SOLUTIONS_ARCHITECT",
-        persona_badge="🏗️ Solutions Architect (Alex Morgan)",
+        persona_badge="🏗️ Principal Solutions Architect",
         content=(
             f"🏗️ **Architectural Scoping Feasibility Confirmed!**\n\n"
             f"• **Target Hyperscaler:** {payload.cloud_preference}\n"
@@ -1871,8 +1877,8 @@ def delegate_architect_endpoint(payload: DelegateArchitectPayload):
     session.messages.append(ChatMessage(
         sender="architect",
         persona="SOLUTIONS_ARCHITECT",
-        persona_badge="🏗️ Solutions Architect (Alex Morgan)",
-        content=f"🏗️ **Alex Morgan's Technical Recommendation for {cur_q.title}:**\n\n{rec['quote']}\n\n👉 *Applied: `{rec['label']}`*",
+        persona_badge="🏗️ Solutions Architect",
+        content=f"🏗️ **Technical Recommendation from Solutions Architect for {cur_q.title}:**\n\n{rec['quote']}\n\n👉 *Applied: `{rec['label']}`*",
         timestamp="Just now"
     ))
     
@@ -1922,7 +1928,7 @@ def dual_review_feedback_endpoint(payload: DualReviewFeedbackPayload):
     target_rev.feedback = payload.feedback
     target_rev.feedback_history.append(payload.feedback)
     
-    author_tag = "Elena Vance (Client Lead)" if is_client else "Alex Morgan (Principal Architect)"
+    author_tag = "Client Business Lead" if is_client else "Principal Solutions Architect"
     author_badge = "🧑‍💼 Client Review" if is_client else "🏗️ Architect Review"
     
     session.messages.append(ChatMessage(
@@ -1975,8 +1981,8 @@ def dual_review_approve_endpoint(payload: DualReviewApprovePayload):
         session.messages.append(ChatMessage(
             sender="client",
             persona="CLIENT",
-            persona_badge="🧑‍💼 Client (Elena Vance)",
-            content="✅ **Client Sign-Off Confirmed:** Elena Vance has approved the scope, timeline, and deliverables in the BRD.",
+            persona_badge="🧑‍💼 Client Business Lead",
+            content="✅ **Client Sign-Off Confirmed:** Client Business Lead has approved the scope, timeline, and deliverables in the BRD.",
             timestamp="Just now"
         ))
     else:
@@ -1985,8 +1991,8 @@ def dual_review_approve_endpoint(payload: DualReviewApprovePayload):
         session.messages.append(ChatMessage(
             sender="architect",
             persona="SOLUTIONS_ARCHITECT",
-            persona_badge="🏗️ Solutions Architect (Alex Morgan)",
-            content="✅ **Architect Sign-Off Confirmed:** Alex Morgan has approved the technical architecture, microservices decomposition, and cloud sizing BoM.",
+            persona_badge="🏗️ Principal Solutions Architect",
+            content="✅ **Architect Sign-Off Confirmed:** Principal Solutions Architect has approved the technical architecture, microservices decomposition, and cloud sizing BoM.",
             timestamp="Just now"
         ))
         
@@ -2000,8 +2006,8 @@ def dual_review_approve_endpoint(payload: DualReviewApprovePayload):
             persona_badge="🤖 Governance Workflow",
             content=(
                 "🎉 **Dual Sign-Off Achieved!**\n\n"
-                "Both **Elena Vance (Client)** and **Alex Morgan (Solutions Architect)** have approved the plan.\n"
-                "👉 **The engagement has transitioned to Stage 4: Project Manager Marcus Reed** for commercial governance, holiday scheduling, and final sign-off."
+                "Both **Client Business Lead** and **Solutions Architect** have approved the plan.\n"
+                "👉 **The engagement has transitioned to Stage 4: Senior Delivery PM** for commercial governance, holiday scheduling, and final sign-off."
             ),
             timestamp="Just now"
         ))
@@ -2042,7 +2048,7 @@ def pm_query_endpoint(payload: PMQueryPayload):
     tri_msg = TripartyMessage(
         message_id=str(uuid.uuid4())[:8],
         persona="PROJECT_MANAGER",
-        author_name="Marcus Reed (Senior Delivery PM)",
+        author_name="Senior Delivery PM",
         text=f"📢 **Governance Query [{query_item.query_id} - {payload.topic}]:** {payload.text} *(Addressed to: {payload.addressed_to})*",
         timestamp=now_str
     )
@@ -2051,7 +2057,7 @@ def pm_query_endpoint(payload: PMQueryPayload):
     session.messages.append(ChatMessage(
         sender="manager",
         persona="PROJECT_MANAGER",
-        persona_badge="👔 Delivery PM (Marcus Reed)",
+        persona_badge="👔 Senior Delivery PM",
         content=f"📢 **Delivery Lead Query [{query_item.query_id}]:** {payload.text}",
         timestamp="Just now"
     ))
@@ -2079,9 +2085,9 @@ def pm_respond_endpoint(payload: PMResponsePayload):
     now_str = datetime.now().isoformat()
     
     name_map = {
-        "CLIENT": "Elena Vance (Client Business Lead)",
-        "SOLUTIONS_ARCHITECT": "Alex Morgan (Principal Architect)",
-        "PROJECT_MANAGER": "Marcus Reed (Delivery PM)"
+        "CLIENT": "Client Business Lead",
+        "SOLUTIONS_ARCHITECT": "Principal Solutions Architect",
+        "PROJECT_MANAGER": "Senior Delivery PM"
     }
     
     tri_msg = TripartyMessage(
@@ -2124,8 +2130,8 @@ def pm_approve_endpoint(payload: PMApprovePayload):
     session.messages.append(ChatMessage(
         sender="manager",
         persona="PROJECT_MANAGER",
-        persona_badge="👔 Senior Delivery PM (Marcus Reed)",
-        content="🏆 **Final PM Governance Sign-Off Granted:** Marcus Reed has officially verified 12-discipline resource loading, budget limits (@ $30/hr), and statutory milestones. Deliverables released for distribution!",
+        persona_badge="👔 Senior Delivery PM",
+        content="🏆 **Final PM Governance Sign-Off Granted:** Senior Delivery PM has officially verified 12-discipline resource loading, budget limits (@ $30/hr), and statutory milestones. Deliverables released for distribution!",
         timestamp="Just now"
     ))
 

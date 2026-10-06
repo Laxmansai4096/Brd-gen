@@ -4,33 +4,62 @@ let activePersona = "CLIENT"; // "CLIENT" | "SOLUTIONS_ARCHITECT" | "PROJECT_MAN
 
 const PERSONA_CONFIG = {
   CLIENT: {
-    name: "Elena Vance",
+    name: "Client Business Lead",
     role: "Client Business Lead",
-    avatar: "EV",
+    avatar: "CL",
     class: "client",
-    tag: "🧑‍💼 Client (Elena)",
+    tag: "🧑‍💼 Client",
     pillId: "pillClient",
-    tip: "Typing as: <strong>Elena Vance (Client Business Lead)</strong>"
+    tip: "Typing as: <strong>Client Business Lead</strong>"
   },
   SOLUTIONS_ARCHITECT: {
-    name: "Alex Morgan",
+    name: "Principal Solutions Architect",
     role: "Principal Solutions Architect",
-    avatar: "AM",
+    avatar: "SA",
     class: "architect",
-    tag: "🏗️ Architect (Alex)",
+    tag: "🏗️ Architect",
     pillId: "pillArchitect",
-    tip: "Typing as: <strong>Alex Morgan (Principal Solutions Architect)</strong>"
+    tip: "Typing as: <strong>Principal Solutions Architect</strong>"
   },
   PROJECT_MANAGER: {
-    name: "Marcus Reed",
+    name: "Senior Delivery PM",
     role: "Senior Delivery PM",
-    avatar: "MR",
+    avatar: "PM",
     class: "pm",
-    tag: "👔 PM (Marcus)",
+    tag: "👔 PM",
     pillId: "pillPM",
-    tip: "Typing as: <strong>Marcus Reed (Senior Delivery PM)</strong>"
+    tip: "Typing as: <strong>Senior Delivery PM</strong>"
   }
 };
+
+let isSidebarCollapsed = localStorage.getItem("brd_sidebar_collapsed") === "true";
+
+function toggleLeftSidebar() {
+  isSidebarCollapsed = !isSidebarCollapsed;
+  localStorage.setItem("brd_sidebar_collapsed", isSidebarCollapsed ? "true" : "false");
+  applySidebarState();
+}
+
+function applySidebarState() {
+  const sidebar = document.getElementById("sidebarPanel");
+  const headerIcon = document.getElementById("sidebarToggleIcon");
+  const panelIcon = document.getElementById("panelToggleSidebarIcon");
+  const panelText = document.getElementById("panelToggleSidebarText");
+
+  if (!sidebar) return;
+
+  if (isSidebarCollapsed) {
+    sidebar.classList.add("collapsed");
+    if (headerIcon) headerIcon.textContent = "▶";
+    if (panelIcon) panelIcon.textContent = "▶";
+    if (panelText) panelText.textContent = "Sidebar";
+  } else {
+    sidebar.classList.remove("collapsed");
+    if (headerIcon) headerIcon.textContent = "☰";
+    if (panelIcon) panelIcon.textContent = "◀";
+    if (panelText) panelText.textContent = "Sidebar";
+  }
+}
 
 let isChatExpanded = false;
 
@@ -57,8 +86,8 @@ async function switchActivePersona(persona) {
   activePersona = persona;
   const cfg = PERSONA_CONFIG[persona];
   
-  // Update Switcher Pills
-  document.querySelectorAll(".persona-pill").forEach(p => p.classList.remove("active"));
+  // Update Switcher Pills in header
+  document.querySelectorAll(".persona-pill, .persona-tab-btn, .header-persona-pill").forEach(p => p.classList.remove("active"));
   const activePill = document.getElementById(cfg.pillId);
   if (activePill) activePill.classList.add("active");
   
@@ -102,138 +131,61 @@ async function switchActivePersona(persona) {
   }
 }
 
-// Render Persona-Specific Hero Banner
+// Render Persona-Specific Status
 function renderPersonaHero() {
   const iconEl = document.getElementById("personaHeroIcon");
   const tagEl = document.getElementById("personaHeroTag");
-  const titleEl = document.getElementById("personaHeroTitle");
   const descEl = document.getElementById("personaHeroDesc");
-  const actionsEl = document.getElementById("personaHeroActions");
-  const port = window.location.port || "8088";
 
-  // Apply body mode class
   document.body.classList.remove("persona-client-mode", "persona-architect-mode", "persona-pm-mode", "persona-admin-mode");
 
-  if (port === "8084" || activePersona === "ADMIN") {
-    document.body.classList.add("persona-admin-mode");
-    if (iconEl) iconEl.innerHTML = "🛡️";
-    if (tagEl) tagEl.textContent = `🛡️ Enterprise Admin Console (Port ${port}) — Governance & Master Config`;
-    if (titleEl) titleEl.textContent = "Global Working Hours, Rate Cards & System Parameters";
-    if (descEl) descEl.textContent = "Manage statutory holiday calendars, blended hourly rate cards, master assumption rules, and multi-cloud AI endpoints.";
-    if (actionsEl) {
-      actionsEl.innerHTML = `
-        <button class="persona-action-btn primary" onclick="openAdminModal()"><span>📅</span> Working Calendars & Rates</button>
-        <button class="persona-action-btn" onclick="openSettingsModal()"><span>☁️</span> Cloud AI Gateway</button>
-        <button class="persona-action-btn" onclick="switchTab('tab-assumptions')"><span>📋</span> Master Assumptions</button>
-      `;
-    }
-  } else if (activePersona === "CLIENT") {
+  if (activePersona === "CLIENT") {
     document.body.classList.add("persona-client-mode");
     if (iconEl) iconEl.innerHTML = "🧑‍💼";
-    if (tagEl) tagEl.textContent = `🧑‍💼 Client Portal (Port ${port}) — Elena Vance (Client Business Lead)`;
-    if (titleEl) titleEl.textContent = "Start Your Project & Define Business Requirements";
-    if (descEl) descEl.textContent = "Define business objectives, answer friendly discovery questions, or consult Solutions Architect Alex Morgan for technical decisions.";
-    if (actionsEl) {
-      actionsEl.innerHTML = `
-        <button class="persona-action-btn primary" onclick="switchTab('tab-ideation')"><span>💡</span> 1. Ideation Studio</button>
-        <button class="persona-action-btn" onclick="switchTab('tab-brd')"><span>💬</span> 2. Discovery Chat</button>
-        <button class="persona-action-btn" onclick="switchTab('tab-dual-review')"><span>✍️</span> 3. Client Sign-off</button>
-      `;
-    }
+    if (tagEl) tagEl.textContent = "Client Business Lead";
+    if (descEl) descEl.textContent = "Define business objectives and discovery parameters";
   } else if (activePersona === "SOLUTIONS_ARCHITECT") {
     document.body.classList.add("persona-architect-mode");
     if (iconEl) iconEl.innerHTML = "🏗️";
-    if (tagEl) tagEl.textContent = `🏗️ Solutions Architect Portal (Port ${port}) — Alex Morgan (Principal Architect)`;
-    if (titleEl) titleEl.textContent = "Multi-Cloud Topology, Sizing BoM & Technical Oversight";
-    if (descEl) descEl.textContent = "Architect microservices decomposition (C001-C006), verify cloud infrastructure BoM ($645/mo), and resolve technical delegations from Elena.";
-    if (actionsEl) {
-      actionsEl.innerHTML = `
-        <button class="persona-action-btn primary" onclick="switchTab('tab-components')"><span>🏗️</span> Components C001-C006</button>
-        <button class="persona-action-btn" onclick="switchTab('tab-sizing')"><span>☁️</span> Sizing & BoM ($645/mo)</button>
-        <button class="persona-action-btn" onclick="switchTab('tab-dual-review')"><span>✅</span> Architect Sign-off</button>
-      `;
-    }
+    if (tagEl) tagEl.textContent = "Principal Solutions Architect";
+    if (descEl) descEl.textContent = "Microservices decomposition, Sizing BoM & Dual Review";
   } else if (activePersona === "PROJECT_MANAGER") {
     document.body.classList.add("persona-pm-mode");
     if (iconEl) iconEl.innerHTML = "👔";
-    if (tagEl) tagEl.textContent = `👔 Project Manager Portal (Port ${port}) — Marcus Reed (Senior Delivery PM)`;
-    if (titleEl) titleEl.textContent = "18-Phase WBS, Calendar Feasibility & Final Sign-Off";
-    if (descEl) descEl.textContent = "Review 18-phase timeline, 12-discipline resource loading, statutory holiday impacts, and resolve team queries in Tripartite Discussion.";
-    if (actionsEl) {
-      actionsEl.innerHTML = `
-        <button class="persona-action-btn primary" onclick="switchTab('tab-pm-review')"><span>💬</span> Tripartite Consensus</button>
-        <button class="persona-action-btn" onclick="switchTab('tab-phases')"><span>📊</span> 18-Phase Roadmap</button>
-        <button class="persona-action-btn" onclick="switchTab('tab-daywise')"><span>📅</span> Day-Wise Calendar</button>
-      `;
-    }
+    if (tagEl) tagEl.textContent = "Senior Delivery PM";
+    if (descEl) descEl.textContent = "12 disciplines, holiday calendars, and consensus sign-off";
   }
 }
 
-// Multi-Port Persona Auto-Configuration
+// Multi-Port Persona Auto-Configuration (Ports: 8081 Client, 8082 Architect, 8083 PM, 8084 Admin)
 function configurePortPersona() {
-  const port = window.location.port || "8088";
-  const badgeEl = document.getElementById("portCurrentBadge");
-  
-  // Highlight current port nav button
-  document.querySelectorAll(".port-nav-btn").forEach(btn => btn.classList.remove("active-current-port"));
-  const currentNav = document.getElementById(`navPort${port}`);
-  if (currentNav) currentNav.classList.add("active-current-port");
+  const port = window.location.port || "8081";
 
-  if (port === "8081") {
-    // Client Lead Portal
-    activePersona = "CLIENT";
-    if (badgeEl) {
-      badgeEl.className = "port-badge-indicator client-port";
-      badgeEl.innerHTML = `<span class="port-pulse-dot"></span> 🧑‍💼 Port 8081: Client Interface (Elena Vance - Client Lead)`;
-    }
-    document.title = "🧑‍💼 Client Portal (Port 8081) | Elena Vance";
-    switchActivePersona("CLIENT");
-    switchTab("tab-ideation");
-  } else if (port === "8082") {
-    // Solutions Architect Portal
+  if (port === "8082") {
     activePersona = "SOLUTIONS_ARCHITECT";
-    if (badgeEl) {
-      badgeEl.className = "port-badge-indicator architect-port";
-      badgeEl.innerHTML = `<span class="port-pulse-dot"></span> 🏗️ Port 8082: Solutions Architect Interface (Alex Morgan)`;
-    }
-    document.title = "🏗️ Solutions Architect Portal (Port 8082) | Alex Morgan";
+    document.title = "🏗️ Solutions Architect Portal";
     switchActivePersona("SOLUTIONS_ARCHITECT");
     switchTab("tab-dual-review");
   } else if (port === "8083") {
-    // Project Manager Portal
     activePersona = "PROJECT_MANAGER";
-    if (badgeEl) {
-      badgeEl.className = "port-badge-indicator pm-port";
-      badgeEl.innerHTML = `<span class="port-pulse-dot"></span> 👔 Port 8083: Project Manager Interface (Marcus Reed)`;
-    }
-    document.title = "👔 Project Manager Portal (Port 8083) | Marcus Reed";
+    document.title = "👔 Project Manager Portal";
     switchActivePersona("PROJECT_MANAGER");
     switchTab("tab-pm-review");
   } else if (port === "8084") {
-    // Admin & Governance Console
     activePersona = "ADMIN";
-    if (badgeEl) {
-      badgeEl.className = "port-badge-indicator admin-port";
-      badgeEl.innerHTML = `<span class="port-pulse-dot"></span> 🛡️ Port 8084: Enterprise Admin & Governance Console`;
-    }
-    document.title = "🛡️ Admin & Governance Console (Port 8084)";
-    renderPersonaHero();
-    setTimeout(() => {
-      openAdminModal();
-    }, 450);
+    document.title = "🛡️ Admin Console";
+    setTimeout(() => { openAdminModal(); }, 450);
   } else {
-    // Unified Gateway (8088 or others)
-    if (badgeEl) {
-      badgeEl.className = "port-badge-indicator";
-      badgeEl.innerHTML = `<span class="port-pulse-dot"></span> 🌐 Port ${port}: Unified Team Collaboration Gateway`;
-    }
-    document.title = `🌐 Unified AI BRD Platform (Port ${port})`;
-    renderPersonaHero();
+    // Default to Client Lead on 8081 or standard ports
+    activePersona = "CLIENT";
+    document.title = "AI BRD Studio | Client Portal";
+    switchActivePersona("CLIENT");
   }
 }
 
 // Initialize app on load
 document.addEventListener("DOMContentLoaded", async () => {
+  applySidebarState();
   await loadSettings();
   await initSession();
   await loadProjectHistory();
@@ -310,6 +262,7 @@ async function initSession() {
       renderChatMessages();
       updateProgressCounter();
       updateWorkflowUI(currentSessionData);
+      renderBRDTemplateSheet(currentSessionData.template_sheet);
       
       if (currentSessionData.brd) {
         renderBRDWorkbench(currentSessionData.brd);
@@ -333,6 +286,16 @@ async function resetSession() {
   }
 }
 
+function formatMessageTimestamp(ts) {
+  if (!ts) return '';
+  if (typeof ts === 'string' && (ts === 'Just now' || ts.toLowerCase().includes('now'))) return 'Just now';
+  const d = new Date(ts);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  return String(ts);
+}
+
 // Render Chat Stream
 function renderChatMessages() {
   const container = document.getElementById("chatHistory");
@@ -346,29 +309,39 @@ function renderChatMessages() {
     const sender = m.sender || "agent";
     msgDiv.className = `chat-msg ${sender}`;
     
-    let formattedText = m.content
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      .replace(/`([^`]+)`/g, "<code>$1</code>")
-      .replace(/\n\n/g, "</p><p>")
-      .replace(/\n/g, "<br>");
+    let isAmbiguity = m.content.includes("Targeted Clarification") || m.content.includes("Ambiguity") || m.content.includes("too brief or ambiguous") || m.content.includes("ambiguous");
+    let formattedText = "";
+    if (window.marked && typeof marked.parse === "function") {
+      formattedText = marked.parse(m.content);
+    } else {
+      formattedText = m.content
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*(.*?)\*/g, "<em>$1</em>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\n\n/g, "</p><p>")
+        .replace(/\n/g, "<br>");
+    }
+
+    if (isAmbiguity && sender === "agent") {
+      formattedText = `<div class="ambiguity-card"><div class="ambiguity-card-title">⚠️ Specificity & Clarification Needed</div>${formattedText}</div>`;
+    }
 
     let personaHeader = "";
     if (m.persona_name || m.persona) {
       const pRole = m.persona_role || (m.persona === "SOLUTIONS_ARCHITECT" ? "Principal Architect" : m.persona === "PROJECT_MANAGER" ? "Senior Delivery PM" : "Client Business Lead");
       const pCls = (m.persona === "SOLUTIONS_ARCHITECT" ? "architect" : (m.persona === "PROJECT_MANAGER" ? "pm" : "client"));
-      const pTag = (m.persona === "SOLUTIONS_ARCHITECT" ? "🏗️ Architect (Alex)" : (m.persona === "PROJECT_MANAGER" ? "👔 PM (Marcus)" : "🧑‍💼 Client (Elena)"));
+      const pTag = (m.persona === "SOLUTIONS_ARCHITECT" ? "🏗️ Architect" : (m.persona === "PROJECT_MANAGER" ? "👔 PM" : "🧑‍💼 Client"));
       personaHeader = `
         <div class="msg-author-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 0.74rem;">
           <span class="msg-persona-tag msg-persona-${pCls}">${escapeHtml(m.persona_name ? `${pTag} — ${m.persona_name}` : pTag)}</span>
-          <span style="color: #94a3b8; font-size: 0.68rem;">${m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+          <span style="color: #94a3b8; font-size: 0.68rem;">${formatMessageTimestamp(m.timestamp)}</span>
         </div>
       `;
     } else if (sender === "agent") {
       personaHeader = `
         <div class="msg-author-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 0.74rem;">
           <span class="msg-persona-tag msg-persona-agent">🤖 BRD Discovery Agent</span>
-          <span style="color: #94a3b8; font-size: 0.68rem;">${m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+          <span style="color: #94a3b8; font-size: 0.68rem;">${formatMessageTimestamp(m.timestamp)}</span>
         </div>
       `;
     }
@@ -491,9 +464,9 @@ function renderQuickSuggestions() {
     delegateBtn.style.borderColor = "#60a5fa";
     delegateBtn.style.fontWeight = "700";
     delegateBtn.style.boxShadow = "0 2px 8px rgba(59, 130, 246, 0.35)";
-    delegateBtn.title = "Ask Solutions Architect Alex Morgan to analyze this and provide technical recommendations";
+    delegateBtn.title = "Ask Solutions Architect to analyze this and provide technical recommendations";
     delegateBtn.innerHTML = `
-      <span class="chip-label" style="color: #ffffff;">🏗️ Ask Solutions Architect (Alex)</span>
+      <span class="chip-label" style="color: #ffffff;">🏗️ Ask Solutions Architect</span>
       <button class="chip-instant-btn" style="background: rgba(255,255,255,0.2); color: #ffffff;" title="Delegate instantly to Architect" onclick="event.stopPropagation(); delegateCurrentQuestionToArchitect()">➔</button>
     `;
     delegateBtn.onclick = () => delegateCurrentQuestionToArchitect();
@@ -529,6 +502,115 @@ function updateProgressCounter() {
     el.className = "progress-counter";
     el.innerHTML = `<span>📊</span> <strong>Domain Coverage:</strong> ${confirmed} / ${total} (${completionRate}%) <span class="gate-target-pill">Gate: 95%</span>`;
   }
+}
+
+function renderBRDTemplateSheet(templateSheet) {
+  const container = document.getElementById("brdTemplateTopicsContainer");
+  const percentText = document.getElementById("brdSheetPercentText");
+  const meterFill = document.getElementById("brdSheetMeterFill");
+  const keyCountEl = document.getElementById("brdSheetKeyCount");
+  const statusBadge = document.getElementById("brdSheetStatusBadge");
+  const calloutContainer = document.getElementById("gate95CalloutContainer");
+
+  if (!templateSheet && currentSessionData && currentSessionData.template_sheet) {
+    templateSheet = currentSessionData.template_sheet;
+  }
+  if (!templateSheet || !container) return;
+
+  const rate = templateSheet.completion_rate || 0;
+  const isPassed = templateSheet.is_gate_passed || (rate >= 95.0);
+  const keyFilled = templateSheet.key_fields_filled || 0;
+  const keyTotal = templateSheet.key_fields_total || 17;
+
+  if (percentText) percentText.textContent = `${rate}%`;
+  if (meterFill) {
+    meterFill.style.width = `${Math.min(100, rate)}%`;
+    if (rate >= 95) {
+      meterFill.style.background = "linear-gradient(90deg, #10b981, #059669)";
+    } else {
+      meterFill.style.background = "linear-gradient(90deg, #3b82f6, #10b981)";
+    }
+  }
+  if (keyCountEl) {
+    keyCountEl.textContent = `${keyFilled} / ${keyTotal} Key Fields Filled (Gate: 95%)`;
+  }
+  if (statusBadge) {
+    if (isPassed) {
+      statusBadge.className = "badge badge-success";
+      statusBadge.textContent = "95% Gate Passed";
+    } else {
+      statusBadge.className = "badge badge-info";
+      statusBadge.textContent = "Collecting Information";
+    }
+  }
+
+  // Hide premature client approval banner if BRD is not yet synthesized
+  const approvalBanner = document.getElementById("brdApprovalBanner");
+  if (approvalBanner) {
+    const hasBrd = (currentSessionData && currentSessionData.has_brd) || templateSheet.has_synthesized_brd;
+    approvalBanner.style.display = hasBrd ? "block" : "none";
+  }
+
+  // Gate 95% Action Callout
+  if (calloutContainer) {
+    if (isPassed) {
+      calloutContainer.style.display = "block";
+      calloutContainer.innerHTML = `
+        <div class="gate-95-banner">
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem;">🎉 95%+ Confidence Gate Passed (${rate}%)!</div>
+            <div style="font-size: 0.80rem; opacity: 0.95;">All key data fields confirmed across Client & Architect. Draft BRD synthesized.</div>
+          </div>
+          <button class="gate-95-btn" onclick="switchTab('tab-dual-review')">Inspect & Review BRD Template →</button>
+        </div>
+      `;
+    } else {
+      calloutContainer.style.display = "none";
+    }
+  }
+
+  // Topics Render
+  container.innerHTML = "";
+  const topics = templateSheet.topics || [];
+  topics.forEach((topic) => {
+    const topicCard = document.createElement("div");
+    topicCard.className = "brd-sheet-topic-card";
+
+    let fieldsHtml = "";
+    (topic.fields || []).forEach((f) => {
+      const isFilled = (f.status === "FILLED");
+      const statusClass = isFilled ? "filled" : "pending";
+      const badgeText = isFilled ? "✓ Confirmed" : "⏳ Pending";
+      const displayVal = f.value ? escapeHtml(f.value) : `<em style="color:#94a3b8;">Pending chat intake...</em>`;
+      const keyTag = f.is_key ? `<span style="color:#ef4444; font-weight:700;" title="Key Required Data Field">*</span>` : "";
+
+      fieldsHtml += `
+        <div class="brd-sheet-field-row ${statusClass}">
+          <div class="brd-field-name">
+            <span>${keyTag}${escapeHtml(f.title)}:</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="brd-field-val" title="${f.value ? escapeHtml(f.value) : ''}">${displayVal}</div>
+            <span class="brd-field-badge ${statusClass}">${badgeText}</span>
+          </div>
+        </div>
+      `;
+    });
+
+    topicCard.innerHTML = `
+      <div class="brd-sheet-topic-header">
+        <div class="brd-sheet-topic-title">
+          <span>${topic.icon || '📌'}</span>
+          <span>${escapeHtml(topic.title)}</span>
+        </div>
+        <span class="badge" style="font-size: 0.68rem; background: #e0f2fe; color: #0369a1;">${escapeHtml(topic.primary_persona || '')}</span>
+      </div>
+      <div class="brd-sheet-field-grid">
+        ${fieldsHtml}
+      </div>
+    `;
+    container.appendChild(topicCard);
+  });
 }
 
 function sendUserMessage() {
@@ -599,6 +681,7 @@ async function sendMessageWithText(text, displayText) {
       renderChatMessages();
       updateProgressCounter();
       updateWorkflowUI(currentSessionData);
+      renderBRDTemplateSheet(currentSessionData.template_sheet);
       
       if (currentSessionData.brd) {
         renderBRDWorkbench(currentSessionData.brd);
@@ -3118,7 +3201,7 @@ function updateWorkflowUI(data) {
     if (pmRev.triparty_messages.length === 0) {
       tripartyContainer.innerHTML = `
         <div style="text-align: center; color: #94a3b8; font-size: 0.82rem; padding: 24px;">
-          🤝 Tripartite consensus room is ready. Delivery PM Marcus Reed, Client Elena Vance, and Architect Alex Morgan can negotiate deliverables, staffing, and risk mitigations here.
+          🤝 Tripartite consensus room is ready. Delivery PM, Client Business Lead, and Solutions Architect can negotiate deliverables, staffing, and risk mitigations here.
         </div>
       `;
     } else {
@@ -3131,7 +3214,7 @@ function updateWorkflowUI(data) {
         msgEl.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <span class="msg-persona-tag msg-persona-${pCls}">${escapeHtml(pTag + " (" + msg.author_name + ")")}</span>
-            <span style="font-size: 0.68rem; color: #94a3b8;">${msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+            <span style="font-size: 0.68rem; color: #94a3b8;">${formatMessageTimestamp(msg.timestamp)}</span>
           </div>
           <div style="font-size: 0.84rem; color: #1e293b; line-height: 1.5;">${escapeHtml(msg.text)}</div>
         `;
@@ -3288,7 +3371,7 @@ async function submitDualReviewFeedback(persona) {
       if (currentSessionData.brd) {
         renderBRDWorkbench(currentSessionData.brd);
       }
-      alert(`Feedback recorded for ${persona === "CLIENT" ? "Elena Vance" : "Alex Morgan"}. Plan re-synthesized!`);
+      alert(`Feedback recorded for ${persona === "CLIENT" ? "Client Business Lead" : "Solutions Architect"}. Plan re-synthesized!`);
     }
   } catch (err) {
     console.error("Dual review feedback error:", err);
@@ -3313,10 +3396,10 @@ async function submitDualReviewApproval(persona) {
       
       const wf = currentSessionData.workflow;
       if (wf && wf.current_stage === "PM_REVIEW") {
-        alert("🎉 Both Client and Solutions Architect have approved! Project automatically transitioned to Marcus Reed (PM) for Stage 4 Governance.");
+        alert("🎉 Both Client and Solutions Architect have approved! Project automatically transitioned to Senior Delivery PM for Stage 4 Governance.");
         switchTab("tab-pm-review");
       } else {
-        alert(`✓ Approval confirmed for ${persona === "CLIENT" ? "Client Elena Vance" : "Solutions Architect Alex Morgan"}. Waiting for peer sign-off.`);
+        alert(`✓ Approval confirmed for ${persona === "CLIENT" ? "Client Business Lead" : "Solutions Architect"}. Waiting for peer sign-off.`);
       }
     }
   } catch (err) {
@@ -3393,7 +3476,7 @@ async function submitPMApproval() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         session_id: currentSessionId,
-        notes: "Approved by Marcus Reed following tripartite milestone and commercial alignment."
+        notes: "Approved by Senior Delivery PM following tripartite milestone and commercial alignment."
       })
     });
 
@@ -3401,7 +3484,7 @@ async function submitPMApproval() {
       currentSessionData = await res.json();
       renderChatMessages();
       updateWorkflowUI(currentSessionData);
-      alert("🏆 Project BRD officially signed and sealed by Project Manager Marcus Reed! Advancing to Final Approved Distribution Suite.");
+      alert("🏆 Project BRD officially signed and sealed by Senior Delivery PM! Advancing to Final Approved Distribution Suite.");
       switchTab("tab-export");
     }
   } catch (err) {
@@ -3424,11 +3507,11 @@ function applyPmQueryTemplate(type) {
   if (type === "timeline") {
     topicInput.value = "Phase 8 Verification Buffer & Timeline Compression Risk";
     targetSelect.value = "ALL";
-    textInput.value = "Auditing the 18-phase schedule: Can we ensure a 3-day buffer in Phase 8 (Model Verification) before moving to Phase 11 UAT? Client Elena to confirm business blackout dates, and Architect Alex to confirm automated eval test harness readiness.";
+    textInput.value = "Auditing the 18-phase schedule: Can we ensure a 3-day buffer in Phase 8 (Model Verification) before moving to Phase 11 UAT? Client to confirm business blackout dates, and Architect to confirm automated eval test harness readiness.";
   } else if (type === "cloud_cost") {
     topicInput.value = "Cloud Monthly BoM Optimization ($645/mo Baseline)";
     targetSelect.value = "SOLUTIONS_ARCHITECT";
-    textInput.value = "Architect Alex: Verify if Azure AI Search standard partition tier meets our 50,000 document vector indexing requirements without auto-scaling beyond our $800/mo infrastructure cap.";
+    textInput.value = "Solutions Architect: Verify if Azure AI Search standard partition tier meets our 50,000 document vector indexing requirements without auto-scaling beyond our $800/mo infrastructure cap.";
   } else if (type === "staffing") {
     topicInput.value = "Lead AI Engineer & Prompt Specialist Allocation";
     targetSelect.value = "ALL";
@@ -3494,7 +3577,7 @@ async function loadArchitectBriefing() {
       if (!data.escalated_topics || data.escalated_topics.length === 0) {
         streamEl.innerHTML = `
           <div style="background: #ffffff; border: 1px dashed var(--border-color); border-radius: 6px; padding: 14px; text-align: center; color: #64748b; font-size: 0.84rem;">
-            <span>✨</span> No escalated technical questions pending from Client Elena Vance. All questions are aligned!
+            <span>✨</span> No escalated technical questions pending from Client. All questions are aligned!
           </div>
         `;
         return;
@@ -3563,7 +3646,7 @@ async function resolveArchitectEscalation(questionId, answer, notes) {
         session_id: currentSessionId,
         question_id: questionId,
         answer: answer,
-        notes: notes || "Confirmed by Solutions Architect Alex Morgan"
+        notes: notes || "Confirmed by Solutions Architect"
       })
     });
 

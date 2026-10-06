@@ -170,7 +170,7 @@ class WorkflowState(BaseModel):
     current_stage: Optional[str] = "IDEATION"
     active_persona: str = "CLIENT"  # "CLIENT", "SOLUTIONS_ARCHITECT", "PROJECT_MANAGER"
     confidence_score: float = 0.0  # 0 to 100
-    confidence_threshold: float = 98.0
+    confidence_threshold: float = 95.0
     is_confidence_reached: bool = False
     
     # Stage 1: Ideation Data
@@ -182,12 +182,12 @@ class WorkflowState(BaseModel):
     escalated_topics: List[EscalatedTopicItem] = []
     
     # Stage 3: Dual Review
-    client_review: PersonaReview = PersonaReview(persona="CLIENT", signature_name="Elena Vance (Client Business Lead)")
-    architect_review: PersonaReview = PersonaReview(persona="SOLUTIONS_ARCHITECT", signature_name="Alex Morgan (Principal Architect)")
+    client_review: PersonaReview = PersonaReview(persona="CLIENT", signature_name="Client Business Lead")
+    architect_review: PersonaReview = PersonaReview(persona="SOLUTIONS_ARCHITECT", signature_name="Principal Solutions Architect")
     dual_review_iterations: int = 0
     
     # Stage 4: PM Review & Triparty Consensus
-    pm_review: PersonaReview = PersonaReview(persona="PROJECT_MANAGER", signature_name="Marcus Reed (Senior Delivery PM)")
+    pm_review: PersonaReview = PersonaReview(persona="PROJECT_MANAGER", signature_name="Senior Delivery PM")
     pm_queries: List[PMQueryItem] = []
     triparty_messages: List[TripartyMessage] = []
     
@@ -229,8 +229,8 @@ class DimensionScore(BaseModel):
 
 class DiscoveryConfidence(BaseModel):
     score: float = 0.0  # 0 to 100
-    is_ready_for_brd: bool = False  # True when >= 98.0
-    threshold: float = 98.0
+    is_ready_for_brd: bool = False  # True when >= 95.0
+    threshold: float = 95.0
     dimensions: List[DimensionScore] = []
     missing_items: List[str] = []
     recommendation: str = ""

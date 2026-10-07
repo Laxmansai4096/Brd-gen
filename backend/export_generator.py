@@ -2,7 +2,7 @@ import os
 import csv
 import io
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple, Optional
 import docx
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor

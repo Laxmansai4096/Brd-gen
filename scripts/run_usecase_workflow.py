@@ -2,10 +2,35 @@ import requests
 import json
 import time
 import os
+import sys
+
+workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if workspace_dir not in sys.path:
+    sys.path.insert(0, workspace_dir)
 
 BASE_URL = "http://127.0.0.1:8081"
 
+def ensure_server():
+    try:
+        res = requests.get(f"{BASE_URL}/api/session", timeout=1.0)
+        if res.status_code == 200:
+            return
+    except Exception:
+        pass
+    print(f"Starting server at {BASE_URL} in background thread...")
+    import threading
+    import uvicorn
+    from app import app
+    def _run():
+        config = uvicorn.Config(app=app, host="127.0.0.1", port=8081, log_level="warning", access_log=False)
+        server = uvicorn.Server(config)
+        server.run()
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    time.sleep(2.5)
+
 def run_usecase():
+    ensure_server()
     print(f"Connecting to Project Planner MVP at {BASE_URL}...")
     
     # 1. Initialize session

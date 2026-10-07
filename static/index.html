@@ -7,8 +7,7 @@
   <title>AI BRD & Project Plan Generator | Multi-Cloud AI Accelerator</title>
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
@@ -77,7 +76,7 @@
             <span class="profile-role" id="sidebarProfileRole">Client Lead</span>
             <span class="profile-tenant">⚡ Enterprise AI Delivery Hub</span>
           </div>
-          <button class="btn-sidebar-fold-btn" onclick="toggleLeftSidebar()" title="Collapse Left Sidebar" style="margin-left: auto; background: transparent; border: none; color: #94a3b8; font-size: 0.95rem; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center;">◀</button>
+          </div>
         </div>
 
         <!-- Quick Workspace Action Buttons -->
@@ -86,7 +85,9 @@
             <span>💡</span> Project Ideation
           </button>
           <button class="btn-sidebar-action secondary"
-            onclick="document.getElementById('rfpAutoDiscoverInput').click()">
+            onclick="document.getElementById('rfpAutoDiscoverInput').click()" title="Drop RFP / SOW document to auto-populate all 25 discovery parameters">
+            <input type="file" id="rfpAutoDiscoverInput" style="display: none;" accept=".pdf,.docx,.txt,.csv,.json,.doc"
+              onchange="handleRfpAutoDiscovery(event)">
             <span>⚡</span> 0-Click RFP Ingestion
           </button>
         </div>
@@ -121,9 +122,9 @@
           </div>
         </div>
 
-        <!-- BRD Deliverables & Collaborative Workflow Navigation -->
+        <!-- 6-Stage Collaborative Lifecycle Navigation -->
         <div class="sidebar-section-header" style="margin-top: 6px;">
-          <span class="sidebar-section-title">👥 3-Persona Lifecycle</span>
+          <span class="sidebar-section-title">👥 6-Stage Lifecycle</span>
         </div>
 
         <div class="sidebar-nav-tabs" id="sidebarNavTabs">
@@ -136,32 +137,14 @@
           <button class="sidebar-tab-btn" onclick="switchTab('tab-dual-review')" id="tabBtnDualReview">
             <span class="tab-btn-title"><span>⚖️</span> 3. Dual Review Hub</span>
           </button>
+          <button class="sidebar-tab-btn" onclick="switchTab('tab-estimates')" id="tabBtnEstimates">
+            <span class="tab-btn-title"><span>📊</span> 4. Estimates & Roadmap</span>
+          </button>
           <button class="sidebar-tab-btn" onclick="switchTab('tab-pm-review')" id="tabBtnPMReview">
-            <span class="tab-btn-title"><span>👔</span> 4. PM Consensus Room</span>
+            <span class="tab-btn-title"><span>👔</span> 5. PM Consensus Room</span>
           </button>
-          <button class="sidebar-tab-btn" onclick="switchTab('tab-roles')">
-            <span class="tab-btn-title"><span>👥</span> 12 Disciplines & Tasks</span>
-          </button>
-          <button class="sidebar-tab-btn" onclick="switchTab('tab-phases')">
-            <span class="tab-btn-title"><span>📊</span> 18-Phase Roadmap</span>
-          </button>
-          <button class="sidebar-tab-btn" onclick="switchTab('tab-daywise')">
-            <span class="tab-btn-title"><span>📅</span> Day-Wise Plan</span>
-          </button>
-          <button class="sidebar-tab-btn" onclick="switchTab('tab-components')">
-            <span class="tab-btn-title"><span>🏗️</span> Tech Components (6)</span>
-          </button>
-          <button class="sidebar-tab-btn" onclick="switchTab('tab-sizing')">
-            <span class="tab-btn-title"><span>☁️</span> Sizing & Cloud BoM</span>
-          </button>
-          <button class="sidebar-tab-btn" onclick="switchTab('tab-assumptions')">
-            <span class="tab-btn-title"><span>⚙️</span> Assumptions Gate</span>
-          </button>
-          <button class="sidebar-tab-btn" onclick="switchTab('tab-canonical')">
-            <span class="tab-btn-title"><span>📋</span> Requirements & Gates</span>
-          </button>
-          <button class="sidebar-tab-btn" onclick="switchTab('tab-export')">
-            <span class="tab-btn-title"><span>📥</span> 5. Final Export Suite</span>
+          <button class="sidebar-tab-btn" onclick="switchTab('tab-export')" id="tabBtnExport">
+            <span class="tab-btn-title"><span>📥</span> 6. Final Export Suite</span>
           </button>
         </div>
       </div>
@@ -174,26 +157,13 @@
           <span>💬</span> Discovery Interview
           <span class="msg-persona-tag msg-persona-client" id="chatActivePersonaBadge" style="margin-left: 8px;">🧑‍💼 Client</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <!-- 0-Click Auto Discovery Upload Button -->
-          <button class="btn-header" onclick="document.getElementById('rfpAutoDiscoverInput').click()"
-            style="background: var(--primary-soft-bg); color: var(--primary); font-size: 0.68rem; padding: 3px 8px; border: 1px solid rgba(72, 98, 247, 0.25); font-weight: 600; border-radius: 6px;"
-            title="Drop RFP / SOW document to auto-populate all 25 discovery parameters">
-            <input type="file" id="rfpAutoDiscoverInput" style="display: none;" accept=".pdf,.docx,.txt,.csv,.json,.doc"
-              onchange="handleRfpAutoDiscovery(event)">
-            <span>⚡</span> 0-Click Auto-Discovery
-          </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
           <div class="progress-counter" id="progressCounter">
             <span>📊</span> <strong>Domain Coverage:</strong> 0 / 32 (0%) <span class="gate-target-pill">Gate: 95%</span>
           </div>
-          <!-- Toggle Fold/Unfold Left Sidebar -->
-          <button class="btn-header" id="btnPanelSidebarToggle" onclick="toggleLeftSidebar()"
-            style="padding: 3px 8px; font-size: 0.68rem;" title="Fold / Unfold Left Sidebar">
-            <span id="panelToggleSidebarIcon">◀</span> <span id="panelToggleSidebarText">Sidebar</span>
-          </button>
           <!-- Toggle Expand Chat Area Button -->
           <button class="btn-header" id="btnToggleExpand" onclick="toggleChatExpand()"
-            style="padding: 3px 8px; font-size: 0.68rem;" title="Toggle Full/Split Chat Width">
+            style="padding: 4px 10px; font-size: 0.72rem;" title="Toggle Full/Split Chat Width">
             <span>⛶</span> Focus Chat
           </button>
         </div>
@@ -210,11 +180,10 @@
         <div class="quick-options-tray" id="quickOptionsTray" style="display: none;"></div>
 
         <!-- Quick Delegation Bar -->
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; margin-bottom: 6px;">
+        <div style="display: flex; align-items: center; justify-content: flex-start; padding: 4px 6px; margin-bottom: 6px;">
           <button class="btn-delegate-architect" id="btnDelegateArchitect" onclick="delegateCurrentQuestionToArchitect()" title="Forward this question to Principal Solutions Architect for technical recommendation">
             <span>🏗️</span> Ask Solutions Architect
           </button>
-          <span style="font-size: 0.72rem; color: #64748b;" id="chatPersonaTip">Typing as: <strong>Client Business Lead</strong></span>
         </div>
 
         <div class="input-row" id="chatInputRow" style="align-items: center;">
@@ -401,8 +370,27 @@
           </div>
         </div>
 
-        <!-- TAB 1: BRD Document & Live Template Progress -->
+        <!-- TAB 2: BRD Document & Live Template Progress -->
         <div id="tab-brd" class="tab-pane active">
+          <!-- Stage 2 Explorer Sub-Navigation Pills -->
+          <div class="subnav-pills-bar">
+            <button class="btn-subpill active" onclick="switchTab('tab-brd')">
+              <span>📄</span> Executive BRD & Progress
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-components')">
+              <span>🏗️</span> Tech Components (6)
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-sizing')">
+              <span>☁️</span> Sizing & Cloud BoM
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-assumptions')">
+              <span>⚙️</span> Assumptions Gate
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-canonical')">
+              <span>📋</span> Requirements & Gates
+            </button>
+          </div>
+
           <!-- LIVE BRD DOCUMENT TEMPLATE PROGRESS SHEET (Agentic Information Collector) -->
           <div id="liveBrdTemplateSheetSection" class="section-block" style="margin-bottom: 16px;">
             <div class="brd-sheet-header">
@@ -658,14 +646,14 @@
           </div>
         </div>
 
-        <!-- TAB: Stage 4 Project Manager Review & Tripartite Consensus Room -->
+        <!-- TAB: Stage 5 Project Manager Review & Tripartite Consensus Room -->
         <div id="tab-pm-review" class="tab-pane" style="display: none;">
           <div class="pm-governance-box">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
               <div>
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
                   <span style="font-size: 1.3rem;">👔</span>
-                  <h3 style="color: #ffffff; margin: 0; font-size: 1.1rem; font-weight: 700;">Stage 4: Project Manager Governance & Consensus</h3>
+                  <h3 style="color: #ffffff; margin: 0; font-size: 1.1rem; font-weight: 700;">Stage 5: Project Manager Governance & Consensus</h3>
                   <span class="badge badge-success" id="pmReviewStageBadge" style="font-size: 0.75rem;">Delivery Lead Sign-Off</span>
                 </div>
                 <p style="font-size: 0.85rem; color: #e2e8f0; margin: 0; line-height: 1.5;">
@@ -771,8 +759,20 @@
           </div>
         </div>
 
-        <!-- TAB 2: 12 Disciplines & Tasks -->
+        <!-- TAB: 12 Disciplines & Tasks (Stage 4 Estimates) -->
         <div id="tab-roles" class="tab-pane" style="display: none;">
+          <!-- Stage 4 Sub-Navigation Pills -->
+          <div class="subnav-pills-bar">
+            <button class="btn-subpill" onclick="switchTab('tab-phases')">
+              <span>📊</span> 18-Phase Roadmap
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-daywise')">
+              <span>📅</span> Day-Wise Plan
+            </button>
+            <button class="btn-subpill active" onclick="switchTab('tab-roles')">
+              <span>👥</span> 12 Disciplines & Tasks
+            </button>
+          </div>
           <div class="section-block">
             <div class="section-title">
               <span>12-Discipline Resource Loading Plan</span>
@@ -851,8 +851,20 @@
           </div>
         </div>
 
-        <!-- TAB 3: 18-Phase Roadmap & Feasibility -->
+        <!-- TAB 4: 18-Phase Roadmap & Feasibility (Stage 4 Estimates) -->
         <div id="tab-phases" class="tab-pane" style="display: none;">
+          <!-- Stage 4 Sub-Navigation Pills -->
+          <div class="subnav-pills-bar">
+            <button class="btn-subpill active" onclick="switchTab('tab-phases')">
+              <span>📊</span> 18-Phase Roadmap
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-daywise')">
+              <span>📅</span> Day-Wise Plan
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-roles')">
+              <span>👥</span> 12 Disciplines & Tasks
+            </button>
+          </div>
           <div class="section-block">
             <div class="section-title">
               <span>Schedule Feasibility & Team Ramp Analysis</span>
@@ -870,8 +882,20 @@
           </div>
         </div>
 
-        <!-- TAB: Day-Wise Execution Schedule Plan -->
+        <!-- TAB: Day-Wise Execution Schedule Plan (Stage 4 Estimates) -->
         <div id="tab-daywise" class="tab-pane" style="display: none;">
+          <!-- Stage 4 Sub-Navigation Pills -->
+          <div class="subnav-pills-bar">
+            <button class="btn-subpill" onclick="switchTab('tab-phases')">
+              <span>📊</span> 18-Phase Roadmap
+            </button>
+            <button class="btn-subpill active" onclick="switchTab('tab-daywise')">
+              <span>📅</span> Day-Wise Plan
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-roles')">
+              <span>👥</span> 12 Disciplines & Tasks
+            </button>
+          </div>
           <!-- Day-Wise Summary Strip -->
           <div class="metrics-strip" style="margin-bottom: 16px;">
             <div class="metric-card">
@@ -930,8 +954,26 @@
           </div>
         </div>
 
-        <!-- TAB 4: Technical Components (6) -->
+        <!-- TAB: Technical Components (6) (Stage 2 Explorer) -->
         <div id="tab-components" class="tab-pane" style="display: none;">
+          <!-- Stage 2 Explorer Sub-Navigation Pills -->
+          <div class="subnav-pills-bar">
+            <button class="btn-subpill" onclick="switchTab('tab-brd')">
+              <span>📄</span> Executive BRD & Progress
+            </button>
+            <button class="btn-subpill active" onclick="switchTab('tab-components')">
+              <span>🏗️</span> Tech Components (6)
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-sizing')">
+              <span>☁️</span> Sizing & Cloud BoM
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-assumptions')">
+              <span>⚙️</span> Assumptions Gate
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-canonical')">
+              <span>📋</span> Requirements & Gates
+            </button>
+          </div>
           <div class="section-block">
             <div class="section-title">
               <span>Solution Technical Components (6-Component Decomposition)</span>
@@ -945,8 +987,26 @@
           </div>
         </div>
 
-        <!-- TAB 5: Sizing & Cloud BoM -->
+        <!-- TAB: Sizing & Cloud BoM (Stage 2 Explorer) -->
         <div id="tab-sizing" class="tab-pane" style="display: none;">
+          <!-- Stage 2 Explorer Sub-Navigation Pills -->
+          <div class="subnav-pills-bar">
+            <button class="btn-subpill" onclick="switchTab('tab-brd')">
+              <span>📄</span> Executive BRD & Progress
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-components')">
+              <span>🏗️</span> Tech Components (6)
+            </button>
+            <button class="btn-subpill active" onclick="switchTab('tab-sizing')">
+              <span>☁️</span> Sizing & Cloud BoM
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-assumptions')">
+              <span>⚙️</span> Assumptions Gate
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-canonical')">
+              <span>📋</span> Requirements & Gates
+            </button>
+          </div>
           <!-- Architect Live Cloud Sizing & BoM Simulator -->
           <div class="section-block" style="border-left: 3px solid var(--primary);">
             <div class="section-title">
@@ -1003,8 +1063,26 @@
           </div>
         </div>
 
-        <!-- TAB 6: Assumptions Gate -->
+        <!-- TAB: Assumptions Gate (Stage 2 Explorer) -->
         <div id="tab-assumptions" class="tab-pane" style="display: none;">
+          <!-- Stage 2 Explorer Sub-Navigation Pills -->
+          <div class="subnav-pills-bar">
+            <button class="btn-subpill" onclick="switchTab('tab-brd')">
+              <span>📄</span> Executive BRD & Progress
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-components')">
+              <span>🏗️</span> Tech Components (6)
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-sizing')">
+              <span>☁️</span> Sizing & Cloud BoM
+            </button>
+            <button class="btn-subpill active" onclick="switchTab('tab-assumptions')">
+              <span>⚙️</span> Assumptions Gate
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-canonical')">
+              <span>📋</span> Requirements & Gates
+            </button>
+          </div>
           <div class="section-block">
             <div class="section-title">
               <span>Assumptions Approval Gate</span>
@@ -1035,8 +1113,26 @@
           </div>
         </div>
 
-        <!-- TAB 6.5: Canonical Model & 4 HITL Approval Gates (Section 4, 8, 9, 12, 13, 15, 51) -->
+        <!-- TAB: Requirements & Gates (Stage 2 Explorer) -->
         <div id="tab-canonical" class="tab-pane" style="display: none;">
+          <!-- Stage 2 Explorer Sub-Navigation Pills -->
+          <div class="subnav-pills-bar">
+            <button class="btn-subpill" onclick="switchTab('tab-brd')">
+              <span>📄</span> Executive BRD & Progress
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-components')">
+              <span>🏗️</span> Tech Components (6)
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-sizing')">
+              <span>☁️</span> Sizing & Cloud BoM
+            </button>
+            <button class="btn-subpill" onclick="switchTab('tab-assumptions')">
+              <span>⚙️</span> Assumptions Gate
+            </button>
+            <button class="btn-subpill active" onclick="switchTab('tab-canonical')">
+              <span>📋</span> Requirements & Gates
+            </button>
+          </div>
           <div class="section-block">
             <h3 class="section-title">🛡️ Four-Gate Human-in-the-Loop Governance (Section 51)</h3>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
@@ -1200,9 +1296,9 @@
           </div>
         </div>
 
-        <!-- TAB 7: Enterprise Export Suite & Stage 5 Final Distribution -->
+        <!-- TAB: Enterprise Export Suite & Stage 6 Final Distribution -->
         <div id="tab-export" class="tab-pane" style="display: none;">
-          <!-- Stage 5 Tripartite Sign-Off Certificate -->
+          <!-- Stage 6 Tripartite Sign-Off Certificate -->
           <div class="tripartite-certificate">
             <div style="font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase; color: #a5b4fc; font-weight: 700; margin-bottom: 6px;">
               🛡️ Official Project Governance & Execution Sign-Off

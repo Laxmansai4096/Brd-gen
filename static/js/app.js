@@ -1697,8 +1697,19 @@ async function triggerReplan() {
   }
 }
 
-// Tab Switching
+// Tab Switching (6 Lifecycle Stages with Cohesive Sub-Navigation)
 function switchTab(tabId) {
+  // Map sub-tabs to their parent lifecycle stages for sidebar button highlighting
+  let parentStageTab = tabId;
+  if (["tab-components", "tab-sizing", "tab-assumptions", "tab-canonical"].includes(tabId)) {
+    parentStageTab = "tab-brd";
+  } else if (["tab-phases", "tab-daywise", "tab-roles", "tab-estimates"].includes(tabId)) {
+    parentStageTab = "tab-estimates";
+    if (tabId === "tab-estimates") {
+      tabId = "tab-phases"; // default view for stage 4
+    }
+  }
+
   document.querySelectorAll(".sidebar-tab-btn, .tab-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".tab-pane").forEach(p => p.style.display = "none");
   
@@ -1707,12 +1718,23 @@ function switchTab(tabId) {
     targetPane.style.display = "block";
   }
   
+  // Highlight the corresponding sidebar button for the parent lifecycle stage
   const activeBtns = Array.from(document.querySelectorAll(".sidebar-tab-btn, .tab-btn"))
     .filter(b => {
       const onclickAttr = b.getAttribute("onclick") || "";
-      return onclickAttr.includes(`'${tabId}'`) || onclickAttr.includes(`"${tabId}"`);
+      return onclickAttr.includes(`'${parentStageTab}'`) || onclickAttr.includes(`"${parentStageTab}"`);
     });
   activeBtns.forEach(b => b.classList.add("active"));
+
+  // Synchronize sub-navigation pill highlights
+  document.querySelectorAll(".btn-subpill").forEach(p => {
+    const pOnclick = p.getAttribute("onclick") || "";
+    if (pOnclick.includes(`'${tabId}'`) || pOnclick.includes(`"${tabId}"`)) {
+      p.classList.add("active");
+    } else {
+      p.classList.remove("active");
+    }
+  });
 }
 
 // 0-Click RFP Auto-Discovery Ingestion

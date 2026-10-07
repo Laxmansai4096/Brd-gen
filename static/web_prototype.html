@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise AI BRD Generator & Estimator Platform</title>
+  <!-- Google Fonts & Mermaid.js -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #0B0F19;
+      --bg-surface: #111827;
+      --bg-surface-elevated: #1F2937;
+      --border-subtle: #374151;
+      --border-focus: #3B82F6;
+      --text-main: #F9FAFB;
+      --text-muted: #9CA3AF;
+      --accent-blue: #3B82F6;
+      --accent-blue-hover: #2563EB;
+      --accent-emerald: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-purple: #8B5CF6;
+      --danger: #EF4444;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* TOP HEADER */
+    header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    .brand h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+    .brand span { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+
+    /* HEADER CONTROLS */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .confidence-meter {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-surface-elevated);
+      padding: 6px 14px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+    }
+    .meter-label { font-size: 12px; color: var(--text-muted); }
+    .meter-bar {
+      width: 120px;
+      height: 8px;
+      background: #374151;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .meter-fill {
+      height: 100%;
+      width: 40%;
+      background: linear-gradient(90deg, var(--accent-amber), var(--accent-emerald));
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .meter-pct { font-size: 13px; font-weight: 700; color: var(--accent-emerald); }
+
+    .export-btn {
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .export-btn:hover { background: var(--accent-blue-hover); }
+
+    /* MAIN SPLIT-SCREEN WORKSPACE */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      overflow: hidden;
+    }
+
+    /* LEFT PANEL: INTERACTIVE CHAT */
+    .interview-panel {
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .panel-header {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(17, 24, 39, 0.6);
+    }
+    .panel-header h2 { font-size: 14px; font-weight: 600; }
+    .role-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--accent-blue);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .message {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-width: 90%;
+    }
+    .message.bot { align-self: flex-start; }
+    .message.user { align-self: flex-end; }
+
+    .msg-sender {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .msg-bubble {
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    .message.bot .msg-bubble {
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+    }
+    .message.user .msg-bubble {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    /* INTERACTIVE 1-CLICK PROPOSE-AND-CONFIRM OPTIONS */
+    .option-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .option-btn {
+      background: rgba(31, 41, 55, 0.8);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s;
+    }
+    .option-btn:hover {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: var(--accent-blue);
+      transform: translateX(2px);
+    }
+    .option-btn.primary {
+      border-color: rgba(16, 185, 129, 0.5);
+      background: rgba(16, 185, 129, 0.1);
+      color: #A7F3D0;
+    }
+
+    /* CHAT INPUT FORM */
+    .chat-input-bar {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input {
+      flex: 1;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: white;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .chat-input:focus { border-color: var(--border-focus); }
+    .send-btn {
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0 16px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    /* RIGHT PANEL: LIVE WYSIWYG BRD PREVIEW */
+    .preview-panel {
+      background: var(--bg-base);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+    .preview-header {
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface);
+    }
+    .preview-header h2 { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .live-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--accent-emerald);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-emerald);
+    }
+
+    .preview-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 48px;
+      line-height: 1.6;
+      font-size: 14px;
+      color: #D1D5DB;
+    }
+    .preview-body h1, .preview-body h2, .preview-body h3 {
+      color: white;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .preview-body h1 { font-size: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; }
+    .preview-body h2 { font-size: 18px; margin-top: 32px; color: #93C5FD; }
+    .preview-body p { margin-bottom: 14px; }
+    .preview-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .preview-body th, .preview-body td {
+      border: 1px solid var(--border-subtle);
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 13px;
+    }
+    .preview-body th {
+      background: var(--bg-surface-elevated);
+      color: white;
+      font-weight: 600;
+    }
+    .preview-body blockquote {
+      border-left: 4px solid var(--accent-blue);
+      padding: 10px 16px;
+      background: rgba(59, 130, 246, 0.1);
+      margin: 16px 0;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+
+    /* SUMMARY CARDS IN PREVIEW */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+    }
+    .stat-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+    .stat-val { font-size: 20px; font-weight: 700; color: white; margin-top: 4px; }
+    .stat-sub { font-size: 11px; color: var(--accent-emerald); margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">⚡</div>
+      <div>
+        <h1>Enterprise AI BRD Generator & Sizing Platform</h1>
+        <span>Multi-Persona Collaborative Discovery & Deterministic WBS Engine</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="confidence-meter">
+        <span class="meter-label">Domain Completeness</span>
+        <div class="meter-bar">
+          <div class="meter-fill" id="meterFill" style="width: 40%;"></div>
+        </div>
+        <span class="meter-pct" id="meterPct">40.0%</span>
+      </div>
+      <button class="export-btn" onclick="alert('Exporting full 6-Pack Deliverable Bundle (.docx, .pdf, .xlsx, .pptx, .csv)...')">
+        📥 Export 6-Pack Bundle
+      </button>
+    </div>
+  </header>
+
+  <!-- SPLIT SCREEN MAIN WORKSPACE -->
+  <main>
+    <!-- LEFT PANEL: DYNAMIC INTERVIEW CHAT -->
+    <section class="interview-panel">
+      <div class="panel-header">
+        <h2>Discovery Interview Chat</h2>
+        <span class="role-badge" id="currentRoleBadge">Role: Client Business Lead</span>
+      </div>
+
+      <div class="chat-messages" id="chatStream">
+        <div class="message bot">
+          <span class="msg-sender">🤖 AI Discovery Agent</span>
+          <div class="msg-bubble">
+            Welcome! I am your AI Pre-Sales & Forward Deployed Engineering Discovery Assistant. Let's scope your project.
+            <br/><br/>
+            Could you describe your business problem and the main operational workflow you want to automate?
+          </div>
+        </div>
+      </div>
+
+      <form class="chat-input-bar" onsubmit="handleUserSubmit(event)">
+        <input type="text" id="userInput" class="chat-input" placeholder="Type your response or select an option above..." autocomplete="off">
+        <button type="submit" class="send-btn">Send</button>
+      </form>
+    </section>
+
+    <!-- RIGHT PANEL: LIVE WYSIWYG BRD PREVIEW -->
+    <section class="preview-panel">
+      <div class="preview-header">
+        <h2><span class="live-indicator"></span> Live Synchronized BRD & Sizing Specification</h2>
+        <span style="font-size: 12px; color: var(--text-muted);" id="lastSyncedTime">Synced: Just now</span>
+      </div>
+
+      <div class="preview-body" id="brdPreviewBody">
+        <!-- Rendered Live Markdown will be injected here -->
+      </div>
+    </section>
+  </main>
+
+  <script>
+    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+
+    let currentTurn = 0;
+    let confidence = 0.40;
+
+    // Simulated Dynamic Script Steps matching our benchmark
+    const scriptedFlow = [
+      {
+        trigger: "cloud",
+        reply: "To help size this accurately: Does your company already operate on a specific cloud provider or have active corporate enterprise agreements?",
+        options: [
+          { text: "✓ Microsoft Azure (Recommended for Enterprise/Office 365)", val: "Microsoft Azure" },
+          { text: "Amazon Web Services (AWS)", val: "Amazon Web Services" },
+          { text: "Google Cloud Platform (GCP)", val: "Google Cloud" }
+        ],
+        role: "Client Lead",
+        confDelta: 0.20
+      },
+      {
+        trigger: "azure",
+        reply: "To size the Azure microservices for incoming orders and contracts, our recommended high-reliability architecture is:\n• **Azure Service Bus**: Message queue buffering to handle peak morning spikes.\n• **Azure Container Apps**: Serverless auto-scaling microservices.\n• **Azure Document Intelligence**: Layout extraction.\n\nDoes this fit your architecture standards?",
+        options: [
+          { text: "✓ Accept Recommended Azure Architecture", val: "Accept Recommended Azure Architecture", isPrimary: true },
+          { text: "Use Azure Kubernetes Service (AKS)", val: "Use AKS" },
+          { text: "Delegate Technical Sizing to Architect Queue", val: "Escalate to Architect" }
+        ],
+        role: "Client Lead",
+        confDelta: 0.20
+      },
+      {
+        trigger: "escalate",
+        reply: "No problem at all! That is purely an architectural detail that your technical team handles. I have logged this directly in your Solutions Architect's queue for review on Port :8082.\n\nLet's continue with your team's workflow: How many sample documents/contracts are available for initial validation?",
+        options: [
+          { text: "100 contracts per category (600 total)", val: "100 contracts per category (600 total)" },
+          { text: "Full live corpus (50,000 documents)", val: "50000 documents" }
+        ],
+        role: "Solutions Architect (:8082)",
+        confDelta: 0.16
+      }
+    ];
+
+    function appendMessage(sender, text, isBot = false, options = null) {
+      const stream = document.getElementById('chatStream');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${isBot ? 'bot' : 'user'}`;
+
+      let optionsHtml = '';
+      if (options && options.length > 0) {
+        optionsHtml = '<div class="option-cards">';
+        options.forEach(opt => {
+          optionsHtml += `<button class="option-btn ${opt.isPrimary ? 'primary' : ''}" onclick="selectOption('${opt.val}')">${opt.text}</button>`;
+        });
+        optionsHtml += '</div>';
+      }
+
+      msgDiv.innerHTML = `
+        <span class="msg-sender">${isBot ? '🤖 AI Discovery Agent' : '👤 You'}</span>
+        <div class="msg-bubble">${text.replace(/\\n/g, '<br/>')}</div>
+        ${optionsHtml}
+      `;
+      stream.appendChild(msgDiv);
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    function selectOption(val) {
+      appendMessage('user', val, false);
+      processResponse(val);
+    }
+
+    function handleUserSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('userInput');
+      const val = input.value.trim();
+      if (!val) return;
+      appendMessage('user', val, false);
+      input.value = '';
+      processResponse(val);
+    }
+
+    function processResponse(val) {
+      const lower = val.toLowerCase();
+      setTimeout(() => {
+        if (currentTurn === 0) {
+          appendMessage('bot', scriptedFlow[0].reply, true, scriptedFlow[0].options);
+          updateConfidence(0.60);
+          currentTurn++;
+        } else if (currentTurn === 1) {
+          appendMessage('bot', scriptedFlow[1].reply, true, scriptedFlow[1].options);
+          updateConfidence(0.80);
+          currentTurn++;
+        } else if (currentTurn === 2) {
+          appendMessage('bot', scriptedFlow[2].reply, true, scriptedFlow[2].options);
+          updateConfidence(0.96);
+          document.getElementById('currentRoleBadge').innerText = "Role: Solutions Architect (:8082)";
+          currentTurn++;
+        } else {
+          appendMessage('bot', "🎉 Discovery Complete! Overall confidence reached **96.4%**. The 95% gate has passed! Compiling final 10-chapter BRD, 18-Phase WBS schedule, and Azure OPEX cost model.", true);
+          updateConfidence(0.964);
+        }
+        renderLiveBRD();
+      }, 500);
+    }
+
+    function updateConfidence(val) {
+      confidence = Math.min(1.0, val);
+      const pct = (confidence * 100).toFixed(1) + "%";
+      document.getElementById('meterFill').style.width = pct;
+      document.getElementById('meterPct').innerText = pct;
+      if (confidence >= 0.95) {
+        document.getElementById('meterPct').style.color = "#10B981";
+      }
+    }
+
+    function renderLiveBRD() {
+      const container = document.getElementById('brdPreviewBody');
+      const client = currentTurn > 0 ? "PVR INOX" : "Client Enterprise";
+      const cloud = currentTurn > 1 ? "Microsoft Azure (India Region)" : "Under Evaluation";
+
+      const previewMarkdown = `
+# 📑 Enterprise AI Business Requirements Document & Sizing Specification
+## Project: Contract Intelligence & Risk Visibility Platform
+### Client: ${client} | Tier: Proof of Concept (PoC) | Hosting: ${cloud}
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-title">Total Effort</div>
+    <div class="stat-val">127.1 Days</div>
+    <div class="stat-sub">1,143.9 Person-Hours</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-title">Duration</div>
+    <div class="stat-val">6.0 Weeks</div>
+    <div class="stat-sub">0.0 Stretch (Verified)</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-title">Peak Team</div>
+    <div class="stat-val">5.13 FTE</div>
+    <div class="stat-sub">Across 12 Disciplines</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-title">Monthly Azure OPEX</div>
+    <div class="stat-val">~$1,480 /mo</div>
+    <div class="stat-sub">238M Tokens + Doc AI</div>
+  </div>
+</div>
+
+---
+
+## 1. Executive Summary & Engagement Profile
+
+| Attribute | Specification |
+| :--- | :--- |
+| **Client / Account** | **${client}** |
+| **Solution Domain** | Artificial Intelligence / Generative AI & Automation |
+| **Primary Cloud Platform** | ${cloud} |
+| **Delivery Tier** | **Proof of Concept (PoC)** (Tier Multiplier: 0.289x) |
+| **Total Estimated Effort** | **127.1 Person-Days** (Base 97.5 + PM 11.7 + Contingency 11.6) |
+| **Confidence Gate Status** | **${confidence >= 0.95 ? 'PASSED (96.4%)' : 'IN DISCOVERY (40.0%)'}** |
+
+---
+
+## 2. Business Problem Statement & Objectives
+
+${client} manages contracts across six categories: **Lease, Vendor, Service, Facilities, Technology, and Marketing**. Manual review is time-consuming, deviations from contracting principles are missed, and findings live in disconnected spreadsheets.
+
+---
+
+## 4. System Architecture & Technical Component Decomposition
+
+The solution comprises **6 primary architecture components** deployed within Microsoft Azure:
+
+| CID | Component Name | Technology Choice | Key Responsibilities |
+| :--- | :--- | :--- | :--- |
+| **C001** | Landing Store & Ingestion Pipeline | Azure Blob Storage + Doc Intelligence | Ingests contract PDFs; recovers layout-aware coordinates for 100% auditability. |
+| **C002** | Vector & Clause Index Layer | Azure AI Search (Hybrid) | Stores 1,536-dim embeddings with clause metadata. |
+| **C003** | Core AI Reasoning Engine | Azure OpenAI (GPT-4o) | Multi-pass extraction and principle compliance evaluation. |
+| **C004** | Master State & Audit Store | Azure Database (PaaS) | Persists domain ontologies, extraction pass logs, and risk registers. |
+| **C005** | Operational Dashboard & Evals | Web App Dashboard | Read-only risk visualization and RAGAS eval reporting. |
+| **C006** | Identity & Landing Zone | Entra ID + Key Vault | Enforces Single Sign-On and secures credentials. |
+
+---
+
+## 7. Work Breakdown Structure (WBS) & Effort Sizing
+
+$$\\text{Total Effort} = \\text{Base Delivery (97.5)} + \\text{P18 PM Tasks (6.3)} + \\text{12\\% PM Overhead (11.7)} + \\text{10\\% Contingency (11.6)} = \\mathbf{127.1\\text{ Person-Days}}$$
+      `;
+
+      container.innerHTML = marked.parse(previewMarkdown);
+      document.getElementById('lastSyncedTime').innerText = "Synced: " + new Date().toLocaleTimeString();
+    }
+
+    // Initial render
+    renderLiveBRD();
+  </script>
+</body>
+</html>

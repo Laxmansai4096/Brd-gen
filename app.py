@@ -211,8 +211,11 @@ def auth_roles_endpoint():
 
 
 @app.get("/api/session")
-def get_session_endpoint(session_id: Optional[str] = None):
-    session = get_or_create_session(session_id)
+def get_session_endpoint(session_id: Optional[str] = None, new: bool = False):
+    if new or session_id == "new":
+        session = get_or_create_session(str(uuid.uuid4()))
+    else:
+        session = get_or_create_session(session_id)
     current_q = get_current_question(session)
     questions = get_discovery_questions()
     gates = getattr(session, "hitl_gates", None) or HITLGates()

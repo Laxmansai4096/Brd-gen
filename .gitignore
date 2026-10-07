@@ -14,12 +14,17 @@ venv/
 ENV/
 .idea/
 .vscode/
-*.log
 uploads/
+exports/*.json
 exports/*.docx
 exports/*.xlsx
 exports/*.csv
 exports/*.pptx
 exports/*.pdf
+*.log
+*report.json
+*summary.json
+*results.json
+scratch_*.py
 test_features.py
 

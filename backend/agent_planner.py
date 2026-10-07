@@ -418,24 +418,422 @@ def generate_day_wise_schedule(
 
 def detect_project_domain(problem_text: str) -> str:
     raw = problem_text.lower()
-    if any(k in raw for k in ["chat", "bot", "support", "customer", "agent", "helpdesk", "voice", "call center", "virtual agent"]):
-        return "customer_support"
+    # 1. Computer Vision
+    if any(k in raw for k in ["defect", "surface inspection", "manufacturing quality", "wafer", "pcb", "crack", "industrial vision"]):
+        return "cv_defect_detection"
+    if any(k in raw for k in ["camera", "video stream", "surveillance", "traffic", "yolo", "cctv", "object detection", "tracking", "face recognition", "biometric"]):
+        return "cv_object_detection"
+    if any(k in raw for k in ["invoice", "receipt", "form", "ocr", "layoutlm", "scanned document", "document extraction"]):
+        return "cv_ocr_document"
+        
+    # 2. Deep Learning & Speech/Voice
+    if any(k in raw for k in ["speech", "voice", "transcription", "asr", "whisper", "call recording", "audio", "tts", "speech-to-text"]):
+        return "dl_speech_voice"
+    if any(k in raw for k in ["deep learning", "neural network", "transformer model", "custom embedding", "signal processing"]):
+        return "dl_custom_neural"
+        
+    # 3. Classical Machine Learning
+    if any(k in raw for k in ["forecast", "time-series", "timeseries", "demand planning", "inventory prediction", "prophet", "arima"]):
+        return "ml_forecasting_timeseries"
+    if any(k in raw for k in ["fraud", "aml", "anti-money", "transaction risk", "claims anomaly", "anomaly detection", "credit default"]):
+        return "ml_fraud_anomaly"
+    if any(k in raw for k in ["recommend", "personalization", "collaborative filter", "two-tower", "ranking", "upsell"]):
+        return "ml_recommendation"
+    if any(k in raw for k in ["churn", "lead score", "propensity", "regression", "classification", "tabular", "xgboost", "random forest"]):
+        return "ml_predictive_tabular"
+        
+    # 4. Natural Language Processing
+    if any(k in raw for k in ["ner", "entity recognition", "sentiment", "topic modeling", "translation", "spacy", "deberta", "bert"]):
+        return "nlp_text_analytics"
+        
+    # 5. Generative AI
     if any(k in raw for k in ["contract", "clause", "risk register", "legal", "lease", "vendor agreement"]):
         return "contract_intelligence"
-    if any(k in raw for k in ["fraud", "aml", "anti-money", "transaction", "bank", "claims", "financial"]):
-        return "fraud_financial"
-    if any(k in raw for k in ["search", "knowledge", "rag", "wiki", "documentation", "enterprise search"]):
-        return "enterprise_search"
-    if any(k in raw for k in ["invoice", "receipt", "form", "ocr", "parsing", "document extraction"]):
-        return "document_processing"
+    if any(k in raw for k in ["chat", "bot", "support", "customer", "virtual agent", "helpdesk", "faq"]):
+        return "customer_support"
+    if any(k in raw for k in ["copilot", "code generation", "developer assistant", "unit test", "code review"]):
+        return "genai_code_copilot"
+    if any(k in raw for k in ["agentic", "multi-agent", "autonomous agent", "langgraph", "crewai", "autogen", "react"]):
+        return "genai_agentic_workflow"
+    if any(k in raw for k in ["search", "knowledge", "rag", "wiki", "documentation", "enterprise search", "semantic search"]):
+        return "genai_rag_knowledge"
+        
     return "general_ai"
 
 def generate_technical_components_dynamic(cloud_platform: str, domain: str, project_title: str) -> List[TechnicalComponent]:
     cloud_lower = cloud_platform.lower()
     is_gcp = "google" in cloud_lower or "gcp" in cloud_lower
     is_aws = "aws" in cloud_lower or "amazon" in cloud_lower
+    is_ibm = "ibm" in cloud_lower or "watson" in cloud_lower
+    is_onprem = "on-prem" in cloud_lower or "hybrid" in cloud_lower or "private" in cloud_lower or "local" in cloud_lower
     
-    if domain == "customer_support":
+    # -------------------------------------------------------------
+    # 1. Computer Vision (Defect Detection & Object Vision)
+    # -------------------------------------------------------------
+    if domain in ["cv_defect_detection", "cv_object_detection"]:
+        if is_aws:
+            c1_tech = "Amazon S3 + AWS IoT Greengrass / Kinesis Video Streams"
+            c2_tech = "Amazon SageMaker Feature Store + OpenSearch Serverless"
+            c3_tech = "Amazon SageMaker Endpoint (YOLOv8 / RT-DETR on g5.xlarge GPU)"
+            c4_tech = "Amazon DynamoDB / Aurora Serverless v2"
+            c5_tech = "Custom Python CV Evaluation Harness (mAP50, IoU, Recall & Precision Scorer)"
+            c6_tech = "AWS ECS Fargate + Amazon Cognito SSO + CloudWatch"
+        elif is_gcp:
+            c1_tech = "Google Cloud Storage + Cloud Video Intelligence / Vertex AI Vision"
+            c2_tech = "Vertex AI Feature Store + Vertex AI Vector Search"
+            c3_tech = "Vertex AI Custom Model Endpoint (NVIDIA L4 / A100 GPU)"
+            c4_tech = "Google Cloud SQL (PostgreSQL) / Firestore"
+            c5_tech = "Automated Visual Inspection Scorer & Confusion Matrix Evaluator"
+            c6_tech = "Google Cloud Run + Cloud Identity SSO"
+        elif is_ibm:
+            c1_tech = "IBM Cloud Object Storage + IBM Maximo Visual Inspection"
+            c2_tech = "IBM Cloud Pak for Data Feature Catalog"
+            c3_tech = "WatsonX.ai / Custom Vision Inference Container on Red Hat OpenShift"
+            c4_tech = "IBM Cloud Databases for PostgreSQL"
+            c5_tech = "Automated Defect & Object Accuracy Benchmark Suite"
+            c6_tech = "IBM Cloud Code Engine / OpenShift Dashboard + IBM Cloud IAM"
+        elif is_onprem:
+            c1_tech = "Local RTSP Camera Feed / Edge Buffer + MinIO S3 Object Storage"
+            c2_tech = "Milvus / Qdrant Vector Store on Kubernetes"
+            c3_tech = "Triton Inference Server with NVIDIA TensorRT (H100 / L40S Local GPU)"
+            c4_tech = "PostgreSQL 16 Enterprise Cluster with High Availability"
+            c5_tech = "Automated Frame-by-Frame mAP & IoU Benchmark Evaluation Suite"
+            c6_tech = "On-Premises React/FastAPI Cockpit + Keycloak OIDC SSO"
+        else: # Azure
+            c1_tech = "Azure Blob Storage + Azure Video Indexer / IoT Edge"
+            c2_tech = "Azure AI Search + Azure Cosmos DB Metadata Store"
+            c3_tech = "Azure Machine Learning Managed GPU Endpoint (Standard_NC6s_v3)"
+            c4_tech = "Azure SQL Database Serverless / Azure Table Storage"
+            c5_tech = "Automated Vision Evaluation Harness (mAP, F1-Score & False Alarm Scorer)"
+            c6_tech = "Azure App Service / Container Apps + Microsoft Entra ID SSO"
+
+        return [
+            TechnicalComponent(
+                id="C001",
+                name="High-Throughput Vision Data Ingestion & Frame Preprocessing Layer",
+                purpose=f"Captures high-resolution camera feeds, image snapshots, and video frames, performing normalization, resizing, and optical calibration.",
+                technology_choice=c1_tech,
+                key_design_decisions="Decoupled edge ingestion pipeline with zero dropped frames; lossless compressed landing store.",
+                interfaces_in_out="In: Industrial camera feeds, RTSP streams, and batch uploads. Out: Normalized tensor arrays to C002 and C003.",
+                data_classification="Internal industrial images and inspection frames (Confidential).",
+                scalability_performance="Processes up to 60 FPS real-time video streams with sub-30ms frame intake latency.",
+                security_rai_controls="Device certificate authentication (mTLS), tamper-evident stream logging.",
+                failure_modes_mitigation="Local disk buffering on network drops with automatic spooling upon reconnect.",
+                dependencies="Camera Edge Hardware, Secure Network Gateway"
+            ),
+            TechnicalComponent(
+                id="C002",
+                name="Visual Feature & Metadata Indexing Store",
+                purpose="Indexes image embeddings, bounding box coordinates, camera identifiers, and timestamp metadata for historical analytics.",
+                technology_choice=c2_tech,
+                key_design_decisions="Stores multi-dimensional feature vectors with temporal partitioning for instant retrospective defect analysis.",
+                interfaces_in_out="In: Frame features from C001. Out: Historical match candidates to C003.",
+                data_classification="Inspection feature vectors and metadata (Confidential).",
+                scalability_performance="Sub-50ms query latency over millions of visual event records.",
+                security_rai_controls="Role-based access controls; isolated private network endpoints.",
+                failure_modes_mitigation="Automatic index replica failover.",
+                dependencies="C001 Ingestion Store"
+            ),
+            TechnicalComponent(
+                id="C003",
+                name="Deep Computer Vision Inference & Anomaly Detection Engine",
+                purpose="Executes real-time object detection, segmentation, and surface defect classification with millimeter-level bounding boxes.",
+                technology_choice=c3_tech,
+                key_design_decisions="Optimized TensorRT / ONNX GPU runtime ensuring low latency and deterministic inference throughput.",
+                interfaces_in_out="In: Preprocessed image tensors from C001. Out: Classified bounding boxes, defect tags, and confidence scores to C004.",
+                data_classification="Inference payloads and prediction confidence scores (Confidential).",
+                scalability_performance="High-concurrency GPU batching with sub-25ms per-frame inference latency.",
+                security_rai_controls="Strict confidence gating (≥95% precision threshold); low-confidence frames routed to human QA.",
+                failure_modes_mitigation="Circuit breaker routes transient GPU spikes to secondary inference pool.",
+                dependencies="C001 Frame Preprocessing, GPU Inference Hardware"
+            ),
+            TechnicalComponent(
+                id="C004",
+                name="Inspection Findings, Defect Ledger & Analytics Database",
+                purpose="Persists defect records, bounding box coordinates, production line telemetry, and operator sign-off audit logs.",
+                technology_choice=c4_tech,
+                key_design_decisions="Relational schema with spatial/bounding box coordinates and foreign keys to source image storage.",
+                interfaces_in_out="In: Detection events from C003. Out: Telemetry to C006 Cockpit.",
+                data_classification="Production quality audit data (Confidential).",
+                scalability_performance="High-write throughput supporting continuous manufacturing shifts.",
+                security_rai_controls="Transparent Data Encryption (TDE), immutable audit trail.",
+                failure_modes_mitigation="Write-ahead logging and point-in-time recovery.",
+                dependencies="Enterprise Cloud Network, Managed Identity"
+            ),
+            TechnicalComponent(
+                id="C005",
+                name="Automated Vision Benchmark & Quality Scorer",
+                purpose="Evaluates model precision, recall, mAP50, and false positive rates against curated golden ground-truth defect benchmarks.",
+                technology_choice=c5_tech,
+                key_design_decisions="Automated nightly regression suite validating accuracy against edge cases before model promotion.",
+                interfaces_in_out="In: Golden benchmark image datasets. Out: Confusion matrix and mAP scorecard.",
+                data_classification="Anonymized evaluation datasets.",
+                scalability_performance="Evaluates 1,000 benchmark images in under 5 minutes.",
+                security_rai_controls="Deterministic test harness with strict pass/fail quality gates.",
+                failure_modes_mitigation="Regression warnings halt deployment pipeline.",
+                dependencies="C003 Vision Engine, Golden Test Suite"
+            ),
+            TechnicalComponent(
+                id="C006",
+                name="Quality Inspection Cockpit & Operator Review Dashboard",
+                purpose="Provides plant operators and quality engineers with real-time visual inspection alerts, overlay bounding boxes, and sign-offs.",
+                technology_choice=c6_tech,
+                key_design_decisions="Split-screen UI showing live video stream alongside detected defect overlays and 1-click manual verification.",
+                interfaces_in_out="In: HTTPS browser sessions via SSO. Out: REST API queries to C004.",
+                data_classification="Encrypted session traffic (TLS 1.3).",
+                scalability_performance="Supports simultaneous multi-line operator stations with sub-second alert rendering.",
+                security_rai_controls="Corporate SSO, RBAC operator privileges, session timeouts.",
+                failure_modes_mitigation="Local client cache prevents interruption during brief network blips.",
+                dependencies="Enterprise Identity Provider, C004 Database"
+            )
+        ]
+
+    # -------------------------------------------------------------
+    # 2. Classical Machine Learning (Predictive Tabular, Churn, Forecasting, Fraud)
+    # -------------------------------------------------------------
+    elif domain in ["ml_predictive_tabular", "ml_forecasting_timeseries", "ml_fraud_anomaly", "ml_recommendation", "fraud_financial"]:
+        if is_aws:
+            c1_tech = "Amazon S3 + AWS Glue ETL / Amazon Kinesis Data Streams"
+            c2_tech = "Amazon SageMaker Feature Store + Amazon OpenSearch"
+            c3_tech = "Amazon SageMaker Real-Time Endpoint (XGBoost / LightGBM / Prophet)"
+            c4_tech = "Amazon Aurora Serverless v2 (PostgreSQL) / DynamoDB"
+            c5_tech = "SageMaker Model Monitor & Python Evaluation Suite (AUC-ROC / RMSE / F1)"
+            c6_tech = "AWS ECS Fargate + Cognito SSO + CloudWatch"
+        elif is_gcp:
+            c1_tech = "Google Cloud Storage + Cloud Dataflow / BigQuery"
+            c2_tech = "Vertex AI Feature Store"
+            c3_tech = "Vertex AI Prediction Endpoint / BigQuery ML (AutoML & Custom XGBoost)"
+            c4_tech = "Google Cloud SQL (PostgreSQL) / BigQuery Datastore"
+            c5_tech = "Vertex AI Model Monitoring & Automated Backtesting Harness"
+            c6_tech = "Google Cloud Run + Cloud Identity SSO"
+        elif is_ibm:
+            c1_tech = "IBM Cloud Object Storage + DataStage ETL"
+            c2_tech = "IBM Cloud Pak for Data Feature Catalog"
+            c3_tech = "Watson Machine Learning (AutoAI / Custom Python ML Models)"
+            c4_tech = "IBM Cloud Databases for PostgreSQL"
+            c5_tech = "Watson OpenScale Model Drift & Accuracy Monitor"
+            c6_tech = "IBM Cloud Code Engine / OpenShift Dashboard + IBM Cloud IAM"
+        elif is_onprem:
+            c1_tech = "Kafka / Spark Streaming + MinIO Object Storage"
+            c2_tech = "Feast Feature Store on Kubernetes"
+            c3_tech = "Triton Inference Server / FastAPI Python ML Model Server"
+            c4_tech = "PostgreSQL 16 Enterprise Cluster"
+            c5_tech = "Evidently AI / MLflow Drift & Accuracy Evaluation Suite"
+            c6_tech = "On-Premises React/FastAPI Cockpit + Keycloak SSO"
+        else: # Azure
+            c1_tech = "Azure Blob Storage + Azure Data Factory ETL / Event Hubs"
+            c2_tech = "Azure Machine Learning Feature Store"
+            c3_tech = "Azure Machine Learning Managed Online Endpoint (XGBoost / CatBoost / ARIMA)"
+            c4_tech = "Azure SQL Database Serverless / Cosmos DB"
+            c5_tech = "Azure ML Model Data Collector & Automated Backtesting Harness"
+            c6_tech = "Azure App Service / Container Apps + Microsoft Entra ID SSO"
+
+        return [
+            TechnicalComponent(
+                id="C001",
+                name="Data Ingestion, Schema Validation & Feature Extraction Pipeline",
+                purpose=f"Ingests batch historical datasets and real-time event streams, performing automated data cleaning, type validation, and feature transformations.",
+                technology_choice=c1_tech,
+                key_design_decisions="Automated data drift checks at ingestion; decoupled batch and streaming ingestion paths.",
+                interfaces_in_out="In: Batch CSV/Parquet uploads, ERP/CRM database connectors, and event streams. Out: Clean feature matrices to C002 and C003.",
+                data_classification="Enterprise financial/operational data (Confidential). Encrypted in transit and at rest.",
+                scalability_performance="Processes multi-gigabyte feature tables in under 10 minutes.",
+                security_rai_controls="Column-level data masking, TLS 1.3 encryption, IAM managed identities.",
+                failure_modes_mitigation="Quarantine corrupted input records to error dead-letter queue with alert.",
+                dependencies="Data Warehouse / Data Lake, ETL Pipelines"
+            ),
+            TechnicalComponent(
+                id="C002",
+                name="Central Feature Store & Historical Training Store",
+                purpose="Maintains curated, point-in-time correct online and offline feature tables to prevent training-serving skew.",
+                technology_choice=c2_tech,
+                key_design_decisions="Low-latency online feature retrieval coupled with scalable offline time-travel feature logging.",
+                interfaces_in_out="In: Features from C001. Out: Online feature vectors to C003 inference engine.",
+                data_classification="Calculated feature metrics and entity profiles (Confidential).",
+                scalability_performance="Sub-15ms online feature lookup latency.",
+                security_rai_controls="Fine-grained RBAC permissions on feature groups.",
+                failure_modes_mitigation="Fallback to last-known feature snapshot if online store sync encounters delay.",
+                dependencies="C001 Feature Pipeline, Cloud Network"
+            ),
+            TechnicalComponent(
+                id="C003",
+                name="Predictive ML Model Inference & Scoring Engine",
+                purpose="Generates real-time predictions, probability scores, SHAP feature attributions, and anomaly flags.",
+                technology_choice=c3_tech,
+                key_design_decisions="Ensemble architecture combining gradient boosting with calibrated probability estimators and SHAP explainability.",
+                interfaces_in_out="In: Online feature vector from C002. Out: Risk scores, forecasts, and feature attributions to C004.",
+                data_classification="Inference requests and output predictions (Confidential).",
+                scalability_performance="Auto-scales compute endpoints with sub-50ms p95 prediction latency.",
+                security_rai_controls="Explainable AI (SHAP/LIME) on every output; automated thresholding prevents ungrounded predictions.",
+                failure_modes_mitigation="Graceful fallback to baseline heuristic scoring model during endpoint maintenance.",
+                dependencies="C002 Feature Store, Cloud ML Compute"
+            ),
+            TechnicalComponent(
+                id="C004",
+                name="Prediction Store, Decision Ledger & Audit Repository",
+                purpose="Stores prediction outcomes, confidence scores, explainability attributions, and business review statuses.",
+                technology_choice=c4_tech,
+                key_design_decisions="Relational schema with point-in-time timestamping for complete auditability and compliance verification.",
+                interfaces_in_out="In: Predictions from C003. Out: Data feeds to C006 Cockpit and downstream CRM/ERP.",
+                data_classification="Scored transactions, risk registers, and decision records (Confidential).",
+                scalability_performance="High-concurrency indexed relational queries.",
+                security_rai_controls="Row-level security, automated encrypted backups.",
+                failure_modes_mitigation="Automated connection retry policies and transactional rollback.",
+                dependencies="Cloud Database, IAM Role Assignment"
+            ),
+            TechnicalComponent(
+                id="C005",
+                name="Model Performance, Drift Monitor & Backtesting Harness",
+                purpose="Continuously evaluates model performance, tracking AUC-ROC, precision/recall, RMSE, and feature distribution drift.",
+                technology_choice=c5_tech,
+                key_design_decisions="Automated scheduled backtesting against realized ground-truth outcomes; drift detection triggers automated retraining alerts.",
+                interfaces_in_out="In: Ground-truth realized outcomes and prediction logs from C004. Out: Performance scorecards and drift alerts.",
+                data_classification="Aggregated model telemetry and benchmark scorecards.",
+                scalability_performance="Executes full backtest against 100k records in under 3 minutes.",
+                security_rai_controls="Strict statistical confidence intervals with automated alert thresholds.",
+                failure_modes_mitigation="Drift alerts proactively dispatched to ML engineering team.",
+                dependencies="C004 Prediction Store, Evaluation Harness"
+            ),
+            TechnicalComponent(
+                id="C006",
+                name="Predictive Analytics Cockpit & Business Decision Dashboard",
+                purpose="Provides business stakeholders and risk analysts with interactive dashboards, feature importance breakdowns, and review actions.",
+                technology_choice=c6_tech,
+                key_design_decisions="Interactive split-screen dashboard displaying top risk factors, prediction confidence, and 1-click decision approvals.",
+                interfaces_in_out="In: HTTPS browser sessions via Enterprise SSO. Out: REST API queries to C004.",
+                data_classification="Encrypted HTTPS session traffic (TLS 1.3).",
+                scalability_performance="Responsive web dashboard supporting hundreds of concurrent business users.",
+                security_rai_controls="Corporate SSO (Entra ID / Cognito / Okta), RBAC permissions, audit logging.",
+                failure_modes_mitigation="Client-side caching ensures dashboard accessibility during transient network blips.",
+                dependencies="Enterprise Identity Provider, C004 Store"
+            )
+        ]
+
+    # -------------------------------------------------------------
+    # 3. Deep Learning & Speech / Voice AI
+    # -------------------------------------------------------------
+    elif domain in ["dl_speech_voice", "dl_custom_neural"]:
+        if is_aws:
+            c1_tech = "Amazon S3 + Amazon Transcribe / Bedrock Whisper"
+            c2_tech = "Amazon OpenSearch Serverless (Titan Embeddings)"
+            c3_tech = "Amazon Bedrock (Claude 3.5 Sonnet) / SageMaker GPU Endpoint"
+            c4_tech = "Amazon Aurora Serverless v2 (PostgreSQL)"
+            c5_tech = "Automated WER (Word Error Rate) & Intent Accuracy Scorer"
+            c6_tech = "AWS ECS Fargate + Cognito SSO"
+        elif is_gcp:
+            c1_tech = "Google Cloud Storage + Cloud Speech-to-Text / Chirp"
+            c2_tech = "Vertex AI Vector Search"
+            c3_tech = "Vertex AI (Gemini 2.5 Flash Multimodal Audio)"
+            c4_tech = "Google Cloud SQL (PostgreSQL)"
+            c5_tech = "Automated Speech Transcription & Intent Benchmark Suite"
+            c6_tech = "Google Cloud Run + Cloud Identity SSO"
+        elif is_ibm:
+            c1_tech = "IBM Cloud Object Storage + Watson Speech to Text"
+            c2_tech = "Watson Discovery Index"
+            c3_tech = "WatsonX.ai (Granite / Llama Models)"
+            c4_tech = "IBM Cloud Databases for PostgreSQL"
+            c5_tech = "Watson Speech Quality & WER Scorer"
+            c6_tech = "IBM Cloud OpenShift / Code Engine + IBM Cloud IAM"
+        elif is_onprem:
+            c1_tech = "Local Audio Ingestion + MinIO Object Storage"
+            c2_tech = "Qdrant / Milvus Vector Store on Kubernetes"
+            c3_tech = "Whisper.cpp / Faster-Whisper on NVIDIA Local GPUs + vLLM"
+            c4_tech = "PostgreSQL 16 Enterprise Cluster"
+            c5_tech = "Automated Word Error Rate (WER) & ROUGE Scorer Harness"
+            c6_tech = "On-Premises React Dashboard + Keycloak SSO"
+        else: # Azure
+            c1_tech = "Azure Blob Storage + Azure Speech Services / Azure OpenAI Whisper"
+            c2_tech = "Azure AI Search (text-embedding-3-small)"
+            c3_tech = "Azure OpenAI Service (GPT-4o / GPT-5 Audio & Reasoning)"
+            c4_tech = "Azure SQL Database Serverless"
+            c5_tech = "Automated Speech Accuracy & Transcription Evaluation Suite"
+            c6_tech = "Azure App Service + Microsoft Entra ID SSO"
+
+        return [
+            TechnicalComponent(
+                id="C001",
+                name="Audio Ingestion, Speech-to-Text & Diarization Pipeline",
+                purpose=f"Ingests real-time call audio and batch voice recordings, performing noise reduction, speaker diarization, and time-aligned transcription.",
+                technology_choice=c1_tech,
+                key_design_decisions="Multi-channel audio separation with speaker timestamping; raw audio encrypted and archived for compliance.",
+                interfaces_in_out="In: Telephony SIP feeds, WAV/MP3 uploads. Out: Time-aligned transcripts with speaker tags to C002 and C003.",
+                data_classification="Voice recordings and customer conversational PII (Confidential). PII redacted before downstream processing.",
+                scalability_performance="Transcribes 60-minute audio files in under 45 seconds with sub-5% Word Error Rate (WER).",
+                security_rai_controls="Automated PII scrubbing, TLS 1.3 audio streaming, platform-managed encryption.",
+                failure_modes_mitigation="Automatic retry on noisy audio packets with fallback to conservative acoustic model.",
+                dependencies="Telephony Gateway, Cloud Speech Service"
+            ),
+            TechnicalComponent(
+                id="C002",
+                name="Transcript Search & Conversational Embedding Index",
+                purpose="Indexes voice transcripts, utterance embeddings, customer sentiments, and call metadata for fast semantic search.",
+                technology_choice=c2_tech,
+                key_design_decisions="Dense conversational embeddings paired with metadata filters on agent ID, call outcome, and duration.",
+                interfaces_in_out="In: Transcripts from C001. Out: Relevant conversational context to C003.",
+                data_classification="Conversational transcripts and semantic embeddings (Confidential).",
+                scalability_performance="Sub-60ms semantic search latency across hundreds of thousands of historical calls.",
+                security_rai_controls="Role-based call access control; private virtual network endpoints.",
+                failure_modes_mitigation="Index replica failover.",
+                dependencies="C001 Speech Ingestion Pipeline"
+            ),
+            TechnicalComponent(
+                id="C003",
+                name="Voice Intelligence, Intent Extraction & Sentiment Reasoning Engine",
+                purpose="Extracts customer intents, compliance adherence, sentiment progression, and action items from call transcripts.",
+                technology_choice=c3_tech,
+                key_design_decisions="Structured prompt templates with deterministic schema output for compliance checklist validation.",
+                interfaces_in_out="In: Clean transcripts from C001. Out: Compliance scores, intent tags, and summaries to C004.",
+                data_classification="Call analysis findings and compliance scorecards (Confidential).",
+                scalability_performance="Processes multi-turn dialogue analysis with p95 response time under 1.2 seconds.",
+                security_rai_controls="Guardrails against hallucinations; 100% sentence-level citation back to audio timestamp.",
+                failure_modes_mitigation="Low-confidence intent classifications flagged for supervisor review.",
+                dependencies="C001 Transcripts, Cloud LLM Endpoint"
+            ),
+            TechnicalComponent(
+                id="C004",
+                name="Call Telemetry, Compliance Ledger & Analytics Database",
+                purpose="Central structured database storing call metadata, compliance verdicts, sentiment scores, and agent QA metrics.",
+                technology_choice=c4_tech,
+                key_design_decisions="Relational schema linking audio files, transcripts, timestamps, and compliance findings.",
+                interfaces_in_out="In: Insights from C003. Out: Data to C006 Cockpit.",
+                data_classification="Structured call QA findings (Confidential).",
+                scalability_performance="High-concurrency indexed relational queries.",
+                security_rai_controls="Transparent Data Encryption (TDE), automated retention lifecycle.",
+                failure_modes_mitigation="Automated connection pool retry policies.",
+                dependencies="Cloud Database, Managed Identity"
+            ),
+            TechnicalComponent(
+                id="C005",
+                name="Automated WER & Transcription Benchmark Scorer",
+                purpose="Evaluates Word Error Rate (WER), speaker attribution accuracy, and intent classification against golden audio benchmarks.",
+                technology_choice=c5_tech,
+                key_design_decisions="Nightly benchmark suite testing accuracy against varied accents, background noises, and acoustic conditions.",
+                interfaces_in_out="In: Golden transcribed audio datasets. Out: WER and BLEU accuracy reports.",
+                data_classification="Anonymized evaluation audio datasets.",
+                scalability_performance="Evaluates 100 hours of benchmark audio in under 20 minutes.",
+                security_rai_controls="Deterministic test harness with strict pass/fail gates.",
+                failure_modes_mitigation="Regression alerts dispatched to engineering team.",
+                dependencies="C003 Reasoning Engine, Golden Audio Suite"
+            ),
+            TechnicalComponent(
+                id="C006",
+                name="Voice Analytics Cockpit & QA Supervisor Dashboard",
+                purpose="Interactive web application for contact center supervisors, providing audio playback with synchronized transcript highlighting and QA scoring.",
+                technology_choice=c6_tech,
+                key_design_decisions="Audio waveform player synchronized with transcript text and 1-click compliance validation.",
+                interfaces_in_out="In: HTTPS browser sessions via SSO. Out: REST API queries to C004.",
+                data_classification="Encrypted HTTPS session traffic (TLS 1.3).",
+                scalability_performance="Supports hundreds of concurrent supervisor sessions.",
+                security_rai_controls="Corporate SSO, RBAC supervisor roles, session timeouts.",
+                failure_modes_mitigation="Client-side error boundaries with offline state recovery.",
+                dependencies="Enterprise Identity Provider, C004 Database"
+            )
+        ]
+
+    # -------------------------------------------------------------
+    # 4. Generative AI, RAG, Agentic & Customer Support (Default)
+    # -------------------------------------------------------------
+    elif domain == "customer_support":
         c1_tech = "Google Cloud Storage + Vertex AI Search & Conversation" if is_gcp else ("Amazon S3 + Amazon Bedrock Agents" if is_aws else "Azure Blob Storage + Azure Bot Framework")
         c2_tech = "Vertex AI Vector Search (Gecko embeddings)" if is_gcp else ("Amazon OpenSearch Serverless (Titan Embeddings)" if is_aws else "Azure AI Search (text-embedding-3-small)")
         c3_tech = "Vertex AI (Gemini 2.5 Flash / Pro)" if is_gcp else ("Amazon Bedrock (Claude 3.5 Sonnet / Haiku)" if is_aws else "Azure OpenAI Service (GPT-4o / GPT-5)")
@@ -612,7 +1010,7 @@ def generate_technical_components_dynamic(cloud_platform: str, domain: str, proj
             )
         ]
     else:
-        # Default / General AI components
+        # Default Universal General AI / Enterprise RAG components
         c1_tech = "Google Cloud Storage + Document AI" if is_gcp else ("Amazon S3 + Amazon Textract" if is_aws else "Azure Blob Storage + Azure AI Document Intelligence")
         c2_tech = "Vertex AI Vector Search" if is_gcp else ("Amazon OpenSearch Serverless" if is_aws else "Azure AI Search")
         c3_tech = "Vertex AI (Gemini 2.5 Flash / Pro)" if is_gcp else ("Amazon Bedrock (Claude 3.5 Sonnet)" if is_aws else "Azure OpenAI Service (GPT-4o / GPT-5)")
@@ -713,8 +1111,20 @@ def generate_sizing_and_bom_dynamic(
     cloud_lower = cloud_platform.lower()
     is_gcp = "google" in cloud_lower or "gcp" in cloud_lower
     is_aws = "aws" in cloud_lower or "amazon" in cloud_lower
+    is_ibm = "ibm" in cloud_lower or "watson" in cloud_lower
+    is_onprem = "on-prem" in cloud_lower or "hybrid" in cloud_lower or "private" in cloud_lower or "local" in cloud_lower
     
-    base_cost = 580.0 if is_gcp else (610.0 if is_aws else 645.0)
+    if is_onprem:
+        base_cost = 450.0
+    elif is_ibm:
+        base_cost = 620.0
+    elif is_gcp:
+        base_cost = 580.0
+    elif is_aws:
+        base_cost = 610.0
+    else:
+        base_cost = 645.0 # Azure baseline
+        
     total_cost = round(base_cost * ha_mult, 2)
     
     metrics = SizingMetrics(
@@ -839,6 +1249,92 @@ def generate_sizing_and_bom_dynamic(
                 justification="Hosts web dashboard with Cognito Single Sign-On."
             )
         ]
+    elif is_ibm:
+        bom = [
+            SizingBOM(
+                component="C001: Object Storage",
+                sku_or_service="IBM Cloud Object Storage (Standard)",
+                tier="Standard PayG",
+                quantity="50 GB Raw / Archive",
+                monthly_cost_usd=round(17.0 * ha_mult, 2),
+                justification="Secure object landing storage for raw corpora, datasets, and documents."
+            ),
+            SizingBOM(
+                component="C002: Watson Discovery Index",
+                sku_or_service="IBM Watson Discovery (Plus Plan)",
+                tier="Plus Tier",
+                quantity="1 Index Collection",
+                monthly_cost_usd=round(220.0 * ha_mult, 2),
+                justification="Semantic document indexing, enrichment, and NLP entity extraction."
+            ),
+            SizingBOM(
+                component="C003: WatsonX.ai GenAI",
+                sku_or_service="IBM WatsonX.ai (Granite 20b & Llama 3.3)",
+                tier="Standard Tokens PayG",
+                quantity=f"{daily_requests:,} Requests/Day",
+                monthly_cost_usd=round(185.0 * ha_mult, 2),
+                justification="Powers domain reasoning, summarization, and compliance analysis."
+            ),
+            SizingBOM(
+                component="C004: Cloud Databases",
+                sku_or_service="IBM Cloud Databases for PostgreSQL",
+                tier="Standard (2 vCPU, 8 GB RAM)",
+                quantity="1 Database Cluster",
+                monthly_cost_usd=round(68.0 * ha_mult, 2),
+                justification="Stores structured finding registers, ontologies, and user sessions."
+            ),
+            SizingBOM(
+                component="C006: OpenShift / Code Engine",
+                sku_or_service="IBM Cloud Code Engine + Secrets Manager + IAM",
+                tier="Serverless Compute",
+                quantity="1 Code Engine App",
+                monthly_cost_usd=round(30.0 * ha_mult, 2),
+                justification="Hosts containerized discovery cockpit and enterprise SSO integration."
+            )
+        ]
+    elif is_onprem:
+        bom = [
+            SizingBOM(
+                component="C001: MinIO Storage",
+                sku_or_service="MinIO S3-Compatible Storage on Kubernetes",
+                tier="On-Premises Infrastructure",
+                quantity="1 TB Local NVMe Volume",
+                monthly_cost_usd=round(45.0 * ha_mult, 2),
+                justification="Local S3-compatible object landing zone and artifact repository."
+            ),
+            SizingBOM(
+                component="C002: Milvus Vector DB",
+                sku_or_service="Milvus / Qdrant Distributed on Kubernetes",
+                tier="Local Cluster (4 Pods)",
+                quantity="1 Deployed Vector Cluster",
+                monthly_cost_usd=round(80.0 * ha_mult, 2),
+                justification="Ultra-fast local semantic vector search and metadata filtering."
+            ),
+            SizingBOM(
+                component="C003: GPU Inference Server",
+                sku_or_service="Triton Inference Server / vLLM on NVIDIA L40S/A100 GPU",
+                tier="Dedicated Private GPU",
+                quantity="1 GPU Node Allocated",
+                monthly_cost_usd=round(210.0 * ha_mult, 2),
+                justification="Private air-gapped model inference for LLMs, Computer Vision, or ML models."
+            ),
+            SizingBOM(
+                component="C004: PostgreSQL Cluster",
+                sku_or_service="PostgreSQL 16 Enterprise with pgvector on Kubernetes",
+                tier="High-Availability Pod Pair",
+                quantity="1 HA Database Instance",
+                monthly_cost_usd=round(75.0 * ha_mult, 2),
+                justification="Stores risk findings, ontologies, audit trails, and review statuses."
+            ),
+            SizingBOM(
+                component="C006: Web App & Keycloak SSO",
+                sku_or_service="FastAPI Cockpit + Keycloak OIDC SSO on Kubernetes",
+                tier="Container Ingress",
+                quantity="1 Ingress Service",
+                monthly_cost_usd=round(40.0 * ha_mult, 2),
+                justification="Hosts web dashboard and integrates with corporate Active Directory / LDAP."
+            )
+        ]
     else: # Azure
         bom = [
             SizingBOM(
@@ -919,37 +1415,47 @@ def generate_brd(
     problem_raw = session.answers.get("q_problem", AnswerItem(question_id="q_problem", question_title="Problem", answer="Enterprise operational inefficiency and manual processing bottlenecks.")).answer
     
     # Intelligently clean and construct client name and project title
-    client_name = client_raw.split("|")[0].strip() if "|" in client_raw else client_raw.strip()
-    if not client_name or client_name.lower() in ["hii", "hi", "hello", "test", "demo"]:
+    proj_title = None
+    if "|" in client_raw:
+        parts = client_raw.split("|")
+        client_name = parts[0].strip()
+        proj_title = parts[1].strip()
+    elif " — " in client_raw:
+        parts = client_raw.split(" — ")
+        client_name = parts[0].strip()
+        proj_title = parts[1].strip()
+    elif " – " in client_raw:
+        parts = client_raw.split(" – ")
+        client_name = parts[0].strip()
+        proj_title = parts[1].strip()
+    elif " - " in client_raw and not client_raw.startswith("q_"):
+        parts = client_raw.split(" - ")
+        client_name = parts[0].strip()
+        proj_title = parts[1].strip()
+    elif ":" in client_raw:
+        parts = client_raw.split(":")
+        client_name = parts[0].strip()
+        proj_title = parts[1].strip()
+    else:
         client_name = client_raw.strip() if client_raw.strip() else "Enterprise Client"
         
     domain = detect_project_domain(problem_raw)
-    
-    if "|" in client_raw:
-        proj_title = client_raw.split("|")[1].strip()
-    else:
+    if not proj_title:
         if domain == "customer_support":
-            proj_title = "AI-Powered Customer Support & Virtual Agent Cockpit"
+            proj_title = f"{client_name} AI Customer Support & Virtual Assistant"
         elif domain == "contract_intelligence":
-            proj_title = "Contract Intelligence & Risk Visibility Platform"
+            proj_title = f"{client_name} Contract Intelligence & Risk Visibility Platform"
         elif domain == "fraud_financial":
-            proj_title = "Intelligent AML & Financial Fraud Detection System"
+            proj_title = f"{client_name} Intelligent AML & Fraud Detection System"
         elif domain == "enterprise_search":
-            proj_title = "Enterprise Knowledge Base & Neural Search Accelerator"
+            proj_title = f"{client_name} Enterprise Knowledge Base & Neural Search"
         elif domain == "document_processing":
-            proj_title = "Intelligent Document Extraction & Workflow Automation Platform"
+            proj_title = f"{client_name} Intelligent Document Extraction & Workflow Automation"
         else:
             proj_title = f"{client_name} AI Modernization & Automation Platform"
+
+
             
-    dur_ans = session.answers.get("q_duration", AnswerItem(question_id="q_duration", question_title="Duration", answer="6.0")).answer
-    ref_weeks = 6.0
-    try:
-        ref_weeks = float(dur_ans.replace("Weeks", "").replace("Week", "").strip().split()[0])
-    except Exception:
-        ref_weeks = 6.0
-        
-    cloud_ans = session.answers.get("q_cloud", AnswerItem(question_id="q_cloud", question_title="Cloud", answer="Microsoft Azure")).answer
-    
     def get_num_ans(qid: str, default_val: float) -> float:
         if qid in session.answers:
             try:
@@ -965,6 +1471,29 @@ def generate_brd(
         if qid in session.answers:
             return session.answers[qid].answer
         return default_val
+
+    dur_ans = get_str_ans("q_duration", "6.0")
+    ref_weeks = 6.0
+    try:
+        ref_weeks = float(dur_ans.replace("Weeks", "").replace("Week", "").strip().split()[0])
+    except Exception:
+        ref_weeks = 6.0
+        
+    cloud_ans = get_str_ans("q_cloud", "Microsoft Azure")
+    geo_ans = get_str_ans("q_geography", "India")
+    start_date_ans = get_str_ans("q_start_date", "2026-09-30")
+    
+    daily_hours = get_working_hours_for_geography(geo_ans)
+    rate = get_hourly_rate_for_geography(geo_ans)
+    
+    buffer_strategy_ans = get_str_ans("q_buffer_strategy", "15% Shadow / Backup Capacity (Recommended)")
+    buffer_pct = 15.0
+    if "0%" in buffer_strategy_ans or "Zero" in buffer_strategy_ans:
+        buffer_pct = 0.0
+    elif "25%" in buffer_strategy_ans:
+        buffer_pct = 25.0
+    elif "10%" in buffer_strategy_ans:
+        buffer_pct = 10.0
 
     # Scale quantities map dynamically extracted from user's direct answers
     scale_quantities = {
@@ -1039,21 +1568,74 @@ def generate_brd(
         daily_requests=daily_requests
     )
     
-    # Master Assumptions from admin store
-    assumptions_raw = get_master_assumptions()
-    assumptions: List[AssumptionItem] = []
-    for a in assumptions_raw:
-        assumptions.append(AssumptionItem(
-            id=a.get("id", "A001"),
-            type=a.get("type", "Assumption"),
-            category=a.get("category", "Functional"),
-            statement=a.get("statement", ""),
-            impact_if_wrong=a.get("impact_if_wrong", a.get("impact", "")),
-            owner_to_confirm=a.get("owner_to_confirm", "Project Sponsor & Technical Lead"),
-            confidence=a.get("confidence", "High"),
-            status=a.get("status", "Approve"),
-            reason=a.get("reason", "")
-        ))
+    # Master Assumptions strictly from user inputs and admin default store (Zero Hallucination)
+    assumptions: List[AssumptionItem] = [
+        AssumptionItem(
+            id="ASM-001",
+            type="Constraint",
+            category="Technical",
+            statement=f"Solution executes exclusively on {cloud_ans} in {geo_ans} region within dedicated non-production cloud subscription with zero unauthorized external egress.",
+            impact_if_wrong="Cloud architecture redesign, resource relocation, and network perimeter reconfiguration.",
+            owner_to_confirm="Principal Solutions Architect & Client Cloud Lead",
+            confidence="High",
+            status="Approve"
+        ),
+        AssumptionItem(
+            id="ASM-002",
+            type="Assumption",
+            category="Commercial",
+            statement=f"Delivery baseline calibrated for {tier_name} tier over {ref_weeks} reference weeks ({feasibility.working_days} working days) at blended rate ${rate:.2f}/hr with {buffer_pct}% shadow standby engineering protection.",
+            impact_if_wrong="Schedule timeline adjustment, sprint re-estimation, and resource loading revisions.",
+            owner_to_confirm="Senior Delivery PM & Client Sponsor",
+            confidence="High",
+            status="Approve"
+        ),
+        AssumptionItem(
+            id="ASM-003",
+            type="Assumption",
+            category="Scale",
+            statement=f"Workload sizing dimensioned for {named_users} named users, {concurrent_users} peak concurrent sessions, and {daily_requests} daily requests across {int(scale_quantities['ENVS'])} environment(s).",
+            impact_if_wrong="Cloud infrastructure resizing and provisioned throughput SKU adjustment.",
+            owner_to_confirm="Enterprise Architect & Infrastructure Lead",
+            confidence="High",
+            status="Approve"
+        ),
+        AssumptionItem(
+            id="ASM-004",
+            type="Prerequisite",
+            category="Data",
+            statement=f"Client provides representative digital training & test sample data across {int(scale_quantities['DATASOURCES'])} connected data source(s) prior to Sprint 1 kick-off.",
+            impact_if_wrong="Model grounding delay and validation dataset dependency blocker.",
+            owner_to_confirm="Client Data Owner & ML Engineer",
+            confidence="High",
+            status="Approve"
+        ),
+        AssumptionItem(
+            id="ASM-005",
+            type="Constraint",
+            category="Governance",
+            statement=f"Responsible AI governance enforces 100% human-in-the-loop review for high-impact outputs and zero client data retention for public foundation model training.",
+            impact_if_wrong="Compliance audit exception and regulatory governance escalation.",
+            owner_to_confirm="AI Ethics Board & Compliance Officer",
+            confidence="High",
+            status="Approve"
+        )
+    ]
+    
+    # Append any custom admin master assumptions from store
+    for a in get_master_assumptions():
+        if not any(ex.statement == a.get("statement") for ex in assumptions):
+            assumptions.append(AssumptionItem(
+                id=a.get("id", f"ASM-{len(assumptions)+1:03d}"),
+                type=a.get("type", "Assumption"),
+                category=a.get("category", "Functional"),
+                statement=a.get("statement", ""),
+                impact_if_wrong=a.get("impact_if_wrong", a.get("impact", "")),
+                owner_to_confirm=a.get("owner_to_confirm", "Project Sponsor & Technical Lead"),
+                confidence=a.get("confidence", "High"),
+                status=a.get("status", "Approve"),
+                reason=a.get("reason", "")
+            ))
 
     if domain == "contract_intelligence":
         solution_summary_six = (
@@ -1161,19 +1743,6 @@ def generate_brd(
             "5. Structured findings and confidence scores persisted to database.\n"
             "6. Results rendered in interactive dashboard with audit-ready export."
         )
-
-    start_date_raw = get_str_ans("q_start_date", "2026-09-30")
-    m_date = re.search(r'\b\d{4}-\d{2}-\d{2}\b', start_date_raw)
-    start_date_ans = m_date.group(0) if m_date else "2026-09-30"
-    
-    buffer_strategy_ans = get_str_ans("q_buffer_strategy", "15% Shadow / Backup Capacity (Recommended)")
-    buffer_pct = 15.0
-    if "0%" in buffer_strategy_ans or "Zero" in buffer_strategy_ans:
-        buffer_pct = 0.0
-    elif "25%" in buffer_strategy_ans:
-        buffer_pct = 25.0
-    elif "10%" in buffer_strategy_ans:
-        buffer_pct = 10.0
 
     # 6 Factor Sizing & Functional Fields
     legal_cats_raw = get_str_ans("q_legal_categories", "Lease, Vendor, Service, Facilities, Technology, Marketing")

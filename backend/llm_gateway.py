@@ -279,7 +279,7 @@ class LLMGateway:
                         "parts": [{"text": system_instruction}]
                     }
                 
-                with httpx.Client(timeout=45.0) as client:
+                with httpx.Client(timeout=5.0) as client:
                     resp = client.post(endpoint, json=payload, headers={"Content-Type": "application/json"})
                     if resp.status_code == 200:
                         data = resp.json()
@@ -305,7 +305,7 @@ class LLMGateway:
                     "max_tokens": max_tokens,
                     "temperature": temperature
                 }
-                with httpx.Client(timeout=45.0) as client:
+                with httpx.Client(timeout=5.0) as client:
                     resp = client.post(url, json=payload, headers={"api-key": api_key, "Content-Type": "application/json"})
                     if resp.status_code == 200:
                         data = resp.json()
@@ -363,7 +363,7 @@ class LLMGateway:
                     "max_tokens": max_tokens,
                     "temperature": temperature
                 }
-                with httpx.Client(timeout=45.0) as client:
+                with httpx.Client(timeout=5.0) as client:
                     resp = client.post(url, json=payload, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"})
                     if resp.status_code == 200:
                         data = resp.json()
@@ -472,11 +472,15 @@ Extract and return a JSON object with EXACTLY the following structure:
         """
         Real-time Requirements Intelligence:
         Interprets natural language user responses, evaluates ambiguity,
-        and generates targeted dynamic clarification if needed.
+        and generates targeted dynamic clarification grounded in ai_brd_questionnaire_template.json rules.
         """
         system = (
-            "You are an AI Requirements Intelligence Agent for enterprise project discovery. "
-            "Evaluate if the user's answer is sufficiently specific or if it is ambiguous/vague."
+            "You are an AI Requirements Intelligence Agent conducting an enterprise AI discovery interview "
+            "based on the AI Project BRD Questionnaire (AWS, Azure, GCP, IBM Cloud). "
+            "Evaluate if the user's answer is sufficiently specific or if it is ambiguous/vague according to: "
+            "specific = measurable/named/verifiable targets; vague = generic terms ('fast', 'good'); assumed = chatbot inferred. "
+            "Never hallucinate or recommend services outside the single selected cloud platform. "
+            "CRITICAL: Always ask EXACTLY ONE focused question at a time. Never dump multiple questions in a single message."
         )
         prompt = f"""Context:
 Question: {question_title}
@@ -496,6 +500,49 @@ Analyze the user's input. Return a JSON object with:
     {{"label": "Option A Title", "value": "Detailed specification of Option A"}},
     {{"label": "Option B Title", "value": "Detailed specification of Option B"}},
     {{"label": "Option C Title", "value": "Detailed specification of Option C"}}
+  ]
+}}"""
+        return cls.generate_json(prompt, system_instruction=system, max_tokens=1500)
+
+    @classmethod
+    def interview_discovery_agent(
+        cls,
+        current_section: Dict[str, Any],
+        current_question: Dict[str, Any],
+        user_message: str,
+        session_answers: Dict[str, Any],
+        accumulated_requirements: Optional[List[str]] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Conducts discovery interview turns directly powered by ai_brd_questionnaire_template.json rules.
+        """
+        system = (
+            "You are an expert Enterprise AI Business Analyst & Solutions Architect interviewing a client. "
+            "Your interview is strictly guided by the AI Project BRD Questionnaire Template (AWS, Azure, GCP, IBM Cloud). "
+            "Rules:\n"
+            "1. Ask S01 (Project/Client), S02 (Problem/Objectives), S03 (Scope), S05 (Project Types), and S19 (Cloud Provider) first.\n"
+            "2. Never recommend or mention services from non-selected clouds.\n"
+            "3. Challenge vague answers for measurable metrics.\n"
+            "4. Acknowledge user requirements conversationally, check if they have more, and summarize clearly.\n"
+            "5. Return atomic, verifiable requirements."
+        )
+        prompt = f"""Active Section: {current_section.get('section_id')} - {current_section.get('title')}
+Question ID: {current_question.get('id')} ({current_question.get('key')})
+Question Text: {current_question.get('question')}
+Help Text: {current_question.get('help_text', '')}
+
+User Input: "{user_message}"
+Previously Accumulated Requirements: {json.dumps(accumulated_requirements or [])}
+Active Answers: {json.dumps({k: (v.answer if hasattr(v, 'answer') else str(v)) for k, v in list(session_answers.items())[-8:]})}
+
+Generate a JSON response:
+{{
+  "acknowledgment": "Conversational acknowledgment of what was entered",
+  "is_end_of_requirements": true or false,
+  "extracted_requirements": ["Requirement 1", "Requirement 2"],
+  "next_prompt": "What to ask next or follow up with",
+  "suggested_options": [
+    {{"label": "Option Label", "value": "Option Value"}}
   ]
 }}"""
         return cls.generate_json(prompt, system_instruction=system, max_tokens=1500)

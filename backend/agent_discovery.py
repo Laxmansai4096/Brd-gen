@@ -9,25 +9,56 @@ from backend.models import (
 )
 from backend.admin_store import get_admin_defaults, get_calendar_for_geography, DELIVERY_TIERS
 from backend.llm_gateway import LLMGateway
+from backend.json_questionnaire_engine import JSONQuestionnaireEngine
+from backend.worked_example_data import MASTER_CLARIFICATION_QUESTIONS_52
+
+TEMPLATE_FILE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ai_brd_questionnaire_template.json")
+
+def get_brd_questionnaire_template() -> Dict[str, Any]:
+    return JSONQuestionnaireEngine.get_template()
 
 STATIC_QUESTIONS: List[QuestionItem] = [
-    # 1. Project Timeline & Scheduling Factors
+    # 1. Project Vision & Core Objectives
     QuestionItem(
         id="q_client",
-        title="Client & Engagement Name",
-        prompt="Who is the client/account, and what is the working title for this initiative?",
-        type="dropdown",
-        options=[
-            QuestionOption(value="Contract Intelligence & Risk Visibility Platform", label="PVR INOX | Contract Intelligence & Risk Visibility Platform (Recommended)", description="Automated contract risk classification and clause extraction"),
-            QuestionOption(value="Enterprise Retail | AI-Powered Customer Support & Virtual Agent Cockpit", label="Enterprise Retail | AI Support & Agent Cockpit", description="Omnichannel customer support resolution and CRM integration"),
-            QuestionOption(value="Global Banking Corp | Intelligent AML & Financial Fraud Detection System", label="Global Bank | Financial Fraud & AML Detection", description="Real-time transaction risk scoring and compliance tracking"),
-            QuestionOption(value="Healthcare System | Intelligent Clinical Document Extraction Platform", label="Healthcare | Clinical Document Extraction", description="Layout-aware medical record and claims extraction"),
-            QuestionOption(value="SaaS Tech Corp | Enterprise Knowledge Base & Neural Search Accelerator", label="SaaS Enterprise | Neural Search & Knowledge Base", description="High-throughput hybrid vector retrieval engine")
-        ],
-        default_value="PVR INOX | Contract Intelligence & Risk Visibility Platform",
+        title="Client & Project Initiative",
+        prompt="Who is the client / organization, and what is the working title for this AI project initiative?",
+        type="text",
+        options=[],
+        default_value="Enterprise Client | AI Automation Platform",
         category="Scope",
         priority="Blocker",
-        help_text="Select an enterprise template or pick 'Custom Input' to type your exact client and project title."
+        help_text="Type your organization/client name and project title (e.g. Acme Corp — AI Billing Automation Platform or CareHealth — Clinical Trial Matching)."
+    ),
+    QuestionItem(
+        id="q_problem",
+        title="Problem Statement & Core Business Objectives",
+        prompt="What specific business problem, manual bottlenecks, and key objectives must this AI solution solve? (2-5 sentences)",
+        type="text",
+        options=[],
+        default_value="Manual workflows and disconnected data sources cause operational bottlenecks, long turnaround times, and lack of consolidated visibility. The AI solution must automate extraction, validation, and decision-support with enterprise integration.",
+        category="Scope",
+        priority="Blocker",
+        help_text="Detail who is impacted, current bottlenecks, and what automated decision or action this solution enables."
+    ),
+    QuestionItem(
+        id="q_legal_categories",
+        title="In-Scope Functional Capabilities & Workflows",
+        prompt="Which functional capabilities, business workflows, or domain categories are in scope for this solution?",
+        type="dropdown",
+        options=[
+            QuestionOption(value="Employee Leave Management Lifecycle (Leave balance, applications, manager approval/rejection, cancellation, policy config, holiday calendar, HR reports)", label="Employee Leave Management System (ELMS Benchmark)", description="End-to-end leave lifecycle: balance tracking, validations, approvals, cancellation restoration, policy admin, and audit trail"),
+            QuestionOption(value="Customer Support, IT Helpdesk, Knowledge Retrieval, Automated Triage", label="Conversational AI & Enterprise Support Copilot", description="Multi-turn user assistance, intelligent search, and ticket automation"),
+            QuestionOption(value="Clinical Documentation, EHR Summarization, ICD/CPT Coding, Protocol Matching", label="Healthcare & Clinical AI Intelligence", description="Clinical note summarization, medical protocol matching, and triage"),
+            QuestionOption(value="Lease, Vendor, Service, Facilities, Technology, Marketing", label="Contract Risk & Document Intelligence", description="Clause extraction and compliance scoring across contract categories"),
+            QuestionOption(value="Transaction Monitoring, Fraud Detection, KYC Verification, AML Alerts", label="Financial Crime, AML & Predictive ML", description="Real-time transaction scoring, behavioral anomaly alerts, and KYC verification"),
+            QuestionOption(value="Multi-Agent Task Routing, Autonomous Tool Calling, Code Synthesis, RPA", label="Autonomous Multi-Agent Workflow System", description="Cross-system action orchestration, dynamic tool selection, and execution"),
+            QuestionOption(value="Enterprise Knowledge Base, Semantic Search, Policy Q&A, Research Synthesis", label="Enterprise RAG & Knowledge Hub", description="Vector-indexed organizational documentation and verifiable QA")
+        ],
+        default_value="Employee Leave Management Lifecycle (Leave balance, applications, manager approval/rejection, cancellation, policy config, holiday calendar, HR reports)",
+        category="Scope",
+        priority="High",
+        help_text="Defines the specific functional modules handled by the platform."
     ),
     QuestionItem(
         id="q_tier",
@@ -35,9 +66,9 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="What is the targeted delivery tier for this engagement?",
         type="dropdown",
         options=[
+            QuestionOption(value="MVP", label="Minimum Viable Product (MVP) [Base 0.778]", description="Production-grade core slice, real users, automated CI/CD"),
             QuestionOption(value="PoC", label="Proof of Concept (PoC) [Base 0.289]", description="Throwaway build, happy path, sampled data, single env, headline weight 0.289"),
             QuestionOption(value="Pilot", label="Pilot Trial [Base 0.525]", description="Limited live trial with controlled cohort, real data, ring-fenced"),
-            QuestionOption(value="MVP", label="Minimum Viable Product (MVP) [Base 0.778]", description="Production-grade core slice, real users, automated CI/CD"),
             QuestionOption(value="Production Grade", label="Production Grade [Base 1.000]", description="Full enterprise readiness, enforced NFRs, full HA/DR"),
             QuestionOption(value="PoC to Pilot", label="PoC to Pilot [Transition 0.320]", description="Uplift existing PoC to controlled live trial with rework uplift"),
             QuestionOption(value="PoC to MVP", label="PoC to MVP [Transition 0.612]", description="Uplift existing PoC directly to releasable MVP slice"),
@@ -47,75 +78,25 @@ STATIC_QUESTIONS: List[QuestionItem] = [
             QuestionOption(value="MVP to Production Grade", label="MVP to Production Grade [Transition 0.305]", description="Harden live MVP to full production grade"),
             QuestionOption(value="Incremental Production Grade", label="Incremental Production Grade [Delta 0.300]", description="Delta release on live solution (30% scope share)")
         ],
-        default_value="PoC",
+        default_value="MVP",
         category="Scope",
         priority="Blocker",
         help_text="Select from the 11 delivery tiers to set phase multipliers."
     ),
-    QuestionItem(
-        id="q_problem",
-        title="Problem Statement & Business Challenge",
-        prompt="Describe the business problem, manual bottlenecks, and key objectives in 2 to 5 sentences.",
-        type="dropdown",
-        options=[
-            QuestionOption(
-                value="Limited visibility into contractual risk exposure across contracts and business functions. Manual review by scarce legal experts is slow, disconnected, and lacks traceability. The solution must extract clauses across 6 legal categories (Lease, Vendor, Service, Facilities, Technology, Marketing), assess them against category principles (Agree, Agree with Management Approval, Not Agree), and produce a centralized contract risk register with bounding-box coordinate traceability.",
-                label="Contract Risk & Legal Bottlenecks (Recommended)",
-                description="Extract clauses across 6 categories, 2-pass principle evaluation, centralized risk register"
-            ),
-            QuestionOption(
-                value="High volume of tier-1 customer inquiries causing long wait times, operational overhead, and inconsistent support responses. Manual handling slows resolution and causes agent fatigue. The solution must automate customer deflection via grounded conversational AI, provide human support agent assist, and execute CRM workflows with sub-2-second latency.",
-                label="Customer Support & Omnichannel Deflection",
-                description="Automate tier-1 inquiries, real-time agent-assist, CRM tool calling"
-            ),
-            QuestionOption(
-                value="Manual document ingestion and data extraction across invoices, receipts, and claim forms causes high defect rates, processing delays, and compliance risks. The solution must execute layout-aware OCR extraction, validate business rules, and export structured outputs with 100% audit provenance.",
-                label="Intelligent Document & Invoice Extraction",
-                description="Automated layout-aware OCR parsing, validation gates, structured database persistence"
-            ),
-            QuestionOption(
-                value="Enterprise knowledge is fragmented across disparate wikis, file drives, and databases, forcing employees to spend hours locating accurate information. The solution must provide a secure hybrid neural search engine with semantic embeddings, BM25 keyword matching, and strict RBAC.",
-                label="Enterprise Knowledge Base & Neural Search",
-                description="Hybrid vector and keyword search across enterprise document repositories"
-            )
-        ],
-        default_value="Limited visibility into contractual risk exposure across contracts and business functions. Manual review by scarce legal experts is slow, disconnected, and lacks traceability. The solution must extract clauses across 6 legal categories (Lease, Vendor, Service, Facilities, Technology, Marketing), assess them against category principles (Agree, Agree with Management Approval, Not Agree), and produce a centralized contract risk register with bounding-box coordinate traceability.",
-        category="Scope",
-        priority="Blocker",
-        help_text="Detail who is impacted, bottlenecks, and what decision or action this solution enables."
-    ),
-    QuestionItem(
-        id="q_legal_categories",
-        title="In-Scope Functional Domains & Capabilities",
-        prompt="Which functional domains, capabilities, or business categories are in scope for this AI solution?",
-        type="dropdown",
-        options=[
-            QuestionOption(value="Lease, Vendor, Service, Facilities, Technology, Marketing", label="Contract Risk & Document Intelligence (Recommended)", description="Clause extraction and compliance scoring across 6 contract categories"),
-            QuestionOption(value="Customer Support, IT Helpdesk, Knowledge Retrieval, Automated Triage", label="Conversational AI & Enterprise Copilot", description="Multi-turn user assistance, intelligent search, and ticket automation"),
-            QuestionOption(value="Transaction Monitoring, Fraud Detection, KYC Verification, AML Alerts", label="Financial Crime, AML & Predictive ML", description="Real-time transaction scoring, behavioral anomaly alerts, and KYC verification"),
-            QuestionOption(value="Clinical Documentation, EHR Summarization, ICD/CPT Coding, Lab Triage", label="Healthcare & Clinical AI Assistant", description="Clinical note summarization, medical coding, and diagnostic triage"),
-            QuestionOption(value="Multi-Agent Task Routing, Autonomous Tool Calling, Code Synthesis, RPA", label="Autonomous Multi-Agent Workflow System", description="Cross-system action orchestration, dynamic tool selection, and execution"),
-            QuestionOption(value="Enterprise Knowledge Base, Semantic Search, Policy Q&A, Research Synthesis", label="Enterprise RAG & Knowledge Hub", description="Vector-indexed organizational documentation and verifiable QA"),
-            QuestionOption(value="Enterprise Procurement, NDAs, Master Service Agreements", label="Enterprise Procurement & MSAs", description="Procurement, NDAs, and vendor agreements")
-        ],
-        default_value="Lease, Vendor, Service, Facilities, Technology, Marketing",
-        category="Scope",
-        priority="High",
-        help_text="Defines the business domains or capabilities handled by the AI platform (Contract Risk, Copilot, AML, Clinical, Agentic, or RAG)."
-    ),
+
     QuestionItem(
         id="q_duration",
         title="Reference Duration (Weeks)",
         prompt="What is the targeted reference duration for this phase in calendar weeks?",
         type="dropdown",
         options=[
+            QuestionOption(value="8.0", label="8.0 Weeks (Standard MVP Benchmark)", description="Standard 8-week MVP delivery (40 working days)"),
             QuestionOption(value="4.0", label="4.0 Weeks", description="Aggressive 4-week sprint (20 working days)"),
-            QuestionOption(value="6.0", label="6.0 Weeks (Standard Baseline)", description="Standard 6-week baseline (30 working days)"),
-            QuestionOption(value="8.0", label="8.0 Weeks", description="Extended 8-week PoC / Pilot (40 working days)"),
-            QuestionOption(value="12.0", label="12.0 Weeks", description="MVP Standard 12-week build (60 working days)"),
+            QuestionOption(value="6.0", label="6.0 Weeks", description="Standard 6-week baseline (30 working days)"),
+            QuestionOption(value="12.0", label="12.0 Weeks", description="Extended 12-week build (60 working days)"),
             QuestionOption(value="16.0", label="16.0 Weeks", description="Full Production Grade 16-week delivery (80 working days)")
         ],
-        default_value="6.0",
+        default_value="8.0",
         category="Scope",
         priority="High",
         help_text="Reference duration for back-solving required team loading."
@@ -159,7 +140,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="How many distinct AI/business use cases or capabilities are in scope for this phase? (Baseline is 1)",
         type="dropdown",
         options=[
-            QuestionOption(value="1 Use Case (Standard Baseline - 1.000x)", label="1 Use Case (Standard Baseline - 1.000x)", description="Single primary capability: Contract Risk & Principle Extraction"),
+            QuestionOption(value="1 Use Case (Standard Baseline - 1.000x)", label="1 Use Case (Standard Baseline - 1.000x)", description="Single primary capability: Leave Management Lifecycle or Principle Extraction"),
             QuestionOption(value="2 Use Cases (Factor 1.250x)", label="2 Use Cases (Factor 1.250x)", description="Two distinct functional capabilities"),
             QuestionOption(value="3 Use Cases (Factor 1.500x)", label="3 Use Cases (Factor 1.500x)", description="Three business capabilities"),
             QuestionOption(value="5 Use Cases (Factor 2.000x)", label="5 Use Cases (Factor 2.000x)", description="Multi-department enterprise capabilities")
@@ -167,23 +148,24 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="1 Use Case (Standard Baseline - 1.000x)",
         category="Scale",
         priority="High",
-        help_text="1 for Contract Risk & Principle Extraction Intelligence (Factor: 1.000)."
+        help_text="1 for Primary Business Capability (Factor: 1.000)."
     ),
     QuestionItem(
         id="q_personas_count",
         title="User Personas Count",
-        prompt="How many distinct user personas or stakeholder roles will interact with the system? (Baseline is 2)",
+        prompt="How many distinct user personas or stakeholder roles will interact with the system? (Baseline is 4)",
         type="dropdown",
         options=[
+            QuestionOption(value="4 Personas (Employee, Manager, HR Administrator, HR Manager)", label="4 Personas (Employee, Manager, HR Admin, HR Manager - Benchmark)", description="4 roles: Employee (apply/cancel/view), Manager (approve/reject direct reports), HR Admin (policies/holidays), HR Manager (reports)"),
             QuestionOption(value="4 Personas (Active: Legal, Procurement, Risk, Sponsor - Factor 1.450)", label="4 Personas (Active: Legal, Procurement, Risk, Sponsor - Factor 1.450)", description="Legal Counsel, Procurement Lead, Risk Officer, Executive Sponsor (Elasticity: 0.45)"),
             QuestionOption(value="2 Personas (Standard Baseline - Factor 1.000)", label="2 Personas (Standard Baseline - Factor 1.000)", description="Primary business user and administrator"),
             QuestionOption(value="1 Persona (Single Role - Factor 0.775)", label="1 Persona (Single Role - Factor 0.775)", description="Single designated user type"),
             QuestionOption(value="6 Personas (Enterprise Cross-Functional - Factor 1.900)", label="6 Personas (Enterprise Cross-Functional - Factor 1.900)", description="Broad stakeholder group across legal, ops, audit, and execs")
         ],
-        default_value="4 Personas (Active: Legal, Procurement, Risk, Sponsor - Factor 1.450)",
+        default_value="4 Personas (Employee, Manager, HR Administrator, HR Manager)",
         category="Scale",
         priority="High",
-        help_text="4 active personas: Legal Counsel, Procurement Lead, Risk Officer, Executive Sponsor (Factor: 1.450, Elasticity: 0.45)."
+        help_text="4 active personas: Employee, Manager, HR Administrator, HR Manager (Factor: 1.450)."
     ),
     QuestionItem(
         id="q_integrations_count",
@@ -191,15 +173,15 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="How many inbound/outbound enterprise system integrations are required in this phase? (Baseline is 2)",
         type="dropdown",
         options=[
+            QuestionOption(value="2 Integrations (INT-001 Corporate SSO Identity + INT-002 Corporate Email Notifications)", label="2 Integrations (INT-001 Corporate SSO + INT-002 Corporate Email)", description="INT-001: Corporate Identity/Directory for employee & manager hierarchy | INT-002: Corporate Email for leave event notifications"),
             QuestionOption(value="0 Integrations (Manual Upload / Blob Storage - Floor 0.500x)", label="0 Integrations (Manual Upload / Blob Storage - Floor 0.500x)", description="Manual PDF uploads directly to Azure Blob Storage (Scaled to floor factor 0.500)"),
             QuestionOption(value="1 Integration (Factor 0.675x)", label="1 Integration (Factor 0.675x)", description="Single REST API / ERP connector"),
-            QuestionOption(value="2 Integrations (Standard Baseline - Factor 1.000x)", label="2 Integrations (Standard Baseline - Factor 1.000x)", description="Two external system connectors"),
             QuestionOption(value="4 Integrations (Factor 1.650x)", label="4 Integrations (Factor 1.650x)", description="Four enterprise integrations (CRM, ERP, Document Store, Auth)")
         ],
-        default_value="0 Integrations (Manual Upload / Blob Storage - Floor 0.500x)",
+        default_value="2 Integrations (INT-001 Corporate SSO Identity + INT-002 Corporate Email Notifications)",
         category="Scale",
         priority="High",
-        help_text="0 external interfaces for PoC manual upload (Scaled to floor factor 0.500, Elasticity: 0.65)."
+        help_text="2 enterprise integrations: INT-001 Corporate SSO and INT-002 Corporate Email (Factor: 1.000)."
     ),
     QuestionItem(
         id="q_datasources_count",
@@ -207,45 +189,46 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="How many distinct data sources or document repositories feed into this solution? (Baseline is 2)",
         type="dropdown",
         options=[
+            QuestionOption(value="2 Data Sources (Corporate Employee Directory / HRMS Database + Holiday Calendar Data)", label="2 Data Sources (Employee Directory + Holiday Calendar)", description="Data Source 1: Corporate Employee Directory/HRMS | Data Source 2: Annual Company Holiday Calendar"),
             QuestionOption(value="2 Data Sources (Contract Blob Storage + Risk Spreadsheet - Baseline 1.000x)", label="2 Data Sources (Contract Blob Storage + Risk Spreadsheet - Baseline 1.000x)", description="Azure Blob Storage contract repository + historical risk register spreadsheet"),
-            QuestionOption(value="1 Data Source (Single Repository - Factor 0.750x)", label="1 Data Source (Single Repository - Factor 0.750x)", description="Single digital PDF upload repository"),
+            QuestionOption(value="1 Data Source (Single Repository - Factor 0.750x)", label="1 Data Source (Single Repository - Factor 0.750x)", description="Single digital upload repository"),
             QuestionOption(value="3 Data Sources (Factor 1.250x)", label="3 Data Sources (Factor 1.250x)", description="Blob Storage, SQL Database, and SharePoint repository"),
             QuestionOption(value="5 Data Sources (Enterprise Data Lake - Factor 1.750x)", label="5 Data Sources (Enterprise Data Lake - Factor 1.750x)", description="Enterprise data lake, CRM, ERP, Blob, and Wiki")
         ],
-        default_value="2 Data Sources (Contract Blob Storage + Risk Spreadsheet - Baseline 1.000x)",
+        default_value="2 Data Sources (Corporate Employee Directory / HRMS Database + Holiday Calendar Data)",
         category="Scale",
         priority="High",
-        help_text="Blob Storage contract repository + historical risk register spreadsheet (Total: 2, Factor: 1.000)."
+        help_text="2 distinct data sources (Employee Directory + Holiday Calendar, Factor: 1.000)."
     ),
     QuestionItem(
         id="q_channels_count",
         title="Delivery Channels",
-        prompt="How many user-facing delivery channels are in scope (e.g., Web Cockpit, Mobile, Teams Bot, REST API)?",
+        prompt="How many user-facing delivery channels are in scope (e.g., Web App, Mobile, Teams Bot, REST API)?",
         type="dropdown",
         options=[
-            QuestionOption(value="1 Channel (Web Cockpit UI - Baseline 1.000x)", label="1 Channel (Web Cockpit UI - Baseline 1.000x)", description="Interactive browser-based demonstration and review cockpit"),
-            QuestionOption(value="2 Channels (Web Cockpit + Microsoft Teams Bot - Factor 1.300x)", label="2 Channels (Web Cockpit + Microsoft Teams Bot - Factor 1.300x)", description="Web browser app and integrated Teams bot"),
+            QuestionOption(value="1 Channel (Web Application UI - Baseline 1.000x)", label="1 Channel (Web Application UI - Benchmark Standard)", description="Browser-based web application (Chrome, Edge, Safari latest 2 versions)"),
+            QuestionOption(value="2 Channels (Web App + Microsoft Teams Bot - Factor 1.300x)", label="2 Channels (Web App + Microsoft Teams Bot - Factor 1.300x)", description="Web browser app and integrated Teams bot"),
             QuestionOption(value="3 Channels (Web + Mobile App + REST API - Factor 1.600x)", label="3 Channels (Web + Mobile App + REST API - Factor 1.600x)", description="Web, iOS/Android mobile client, and public REST API")
         ],
-        default_value="1 Channel (Web Cockpit UI - Baseline 1.000x)",
+        default_value="1 Channel (Web Application UI - Baseline 1.000x)",
         category="Scale",
         priority="Medium",
-        help_text="1 for single Web Cockpit UI (Factor: 1.000)."
+        help_text="1 for single Web Application UI (Factor: 1.000; native mobile out of scope per A-006)."
     ),
     QuestionItem(
         id="q_languages_count",
         title="Languages Supported",
-        prompt="How many languages must be processed by the document intelligence engine?",
+        prompt="How many languages must be processed by the application?",
         type="dropdown",
         options=[
-            QuestionOption(value="1 Language (English Digital Documents - Baseline 1.000x)", label="1 Language (English Digital Documents - Baseline 1.000x)", description="Clean English digital PDFs only"),
+            QuestionOption(value="1 Language (English Only - Baseline 1.000x)", label="1 Language (English Only - Benchmark Standard)", description="English is the only language required for MVP per A-004"),
             QuestionOption(value="2 Languages (English + Regional / European - Factor 1.350x)", label="2 Languages (English + Regional / European - Factor 1.350x)", description="Bilingual document processing"),
-            QuestionOption(value="5 Languages (Multilingual Enterprise - Factor 2.000x)", label="5 Languages (Multilingual Enterprise - Factor 2.000x)", description="Global multilingual extraction")
+            QuestionOption(value="5 Languages (Multilingual Enterprise - Factor 2.000x)", label="5 Languages (Multilingual Enterprise - Factor 2.000x)", description="Global multilingual support")
         ],
-        default_value="1 Language (English Digital Documents - Baseline 1.000x)",
+        default_value="1 Language (English Only - Baseline 1.000x)",
         category="Scale",
         priority="Medium",
-        help_text="1 for English-only clean digital PDFs (Factor: 1.000)."
+        help_text="1 for English-only MVP scope per A-004 (Factor: 1.000)."
     ),
     QuestionItem(
         id="q_envs_count",
@@ -253,14 +236,14 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="How many isolated cloud environments must be provisioned (e.g., Dev, Test, Prod)?",
         type="dropdown",
         options=[
-            QuestionOption(value="3 Environments (Dev, Test, Prod - Baseline 1.000x)", label="3 Environments (Dev, Test, Prod - Baseline 1.000x)", description="Development, Test/QA, and Production subscriptions"),
+            QuestionOption(value="3 Environments (Dev, Test, Prod - Baseline 1.000x)", label="3 Environments (Dev, Test, Prod - Benchmark Standard)", description="Development, Test/QA, and Production subscriptions"),
             QuestionOption(value="2 Environments (Dev, Prod - Factor 0.800x)", label="2 Environments (Dev, Prod - Factor 0.800x)", description="Development and Production only"),
             QuestionOption(value="4 Environments (Dev, Test, Staging/UAT, Prod - Factor 1.200x)", label="4 Environments (Dev, Test, Staging/UAT, Prod - Factor 1.200x)", description="Development, Test, Staging, and Production")
         ],
         default_value="3 Environments (Dev, Test, Prod - Baseline 1.000x)",
         category="Scale",
         priority="High",
-        help_text="3 for Dev, Test, and Prod / UAT (Factor: 1.000)."
+        help_text="3 for Dev, Test, and Prod (Factor: 1.000)."
     ),
     QuestionItem(
         id="q_components_count",
@@ -268,14 +251,15 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="How many distinct deployable architecture components carry the target solution? (Baseline is 6)",
         type="dropdown",
         options=[
-            QuestionOption(value="6 Components (Landing, Search, Reasoning, DB, Eval, UI - Baseline 1.000x)", label="6 Components (Landing, Search, Reasoning, DB, Eval, UI - Baseline 1.000x)", description="6 microservices: Landing/Ingestion, Search Index, LLM Engine, Database, Eval Harness, UI Cockpit"),
+            QuestionOption(value="6 Components (UI, API Gateway, Leave Engine, DB, Email Service, Audit Logger)", label="6 Components (UI, API, Leave Engine, DB, Email Service, Audit - Benchmark)", description="6 microservices: Web UI, API Gateway, Leave Policy & Calculation Engine, PostgreSQL DB, Email Integration Service, Audit Logger"),
+            QuestionOption(value="6 Components (Landing, Search, Reasoning, DB, Eval, UI - Baseline 1.000x)", label="6 Components (Landing, Search, Reasoning, DB, Eval, UI - AI Baseline)", description="6 microservices: Landing/Ingestion, Search Index, LLM Engine, Database, Eval Harness, UI Cockpit"),
             QuestionOption(value="4 Components (Lean Pipeline - Factor 0.800x)", label="4 Components (Lean Pipeline - Factor 0.800x)", description="Ingestion, Search, LLM Engine, UI Cockpit"),
             QuestionOption(value="8 Components (Enterprise Scaled Microservices - Factor 1.300x)", label="8 Components (Enterprise Scaled Microservices - Factor 1.300x)", description="Comprehensive enterprise distributed architecture")
         ],
-        default_value="6 Components (Landing, Search, Reasoning, DB, Eval, UI - Baseline 1.000x)",
+        default_value="6 Components (UI, API Gateway, Leave Engine, DB, Email Service, Audit Logger)",
         category="Scale",
         priority="High",
-        help_text="6 for Landing, Search Index, Reasoning Engine, Database, Eval Harness, UI Cockpit (Factor: 1.000)."
+        help_text="6 components for UI, API, Leave Engine, DB, Email, and Audit (Factor: 1.000)."
     ),
     QuestionItem(
         id="q_complexity",
@@ -283,46 +267,48 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="What is the overall technical complexity of the domain and algorithms?",
         type="dropdown",
         options=[
-            QuestionOption(value="Low", label="Low (0.850 Multiplier)", description="Standard RAG, structured documents, straightforward schemas"),
-            QuestionOption(value="Medium", label="Medium (1.000 Baseline)", description="Moderate multi-step extraction and custom ontologies"),
+            QuestionOption(value="Medium", label="Medium (1.000 Baseline - Benchmark Standard)", description="Moderate multi-step validation logic, policy matrix, working-day calculations"),
+            QuestionOption(value="Low", label="Low (0.850 Multiplier)", description="Standard CRUD, structured documents, straightforward schemas"),
             QuestionOption(value="High", label="High (1.250 Multiplier)", description="Deep agentic reasoning, cross-document reasoning"),
             QuestionOption(value="Very High", label="Very High (1.500 Multiplier)", description="Custom model fine-tuning, complex multi-modal pipelines")
         ],
-        default_value="Low",
+        default_value="Medium",
         category="Scale",
         priority="High",
-        help_text="Graded as Low, applying a flat 0.850 multiplier across task library."
+        help_text="Graded as Medium (1.000 baseline) for multi-step approval hierarchy, holiday deduction, and balance restoration."
     ),
     QuestionItem(
         id="q_compliance",
-        title="Compliance & Regulatory Posture",
-        prompt="What is the compliance posture governing this system's data and operations?",
+        title="Non-Functional: Regulatory Compliance & Statutory Standards (NFR-3)",
+        prompt="What regulatory compliance, data privacy, and statutory governance standards must this solution satisfy (e.g. GDPR, HIPAA, SOC2 Type II, ISO 27001, PCI-DSS, RBI Guidelines)?",
         type="dropdown",
         options=[
-            QuestionOption(value="None", label="None (1.000x)", description="No specific regulatory governance"),
-            QuestionOption(value="Internal policy only", label="Internal Policy Only (1.050x)", description="Bound by internal data governance (+5% uplift on COMP tasks)"),
-            QuestionOption(value="Regulated - moderate", label="Regulated - Moderate (1.150x)", description="Standard industry regulatory audit requirements"),
-            QuestionOption(value="Regulated - high (BFSI/Health/Gov)", label="Regulated - High (1.300x)", description="Strict statutory audits (BFSI, HIPAA, Government)")
+            QuestionOption(value="Internal Security & Privacy Policy (A-011 Verification Gate for External Statutory Standards)", label="Internal Security Policy (A-011 Verification Gate - Benchmark)", description="Internal corporate data privacy/security policy; A-011 tagged as 'Needs Verification' for external statutory regulations"),
+            QuestionOption(value="GDPR / DPDP & Data Privacy (EU / India)", label="GDPR / DPDP Privacy Compliance (1.150x)", description="Strict personal data protection, consent tracking, right-to-erasure workflows"),
+            QuestionOption(value="HIPAA & HITECH (Healthcare Protected Health Information)", label="HIPAA Compliance (1.300x)", description="Protected Health Information (PHI) safeguarding, strict BAA agreements, access logs"),
+            QuestionOption(value="SOC2 Type II & ISO 27001 Certified Governance", label="SOC2 Type II & ISO 27001 (1.150x)", description="Independent security control certification, continuous vulnerability scanning"),
+            QuestionOption(value="BFSI / RBI / PCI-DSS Financial Regulatory Grade", label="BFSI / RBI / PCI-DSS Financial Grade (1.300x)", description="Financial transaction auditing, tamper-proof logs, regulatory reporting gates")
         ],
-        default_value="Internal policy only",
+        default_value="Internal Security & Privacy Policy (A-011 Verification Gate for External Statutory Standards)",
         category="Scale",
         priority="High",
-        help_text="Bound by Internal policy only, triggering 1.050 (+5%) uplift on COMP tasks."
+        help_text="Bound by Internal Security/Privacy policy with A-011 statutory verification gate (NFR-3)."
     ),
     QuestionItem(
         id="q_security",
-        title="Security Posture & Isolation",
-        prompt="What security posture and network isolation is mandated for this solution?",
+        title="Non-Functional: Security, Corporate SSO & CMEK Encryption (NFR-5)",
+        prompt="What authentication (SSO/MFA), authorization (RBAC), and encryption standards (TLS 1.3 / AES-256 / CMEK) are mandated for this solution?",
         type="dropdown",
         options=[
-            QuestionOption(value="Standard", label="Standard (1.000 Baseline)", description="HTTPS, RBAC, platform-managed encryption keys, Managed Identities"),
-            QuestionOption(value="Enhanced", label="Enhanced (1.120x)", description="VNet injection, Private Endpoints, Customer-Managed Keys (CMEK)"),
-            QuestionOption(value="Restricted / Air-gapped", label="Restricted / Air-Gapped (1.300x)", description="Zero internet ingress/egress, air-gapped isolation")
+            QuestionOption(value="Corporate SSO (Azure AD / Entra ID) + Role-Based Access Control + Encryption in Transit & Rest", label="Corporate SSO + RBAC + Encryption at Rest/Transit (Benchmark Security)", description="Corporate SSO (OAuth2/OIDC), strict RBAC data isolation between roles, TLS 1.3 in-transit, and AES-256 at-rest"),
+            QuestionOption(value="Enhanced CMEK + VNet Private Endpoints", label="Enhanced CMEK + Private Endpoints (1.120x)", description="VNet injection, Private Endpoints, Customer-Managed Keys (CMEK) via Key Vault / KMS"),
+            QuestionOption(value="Restricted / Air-Gapped Zero-Trust Architecture", label="Restricted / Air-Gapped Zero-Trust (1.300x)", description="Zero internet ingress/egress, air-gapped network isolation, mTLS mutual authentication"),
+            QuestionOption(value="Standard Enterprise IAM", label="Standard Enterprise IAM (1.000 Baseline)", description="HTTPS, standard RBAC, platform-managed keys, Managed Identities")
         ],
-        default_value="Standard",
+        default_value="Corporate SSO (Azure AD / Entra ID) + Role-Based Access Control + Encryption in Transit & Rest",
         category="Scale",
         priority="High",
-        help_text="Standard security posture, keeping SEC tasks at baseline 1.000 multiplier."
+        help_text="Corporate SSO (Azure AD/Entra ID) with RBAC and encryption in transit/at rest (NFR-5, FR-001, FR-023)."
     ),
     # 3. Technology Stack, Cloud & Infrastructure Factors
     QuestionItem(
@@ -331,14 +317,14 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="Which cloud platform will host this solution?",
         type="dropdown",
         options=[
-            QuestionOption(value="Microsoft Azure", label="Microsoft Azure (Sole Approved Platform)", description="Azure AI Document Intelligence, Azure OpenAI, AI Search, Blob Storage"),
-            QuestionOption(value="Google Cloud Platform", label="Google Cloud Platform (GCP)", description="Vertex AI, Gemini, Document AI, Cloud Storage"),
-            QuestionOption(value="Amazon Web Services", label="Amazon Web Services (AWS)", description="AWS Bedrock, Textract, OpenSearch, S3")
+            QuestionOption(value="Microsoft Azure", label="Microsoft Azure (Approved Platform - A-009)", description="Azure App Services / Container Apps, Azure SQL / PostgreSQL, Azure AD SSO"),
+            QuestionOption(value="Google Cloud Platform", label="Google Cloud Platform (GCP)", description="Google Cloud Run, Cloud SQL, Google Workspace Identity"),
+            QuestionOption(value="Amazon Web Services", label="Amazon Web Services (AWS)", description="AWS ECS/Fargate, Aurora PostgreSQL, AWS IAM / Cognito")
         ],
         default_value="Microsoft Azure",
         category="Technical",
         priority="Blocker",
-        help_text="Microsoft Azure is the sole approved platform, preventing cross-cloud complexity."
+        help_text="Microsoft Azure is the approved platform per A-009."
     ),
     QuestionItem(
         id="q_geography",
@@ -355,7 +341,7 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         default_value="India",
         category="Technical",
         priority="Blocker",
-        help_text="India region locks 5 days/wk, 9.0 hrs/day and regional statutory holidays."
+        help_text="India region locks 5 days/wk, 9.0 hrs/day and regional statutory holidays (BR-011)."
     ),
     QuestionItem(
         id="q_onprem_footprint",
@@ -388,37 +374,37 @@ STATIC_QUESTIONS: List[QuestionItem] = [
     ),
     QuestionItem(
         id="q_hadr_tier",
-        title="High Availability & Disaster Recovery (HA/DR)",
-        prompt="What High Availability and Disaster Recovery footprint tier is required for hosting?",
+        title="Non-Functional: High Availability SLA & Disaster Recovery (NFR-2)",
+        prompt="What High Availability (HA) uptime SLA percentage (99.5%–99.99%) and Disaster Recovery (DR) RTO/RPO targets must be guaranteed?",
         type="dropdown",
         options=[
-            QuestionOption(value="None (single instance)", label="None (Single Instance - 1.000x Footprint)", description="Standard single-instance footprint in India region; eliminates multi-region complexity"),
-            QuestionOption(value="Zone redundant", label="Zone Redundant (1.350x)", description="Multi-Availability Zone redundancy within primary region"),
-            QuestionOption(value="Region pair - active/passive", label="Region Pair - Active/Passive (1.600x)", description="Secondary failover region for disaster recovery"),
-            QuestionOption(value="Region pair - active/active", label="Region Pair - Active/Active (2.000x)", description="Dual active regions with global traffic routing")
+            QuestionOption(value="High Availability (99.5% Monthly Uptime) + Daily Backup (RPO 24h, RTO 8h)", label="99.5% Monthly Availability + Daily Backup (RPO 24h, RTO 8h - Benchmark)", description="Target availability 99.5% monthly; daily automated database backups with RPO 24h and RTO 8h"),
+            QuestionOption(value="99.9% Zone-Redundant HA + Automated RPO 1h / RTO 4h", label="99.9% Zone-Redundant (RPO 1h, RTO 4h - 1.350x)", description="Multi-Availability Zone redundancy within primary region with hourly snapshot backups"),
+            QuestionOption(value="99.95% Region Pair Active-Passive + RPO 15m / RTO 1h", label="99.95% Region Pair Active-Passive (RPO 15m, RTO 1h - 1.600x)", description="Secondary failover region with automated geo-replication and warm standby"),
+            QuestionOption(value="99.99% Multi-Region Active-Active Global Resilience", label="99.99% Multi-Region Active-Active (Zero Downtime - 2.000x)", description="Dual active regions with global traffic routing and cross-region consensus replication"),
+            QuestionOption(value="Basic Single Instance (99.0% Uptime)", label="Basic Single Instance (99.0% - 1.000x Baseline)", description="Standard single-instance hosting without multi-zone failover")
         ],
-        default_value="None (single instance)",
+        default_value="High Availability (99.5% Monthly Uptime) + Daily Backup (RPO 24h, RTO 8h)",
         category="Technical",
         priority="Medium",
-        help_text="None (single instance) applies 1.000 footprint multiplier."
+        help_text="99.5% monthly availability with daily backups (RPO 24h, RTO 8h per NFR-2)."
     ),
-    # 4. AI Engine, RAG Pipeline & Model Sizing Factors
+    # 4. Engine, Processing & Sizing Factors
     QuestionItem(
         id="q_foundation_llm",
-        title="Foundation LLM Architecture",
-        prompt="Which foundation model reasoning tier will power the AI solution?",
+        title="Core Engine & Business Rules Processing",
+        prompt="What core processing engine evaluates business rules, policy calculations, and validations?",
         type="dropdown",
         options=[
+            QuestionOption(value="Business Rules & Validation Engine (Working Day Calculation, Balance Check, Overlap Prevention)", label="Deterministic Business Rules & Validation Engine (Benchmark Standard)", description="Executes BR-001 to BR-015: past date block, balance validation, overlap check, holiday exclusions"),
             QuestionOption(value="Azure OpenAI Reasoning (GPT-5 Thinking/Reasoning)", label="Azure OpenAI Reasoning Tier (GPT-5 Thinking/Reasoning)", description="Optimized for multi-pass reasoning, synthesis, and deep verification"),
             QuestionOption(value="Azure OpenAI GPT-4o Standard", label="Azure OpenAI GPT-4o Standard", description="General-purpose high-speed multimodal reasoning"),
-            QuestionOption(value="Anthropic Claude 3.5 Sonnet", label="Anthropic Claude 3.5 Sonnet", description="Long-context retrieval, coding, and structured extraction engine"),
-            QuestionOption(value="Google Gemini 2.5 Pro", label="Google Gemini 2.5 Pro", description="Deep multi-document reasoning and native multimodal comprehension"),
-            QuestionOption(value="Open-Source Meta Llama 3.3 (Self-Hosted / vLLM)", label="Open-Source Meta Llama 3.3 (Self-Hosted / vLLM)", description="Private on-premise or cloud-hosted open weights for strict data sovereignty")
+            QuestionOption(value="Anthropic Claude 3.5 Sonnet", label="Anthropic Claude 3.5 Sonnet", description="Long-context retrieval, coding, and structured extraction engine")
         ],
-        default_value="Azure OpenAI Reasoning (GPT-5 Thinking/Reasoning)",
+        default_value="Business Rules & Validation Engine (Working Day Calculation, Balance Check, Overlap Prevention)",
         category="AI & RAG",
         priority="High",
-        help_text="Selects the primary foundation model family and reasoning profile for generation and synthesis."
+        help_text="Enforces deterministic business rules (BR-001 to BR-015) and policy validation."
     ),
     QuestionItem(
         id="q_grounding_mode",
@@ -436,37 +422,35 @@ STATIC_QUESTIONS: List[QuestionItem] = [
     ),
     QuestionItem(
         id="q_doc_processing",
-        title="Data Ingestion & Multimodal Processing Pipeline",
-        prompt="What data processing or multimodal ingestion technology parses incoming input streams?",
+        title="Data Ingestion & Migration Scope",
+        prompt="What data ingestion pipeline or historical migration is required for this phase?",
         type="dropdown",
         options=[
+            QuestionOption(value="Direct Database Ingestion (Historical Leave Migration Out of Scope per A-012)", label="Direct DB Ingestion (Historical Migration Out of Scope - Benchmark A-012)", description="Direct SQL ingestion of active employee records and policies; historical leave data migration is OUT OF SCOPE"),
             QuestionOption(value="Azure AI Document Intelligence Layout API", label="Document & Layout Intelligence (Layout API)", description="Extracts text, tables, and bounding-box coordinates from PDF/scanned documents"),
             QuestionOption(value="Multi-Turn Conversational & Streaming API Pipeline", label="Conversational & Streaming Text/Audio Intake", description="WebSockets / SSE streaming pipeline for low-latency dialogue and voice interactions"),
-            QuestionOption(value="Semantic Chunking & Dense/Hybrid Vector Ingestion", label="Enterprise Knowledge Base & Vector Indexing", description="Document chunking, dense embeddings, and hybrid BM25 index creation"),
-            QuestionOption(value="Real-Time Event Stream & Tabular Feature Pipeline", label="Real-Time Event Bus & Feature Store", description="Kafka / Event Hub streams and database CDC for predictive ML & fraud detection"),
-            QuestionOption(value="Computer Vision & Multimodal Image Processing", label="Multimodal Vision & Object Detection Engine", description="Image analysis, OCR bounding boxes, and visual defect inspection"),
-            QuestionOption(value="Standard OCR Text Extraction", label="Standard OCR Text Extraction", description="Basic flat-text extraction without coordinate bounding boxes")
+            QuestionOption(value="Semantic Chunking & Dense/Hybrid Vector Ingestion", label="Enterprise Knowledge Base & Vector Indexing", description="Document chunking, dense embeddings, and hybrid BM25 index creation")
         ],
-        default_value="Azure AI Document Intelligence Layout API",
+        default_value="Direct Database Ingestion (Historical Leave Migration Out of Scope per A-012)",
         category="AI & RAG",
         priority="High",
-        help_text="Specifies the ingestion pipeline: Document OCR, Conversational stream, Vector embeddings, or Event stream."
+        help_text="Direct database ingestion; historical data migration is out of scope per A-012."
     ),
     QuestionItem(
         id="q_named_users",
         title="Total Named Users",
-        prompt="How many total named users are entitled to access the platform?",
+        prompt="How many total named employees / users are entitled to access the platform?",
         type="dropdown",
         options=[
-            QuestionOption(value="200 Named Users (Standard Baseline)", label="200 Named Users (Standard Baseline)", description="200 named legal, procurement, and risk reviewers"),
+            QuestionOption(value="500 Named Users (500 Employees Initial, Scalable to 2,000)", label="500 Named Users (500 Employees Initial, Scalable to 2,000 - Benchmark)", description="500 employees initial rollout; architecture supports growth to 2,000 without fundamental redesign"),
+            QuestionOption(value="200 Named Users (Standard Baseline)", label="200 Named Users (Standard Baseline)", description="200 named reviewers"),
             QuestionOption(value="50 Named Users (Pilot Cohort)", label="50 Named Users (Pilot Cohort)", description="Initial business team"),
-            QuestionOption(value="500 Named Users (Department-Wide)", label="500 Named Users (Department-Wide)", description="Expanded division rollout"),
-            QuestionOption(value="1,000 Named Users (Enterprise Scale)", label="1,000 Named Users (Enterprise Scale)", description="Full enterprise legal community")
+            QuestionOption(value="1,000 Named Users (Enterprise Scale)", label="1,000 Named Users (Enterprise Scale)", description="Full enterprise community")
         ],
-        default_value="200 Named Users (Standard Baseline)",
+        default_value="500 Named Users (500 Employees Initial, Scalable to 2,000)",
         category="Sizing",
         priority="Medium",
-        help_text="200 named legal, procurement, and risk reviewers."
+        help_text="500 employees initially, scalable to 2,000 per benchmark scalability NFR."
     ),
     QuestionItem(
         id="q_concurrent_users",
@@ -474,60 +458,62 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="What is the maximum number of simultaneous users active during peak hours?",
         type="dropdown",
         options=[
+            QuestionOption(value="100 Peak Concurrent Users (Benchmark Concurrency Baseline)", label="100 Peak Concurrent Users (Benchmark Concurrency Baseline)", description="100 simultaneous active users during peak hours across 10 departments"),
             QuestionOption(value="50 Peak Concurrent Users (Standard Baseline)", label="50 Peak Concurrent Users (Standard Baseline)", description="50 simultaneous active sessions during peak hours"),
             QuestionOption(value="20 Peak Concurrent Users (Pilot)", label="20 Peak Concurrent Users (Pilot)", description="Controlled concurrency"),
-            QuestionOption(value="100 Peak Concurrent Users (High Concurrency)", label="100 Peak Concurrent Users (High Concurrency)", description="High peak traffic demand"),
-            QuestionOption(value="250 Peak Concurrent Users (Enterprise Peak)", label="250 Peak Concurrent Users (Enterprise Peak)", description="High-scale concurrent review workflows")
+            QuestionOption(value="250 Peak Concurrent Users (Enterprise Peak)", label="250 Peak Concurrent Users (Enterprise Peak)", description="High-scale concurrent workflows")
         ],
-        default_value="50 Peak Concurrent Users (Standard Baseline)",
+        default_value="100 Peak Concurrent Users (Benchmark Concurrency Baseline)",
         category="Sizing",
         priority="Medium",
-        help_text="50 peak concurrent users driving API concurrency."
+        help_text="100 peak concurrent users driving API concurrency."
     ),
     QuestionItem(
         id="q_daily_requests",
-        title="Model Requests per Day",
-        prompt="What is the estimated volume of document processing/analysis requests per day?",
+        title="Non-Functional: Performance SLA, Latency & Throughput (NFR-1)",
+        prompt="What are the performance latency targets (e.g. page load <2.0s, API response <500ms, AI processing <5s) and expected throughput?",
         type="dropdown",
         options=[
-            QuestionOption(value="2,000 Requests / Day (Peak 3.00 RPS Baseline)", label="2,000 Requests / Day (Peak 3.00 RPS Baseline)", description="2,000 requests per day with peak processing speed of 3.00 RPS"),
-            QuestionOption(value="500 Requests / Day (Lean Volume)", label="500 Requests / Day (Lean Volume)", description="Light daily batch traffic"),
-            QuestionOption(value="5,000 Requests / Day (High Throughput)", label="5,000 Requests / Day (High Throughput)", description="High daily document turnover"),
-            QuestionOption(value="10,000 Requests / Day (Enterprise Processing)", label="10,000 Requests / Day (Enterprise Processing)", description="Continuous heavy document processing")
+            QuestionOption(value="8,000 Requests / Year (Annual Benchmark Volume • SLAs: <3s Page Load, <5s Submit, <10s Reports)", label="8,000 Requests/Year (~35/Day • SLAs: <3s Page, <5s Submit, <10s Report)", description="8,000 annual leave transactions with strict NFRs: 95% page loads <3s, leave submission <5s, reports <10s"),
+            QuestionOption(value="Strict SLA: <2.0s Page Load, <500ms API Response (p95), 2,000 Requests/Day", label="Strict Enterprise SLA (<2.0s Page, <500ms API, 2,000 Req/Day)", description="Sub-2-second response time for 95% of user requests under peak load"),
+            QuestionOption(value="High-Throughput Streaming: <100ms Ingestion Latency, 50,000+ Events/Day", label="High-Throughput Streaming (<100ms Latency, 50,000+ Events/Day)", description="Real-time event processing with high-frequency streaming throughput"),
+            QuestionOption(value="Batch Processing: 500 Requests / Day (Turnaround < 1 Hour)", label="Batch Processing (500 Req/Day, <1h Turnaround)", description="Light daily batch traffic with scheduled execution windows")
         ],
-        default_value="2,000 Requests / Day (Peak 3.00 RPS Baseline)",
+        default_value="8,000 Requests / Year (Annual Benchmark Volume • SLAs: <3s Page Load, <5s Submit, <10s Reports)",
         category="Sizing",
         priority="Medium",
-        help_text="2,000 requests per day with peak processing speed of 3.00 RPS."
+        help_text="Performance SLA: <2.0-3.0s response latency, <500ms API response, and throughput sizing (NFR-1)."
     ),
     # 5. Data Governance & Parser Contract Factors
     QuestionItem(
         id="q_multi_pass_policy",
-        title="Multi-Pass Evaluation Logic",
-        prompt="How should contract clauses and risk principles be evaluated?",
+        title="Approval Hierarchy & Cancellation Policy",
+        prompt="What approval hierarchy and balance restoration rules govern leave requests?",
         type="dropdown",
         options=[
+            QuestionOption(value="Manager Approval Hierarchy with Balance Validation & Cancellation Restoration (BR-001 to BR-015)", label="Manager Approval Lifecycle & Balance Restoration (BR-001 - BR-015)", description="BR-001 to BR-015: Direct manager approval, no self-approval, balance reduction on approval, restoration on cancellation"),
             QuestionOption(value="Two-Pass Evaluation (Agree / Agree with Mgmt Approval / Not Agree)", label="Two-Pass Evaluation (3 Status Levels: Agree, Mgmt Approval, Not Agree)", description="Pass 1 extracts standard clauses; Pass 2 evaluates ambiguous terms to assign one of 3 statuses"),
             QuestionOption(value="Single-Pass Flat Extraction", label="Single-Pass Flat Extraction", description="Single prompt pass without iterative disambiguation")
         ],
-        default_value="Two-Pass Evaluation (Agree / Agree with Mgmt Approval / Not Agree)",
+        default_value="Manager Approval Hierarchy with Balance Validation & Cancellation Restoration (BR-001 to BR-015)",
         category="Governance",
         priority="High",
-        help_text="Two sequential steps: Pass 1 extracts clauses, Pass 2 evaluates three-tier status."
+        help_text="Direct manager approval hierarchy; manager cannot self-approve; cancellation restores balance (BR-004, BR-005, BR-008)."
     ),
     QuestionItem(
         id="q_parser_delimiters",
-        title="Parser Delimiters & Truncation Thresholds",
-        prompt="What formatting delimiters and cell thresholds govern parser ingestion?",
+        title="Non-Functional: Immutable Audit Trail & Decision Logging",
+        prompt="What audit trail specifications, user action logging, and event traceability standards must be enforced?",
         type="dropdown",
         options=[
-            QuestionOption(value="Block Headers (<<<BEGIN:NAME>>>) & Pipe (|), 30k Char Cap, 0.72 Synonym Threshold", label="Standard Format (<<<BEGIN:NAME>>> & Pipe |, 30k Char Cap, 0.72 Confidence)", description="30,000 char cell cap (>32k quarantined), 0.72 synonym confidence threshold, NOT PROVIDED placeholder"),
-            QuestionOption(value="Standard JSON Schema Key-Value Delimiters", label="Standard JSON Schema Parser", description="Pure JSON schema parsing without block headers")
+            QuestionOption(value="Structured Audit Event Logging (Actor, Action, Timestamp, Previous Status, New Status, Request ID)", label="Audit Trail & Transaction Logging (Actor, Action, Timestamp, Status Delta)", description="Immutable audit record: Who, What, Date/Time, Previous Status, New Status, Request ID (FR-022, NFR Audit)"),
+            QuestionOption(value="Comprehensive SIEM / Splunk / Sentinel Real-Time Forwarding (7-Year Retention)", label="Enterprise SIEM Forwarding & 7-Year Retention", description="Real-time structured JSON event streaming to central SIEM with 7-year statutory archive"),
+            QuestionOption(value="Block Headers (<<<BEGIN:NAME>>>) & Pipe (|), 30k Char Cap, 0.72 Synonym Threshold", label="Standard Format (<<<BEGIN:NAME>>> & Pipe |, 30k Char Cap, 0.72 Confidence)", description="30,000 char cell cap (>32k quarantined), 0.72 synonym confidence threshold, NOT PROVIDED placeholder")
         ],
-        default_value="Block Headers (<<<BEGIN:NAME>>>) & Pipe (|), 30k Char Cap, 0.72 Synonym Threshold",
+        default_value="Structured Audit Event Logging (Actor, Action, Timestamp, Previous Status, New Status, Request ID)",
         category="Governance",
         priority="High",
-        help_text="Block headers, pipe delimiters, 30k char ceiling, 0.72 synonym match confidence."
+        help_text="Immutable audit trail recording Who, What, When, Prev Status, New Status, Request ID (FR-022)."
     ),
     QuestionItem(
         id="q_approval_gate",
@@ -535,44 +521,97 @@ STATIC_QUESTIONS: List[QuestionItem] = [
         prompt="What governance gate protocol enforces stakeholder prerequisites before calculation?",
         type="dropdown",
         options=[
-            QuestionOption(value="Strict Assumption Gate (Blocks downline effort until all Approved)", label="Strict Assumption Gate (100% Approval Required)", description="Downline effort calculations and schedule are blocked until stakeholders mark all clarification questions as Approve"),
+            QuestionOption(value="Strict Assumption Gate (Blocks downline effort until all Approved / Verified)", label="Strict Assumption Gate (100% Approval / Verification Required)", description="Downline effort calculations and schedule are blocked until stakeholders approve assumptions (A-011 flagged for verification)"),
             QuestionOption(value="Advisory Assumption Gate", label="Advisory Assumption Gate (Non-blocking)", description="Allows schedule generation with unapproved assumption warnings")
         ],
-        default_value="Strict Assumption Gate (Blocks downline effort until all Approved)",
+        default_value="Strict Assumption Gate (Blocks downline effort until all Approved / Verified)",
         category="Governance",
         priority="Blocker",
-        help_text="Enforces strict gate: calculations blocked until all assumptions are Approved."
+        help_text="Enforces strict gate: calculations blocked until all assumptions pass verification (A-011 gate)."
     )
 ]
 
+def _build_reference_doc_questions() -> List[QuestionItem]:
+    res = []
+    for q in MASTER_CLARIFICATION_QUESTIONS_52:
+        qid = q["qid"]
+        cat = q.get("category", "Key Decision")
+        prio = q.get("priority", "High")
+        q_text = q["question"]
+        why = q.get("why_it_matters", "")
+        who = q.get("who_answers", "")
+        default_ans = q.get("suggested_default", q.get("answer", ""))
+        
+        opts = [
+            QuestionOption(
+                value=default_ans,
+                label=f"Standard Baseline / Recommended ({qid})",
+                description=default_ans[:110] + ("..." if len(default_ans) > 110 else "")
+            ),
+            QuestionOption(
+                value=f"Custom Enterprise Specification for {qid}",
+                label="Custom Specification",
+                description="Provide custom client requirement or escalate to Solutions Architect"
+            )
+        ]
+        
+        prompt_text = (
+            f"**[{qid}] {q_text}**\n\n"
+            f"📌 **Why it matters:** {why}\n"
+            f"👤 **Who should answer:** {who}"
+        )
+        
+        res.append(QuestionItem(
+            id=f"q_{qid}",
+            title=f"[{qid}] {cat}: {q_text[:45]}...",
+            prompt=prompt_text,
+            type="dropdown",
+            options=opts,
+            default_value=default_ans,
+            category=cat,
+            priority=prio,
+            help_text=why
+        ))
+    return res
+
+REFERENCE_DOC_QUESTIONS_52: List[QuestionItem] = _build_reference_doc_questions()
+
 def get_discovery_questions() -> List[QuestionItem]:
-    return STATIC_QUESTIONS
+    existing_ids = {q.id for q in STATIC_QUESTIONS}
+    combined = list(STATIC_QUESTIONS)
+    for ref_q in REFERENCE_DOC_QUESTIONS_52:
+        if ref_q.id not in existing_ids:
+            combined.append(ref_q)
+    return combined
+
+def get_all_reference_doc_questions() -> List[QuestionItem]:
+    return REFERENCE_DOC_QUESTIONS_52
 
 # --- Section: 32 Architecture & Business Domains Master Template Registry ---
 MASTER_DOMAIN_TEMPLATE: Dict[str, Dict[str, Any]] = {
     "q_client": {
-        "title": "Client & Engagement Name",
+        "title": "Client & Project Initiative",
         "category": "Scope",
         "required_fields": ["client_account_name", "initiative_title"],
         "description": "Enterprise client entity and formal working initiative title"
+    },
+    "q_problem": {
+        "title": "Problem Statement & Core Business Objectives",
+        "category": "Scope",
+        "required_fields": ["pain_points", "target_users", "core_objectives"],
+        "description": "Detailed business bottlenecks, affected roles, and intended transformation"
+    },
+    "q_legal_categories": {
+        "title": "In-Scope Functional Capabilities & Workflows",
+        "category": "Scope",
+        "required_fields": ["in_scope_contract_categories", "principle_hierarchy"],
+        "description": "Specific functional modules or capabilities in scope (e.g. Inquiries, Protocol Matching, Risk Analysis)"
     },
     "q_tier": {
         "title": "Delivery Tier",
         "category": "Scope",
         "required_fields": ["delivery_tier_name", "headline_weight_code"],
         "description": "Target delivery tier (PoC, Pilot, MVP, Production Grade, etc.)"
-    },
-    "q_problem": {
-        "title": "Problem Statement & Business Challenge",
-        "category": "Scope",
-        "required_fields": ["pain_points", "target_users", "core_objectives"],
-        "description": "Detailed business bottlenecks, affected roles, and intended transformation"
-    },
-    "q_legal_categories": {
-        "title": "In-Scope Business & Legal Categories",
-        "category": "Scope",
-        "required_fields": ["in_scope_contract_categories", "principle_hierarchy"],
-        "description": "Specific contract or document categories in scope (e.g. Lease, Vendor, Service, Facilities, Tech, Marketing)"
     },
     "q_duration": {
         "title": "Reference Duration (Weeks)",
@@ -586,6 +625,7 @@ MASTER_DOMAIN_TEMPLATE: Dict[str, Dict[str, Any]] = {
         "required_fields": ["kickoff_date_iso"],
         "description": "Exact target start date (YYYY-MM-DD) for regional holiday calendar mapping"
     },
+
     "q_buffer_strategy": {
         "title": "Resource Standby & Backup Strategy",
         "category": "Resourcing",
@@ -744,6 +784,20 @@ MASTER_DOMAIN_TEMPLATE: Dict[str, Dict[str, Any]] = {
     }
 }
 
+# Automatically register all 52 Reference Document Clarification Questions (Q001-Q052)
+for _q in MASTER_CLARIFICATION_QUESTIONS_52:
+    _qid = _q["qid"]
+    _q_key = f"q_{_qid}"
+    if _q_key not in MASTER_DOMAIN_TEMPLATE:
+        MASTER_DOMAIN_TEMPLATE[_q_key] = {
+            "title": f"[{_qid}] {_q.get('category', 'Key Decision')}: {_q['question'][:50]}...",
+            "category": _q.get("category", "Technical"),
+            "required_fields": [f"field_{_qid.lower()}"],
+            "description": _q.get("why_it_matters", "")
+        }
+    if _qid not in MASTER_DOMAIN_TEMPLATE:
+        MASTER_DOMAIN_TEMPLATE[_qid] = MASTER_DOMAIN_TEMPLATE[_q_key]
+
 DOMAIN_KEYS_ORDER = list(MASTER_DOMAIN_TEMPLATE.keys())
 
 def is_answer_generic(ans_text: str, q: QuestionItem) -> Tuple[bool, str]:
@@ -874,12 +928,211 @@ def evaluate_domain_completeness(session: ProjectSession) -> Dict[str, Any]:
         "master_domain_statuses": master_statuses
     }
 
+DOMAIN_TO_REFERENCE_QUESTIONS_MAP: Dict[str, List[str]] = {
+    "q_client": ["Q044", "Q045", "Q052"],
+    "q_problem": ["Q047", "Q019", "Q046"],
+    "q_legal_categories": ["Q013", "Q014", "Q016", "Q017"],
+    "q_tier": ["Q015", "Q021"],
+    "q_duration": ["Q012", "Q048"],
+    "q_start_date": ["Q012", "Q048"],
+    "q_buffer_strategy": ["Q045", "Q010"],
+    "q_usecases_count": ["Q013", "Q018"],
+    "q_personas_count": ["Q025"],
+    "q_integrations_count": ["Q038", "Q039"],
+    "q_datasources_count": ["Q029", "Q030"],
+    "q_channels_count": ["Q024"],
+    "q_languages_count": ["Q026"],
+    "q_envs_count": ["Q011"],
+    "q_components_count": ["Q008", "Q022"],
+    "q_complexity": ["Q028"],
+    "q_compliance": ["Q033", "Q034"],
+    "q_security": ["Q009", "Q031", "Q032", "Q036", "Q043"],
+    "q_cloud": ["Q001", "Q004", "Q005"],
+    "q_geography": ["Q003", "Q007", "Q049"],
+    "q_onprem_footprint": ["Q003"],
+    "q_subscription_isolation": ["Q002"],
+    "q_hadr_tier": ["Q042", "Q010"],
+    "q_foundation_llm": ["Q006"],
+    "q_grounding_mode": ["Q008"],
+    "q_doc_processing": ["Q027"],
+    "q_named_users": ["Q037"],
+    "q_concurrent_users": ["Q040"],
+    "q_daily_requests": ["Q041", "Q019"],
+    "q_multi_pass_policy": ["Q018", "Q021"],
+    "q_parser_delimiters": ["Q023", "Q035"],
+    "q_approval_gate": ["Q044", "Q020", "Q051"]
+}
+
+def get_domain_reference_subquestions_status(domain_id: str, session: ProjectSession) -> str:
+    """
+    Constructs a dynamic markdown status section displaying which reference questions
+    (from Sheet 10 Q001-Q052) for this domain have already been answered vs which are pending.
+    """
+    ref_ids = DOMAIN_TO_REFERENCE_QUESTIONS_MAP.get(domain_id, [])
+    if not ref_ids:
+        return ""
+    
+    q_dict = {q["qid"]: q for q in MASTER_CLARIFICATION_QUESTIONS_52}
+    
+    lines = ["\n\n🔹 **Domain Reference Inquiries (Answered & Pending Status):**"]
+    for qid in ref_ids:
+        q_meta = q_dict.get(qid, {})
+        q_text = q_meta.get("question", qid)
+        if len(q_text) > 75:
+            q_text = q_text[:72] + "..."
+            
+        # Check if answered previously
+        ans_item = session.answers.get(f"q_{qid}") or session.answers.get(qid)
+        if ans_item and ans_item.answer:
+            val_str = str(ans_item.answer).strip()
+            if len(val_str) > 40:
+                val_str = val_str[:37] + "..."
+            lines.append(f"• `[{qid}]` {q_text} &rarr; ✅ *Confirmed:* **\"{val_str}\"**")
+        else:
+            default_val = q_meta.get("suggested_default", "")
+            if len(default_val) > 40:
+                default_val = default_val[:37] + "..."
+            lines.append(f"• `[{qid}]` {q_text} &rarr; ❓ *Pending* *(Suggested: `{default_val}`)*")
+            
+    return "\n".join(lines)
+
+def contextualize_question_for_session(base_q: QuestionItem, session: ProjectSession) -> QuestionItem:
+    """
+    Dynamically tailors the prompt, help text, required answers, and examples 
+    of any of the 32 domains based on the user's specific project name, 
+    problem statement, delivery tier, cloud, and prior answers.
+    """
+    if not base_q:
+        return base_q
+
+    # Extract current project context
+    client_ans = session.answers.get("q_client")
+    if client_ans and client_ans.answer:
+        full_client_str = str(client_ans.answer).strip()
+        proj_name = full_client_str.split("—")[-1].strip() if "—" in full_client_str else full_client_str
+        client_org = full_client_str.split("—")[0].strip() if "—" in full_client_str else "Enterprise Client"
+    else:
+        proj_name = "your project"
+        client_org = "Enterprise Client"
+
+    problem_stmt = session.answers.get("q_problem", AnswerItem(question_id="q_problem", question_title="", answer="")).answer
+    tier_val = session.answers.get("q_tier", AnswerItem(question_id="q_tier", question_title="", answer="MVP")).answer
+    cloud_val = session.answers.get("q_cloud", AnswerItem(question_id="q_cloud", question_title="", answer="Microsoft Azure")).answer
+    geo_val = session.answers.get("q_geography", AnswerItem(question_id="q_geography", question_title="", answer="India")).answer
+    scope_val = session.answers.get("q_legal_categories", AnswerItem(question_id="q_legal_categories", question_title="", answer="Core Capabilities")).answer
+    users_val = session.answers.get("q_named_users", AnswerItem(question_id="q_named_users", question_title="", answer="500")).answer
+
+    # Deep copy question to avoid mutating global template
+    q = base_q.model_copy(deep=True)
+    qid = q.id.replace("_clarification", "")
+    ref_status_block = get_domain_reference_subquestions_status(qid, session)
+
+    # Dynamic tailoring across all 32 domains - strictly ONE focused question per turn
+    if qid == "q_client":
+        q.prompt = "What is your **Client Enterprise Name** and **Project Initiative Title**?"
+        q.help_text = "e.g., 'Enterprise Global Corp — Employee Leave Management System (ELMS)' or 'PVR INOX — Contract Intelligence Platform'."
+    elif qid == "q_problem":
+        q.prompt = f"For **{proj_name}**, what specific business problem, manual bottlenecks, and strategic objectives must this solution solve?"
+        q.help_text = "Detail who is impacted, current manual/inefficient processes, and what automated capability or decision this solution unlocks."
+    elif qid == "q_legal_categories":
+        q.prompt = f"What are the core functional modules, workflows, and in-scope capabilities required for **{proj_name}**?"
+        q.help_text = f"Specify all in-scope capabilities, workflows, and business rules for {proj_name}."
+    elif qid == "q_tier":
+        q.prompt = f"What is the targeted delivery tier for **{proj_name}** (e.g. PoC, MVP, Pilot, Production Grade)?"
+        q.help_text = f"Delivery tier defines engineering phase depth, test coverage rigor, environment isolation, and delivery multipliers for {proj_name}."
+    elif qid == "q_duration":
+        q.prompt = f"What is the targeted delivery timeline for **{proj_name}** in calendar weeks?"
+        q.help_text = f"Standard MVP benchmark is 8.0 Weeks (40 working days). PoC baseline is 4.0-6.0 Weeks, Pilot is 12.0 Weeks, Production Grade is 16.0 Weeks."
+    elif qid == "q_start_date":
+        q.prompt = f"When is the targeted project kick-off / start date for **{proj_name}**? (YYYY-MM-DD)"
+        q.help_text = f"e.g. 2026-09-30 (Used to calculate exact day-wise sprint schedule and regional statutory holidays in {geo_val})."
+    elif qid == "q_buffer_strategy":
+        q.prompt = f"What resource standby and backup engineering buffer strategy should be provisioned for **{proj_name}**?"
+        q.help_text = f"Maintains standby capacity (e.g. 15% Recommended) to absorb sprint spikes, leaves, or blockers without delaying {proj_name} milestones."
+    elif qid == "q_usecases_count":
+        q.prompt = f"How many distinct functional use cases or AI capabilities are in scope for **{proj_name}**?"
+        q.help_text = f"Baseline is 1 primary core initiative. Specify count if multiple distinct business sub-modules are included in this phase."
+    elif qid == "q_personas_count":
+        q.prompt = f"How many distinct user personas and stakeholder roles will interact with **{proj_name}**?"
+        q.help_text = f"Specify total count of distinct user roles and permission tiers. (Standard enterprise benchmark is 4 user personas)."
+    elif qid == "q_integrations_count":
+        q.prompt = f"How many external enterprise system integrations are required for **{proj_name}**?"
+        q.help_text = f"List external systems, protocols (REST API, Webhook, SFTP, Kafka), and auth mechanisms required to connect with {proj_name}."
+    elif qid == "q_datasources_count":
+        q.prompt = f"How many upstream data sources or document repositories will feed data into **{proj_name}**?"
+        q.help_text = f"Specify data source types, schema structures, and data synchronization frequency for {proj_name}."
+    elif qid == "q_channels_count":
+        q.prompt = f"Through how many delivery channels will users access **{proj_name}** (e.g. Web App, Mobile, Teams Bot)?"
+        q.help_text = f"Standard enterprise benchmark is 1 primary channel (Responsive Web Application Portal)."
+    elif qid == "q_languages_count":
+        q.prompt = f"How many human languages must **{proj_name}** support across the user interface and business operations?"
+        q.help_text = f"e.g. 1 Language (English standard benchmark) or multilingual localization."
+    elif qid == "q_envs_count":
+        q.prompt = f"How many distinct deployment environments are required for **{proj_name}** (e.g., Development, Test/UAT, Production)?"
+        q.help_text = f"Standard enterprise benchmark is 3 environments (Development, Test, Production) with isolated VPCs/subscriptions."
+    elif qid == "q_components_count":
+        q.prompt = f"How many custom microservices, AI pipelines, or architectural subsystems constitute **{proj_name}**?"
+        q.help_text = f"Baseline architecture comprises 3 core tiers: Frontend Web App, Backend API Gateway & Business Logic, and Data/Storage Engine."
+    elif qid == "q_complexity":
+        q.prompt = f"What is the overall technical complexity level for **{proj_name}** considering workflows, algorithms, and integration depth?"
+        q.help_text = f"Low (standard CRUD forms), Medium (enterprise business logic + integrations), High (complex workflows/LLM RAG), Very High (streaming/vision/multi-agent)."
+    elif qid == "q_compliance":
+        q.prompt = f"What regulatory compliance, data privacy, and statutory auditing standards must **{proj_name}** satisfy? (NFR-3)"
+        q.help_text = f"e.g. Standard Enterprise Audit Trail & Role Logging, GDPR / DPDP (India/EU), HIPAA (Healthcare PHI), SOC2 Type II, RBI Guidelines, PCI-DSS."
+    elif qid == "q_security":
+        q.prompt = f"What authentication (SSO/MFA), authorization (RBAC), and encryption standards (TLS 1.3 / AES-256 / CMEK) are required for **{proj_name}**? (NFR-5)"
+        q.help_text = f"e.g. Enterprise Corporate SSO ({cloud_val} Entra ID / Okta / SAML), Role-Based Access Control (RBAC), Key Vault secret management, and CMEK encryption at rest/transit."
+    elif qid == "q_cloud":
+        q.prompt = f"Which primary hyperscaler cloud platform or infrastructure will host **{proj_name}**?"
+        q.help_text = f"e.g. Microsoft Azure, Amazon Web Services (AWS), Google Cloud Platform (GCP), IBM Cloud, or Hybrid/On-Premise."
+    elif qid == "q_geography":
+        q.prompt = f"In which primary delivery and deployment geography will **{proj_name}** be operated and hosted?"
+        q.help_text = f"e.g. India, United States, United Kingdom, European Union, APAC, or Middle East. (Determines statutory holiday calendars and data residency boundaries)."
+    elif qid == "q_onprem_footprint":
+        q.prompt = f"Does **{proj_name}** require connectivity or hybrid integration with on-premise servers, local databases, or edge networks?"
+        q.help_text = f"e.g. Pure Cloud (Zero on-prem lag), Hybrid VPN / ExpressRoute / DirectConnect, or Fully Air-Gapped On-Premise."
+    elif qid == "q_subscription_isolation":
+        q.prompt = f"What cloud subscription / account isolation and tenant architecture is required for **{proj_name}** on {cloud_val}?"
+        q.help_text = f"e.g. Dedicated Non-Prod & Prod Subscriptions (Recommended), Shared Existing Subscription, or Multi-Tenant SaaS isolation."
+    elif qid == "q_hadr_tier":
+        q.prompt = f"What High Availability (HA) uptime SLA percentage (99.5%–99.99%) and Disaster Recovery (DR) RTO/RPO targets must **{proj_name}** guarantee? (NFR-2)"
+        q.help_text = f"e.g. Standard HA 99.5% (RTO 4h, RPO 1h), Mission-Critical 99.9%+, Zone Redundancy, or Basic Single-Instance 99.0%."
+    elif qid == "q_foundation_llm":
+        q.prompt = f"Which AI foundation model, ML engine, or deterministic algorithmic framework will power **{proj_name}**?"
+        q.help_text = f"e.g. Azure OpenAI GPT-4o, AWS Bedrock Claude 3.5, GCP Vertex Gemini, Self-Hosted Open-Weights (Llama 3), or Deterministic Business Logic / Rule Engine."
+    elif qid == "q_grounding_mode":
+        q.prompt = f"What search indexing, vector retrieval, or data grounding architecture will **{proj_name}** utilize on {cloud_val}?"
+        q.help_text = f"e.g. Hybrid Vector + BM25 Full-Text Search ({cloud_val} AI Search / OpenSearch / pgvector), Relational SQL Indexing, or Direct API Fetching."
+    elif qid == "q_doc_processing":
+        q.prompt = f"What document parsing, file OCR, or structured data ingestion pipeline is required for **{proj_name}**?"
+        q.help_text = f"e.g. Digital PDF & Office Forms, Scanned OCR Multi-Page Vision Processing, CSV/Parquet Batches, or Pure REST API Payloads."
+    elif qid == "q_named_users":
+        q.prompt = f"How many total named employees, internal operators, and stakeholders will have active accounts in **{proj_name}**?"
+        q.help_text = f"e.g., 500 Total Employees (Standard Enterprise Benchmark), 200 Users, 1,000 Users, or 10,000+ Enterprise Scale."
+    elif qid == "q_concurrent_users":
+        q.prompt = f"What is the expected peak concurrent user load during high-traffic windows for **{proj_name}**?"
+        q.help_text = f"e.g., 100 Peak Concurrent Users (Standard 20% concurrency ratio benchmark for {users_val} named users)."
+    elif qid == "q_daily_requests":
+        q.prompt = f"What performance latency SLA (<2.0s response) and daily transaction throughput are required for **{proj_name}**? (NFR-1)"
+        q.help_text = f"e.g., Strict SLA (<2.0s Page Load, <500ms API response, 95% requests), Standard (35-100 actions/day for HR tools), or High-Throughput (50,000+ req/day)."
+    elif qid == "q_multi_pass_policy":
+        q.prompt = f"What multi-pass verification, business rule validation, or guardrail policy should **{proj_name}** enforce?"
+        q.help_text = f"e.g. Dual-Pass Verification on critical approval actions, Deterministic Business Validation Rules, or Single-Pass with Fallback."
+    elif qid == "q_parser_delimiters":
+        q.prompt = f"What immutable audit trail logging and event traceability standards must **{proj_name}** enforce? (NFR-6)"
+        q.help_text = f"e.g. Structured Immutable Audit Logs (Actor, Action, Timestamp, Previous Status, New Status, Request ID), SIEM forwarding, and 7-year retention."
+    elif qid == "q_approval_gate":
+        q.prompt = f"Who is the designated Executive Sponsor and Business SME sign-off authority for **{proj_name}** gate approvals?"
+        q.help_text = f"Identifies the single named decision-maker authority for {proj_name} BRD sign-off and milestone delivery handover."
+
+    return q
+
 def get_current_question(session: ProjectSession) -> Optional[QuestionItem]:
     """
     Dynamic Question Generator:
     1. Returns None if >= 95% of the 32 domains are filled and clear.
     2. If any domain is generic/vague, generates a targeted clarification question asking exactly what is missing.
-    3. Otherwise, returns the next missing domain in priority order.
+    3. Otherwise, returns the next missing domain in priority order, dynamically contextualized for the project.
     """
     comp = evaluate_domain_completeness(session)
     if comp["is_gate_passed"]:
@@ -897,7 +1150,7 @@ def get_current_question(session: ProjectSession) -> Optional[QuestionItem]:
             f"You previously provided: *'{prev_ans}'*, which is somewhat generic.\n\n"
             f"To calibrate the engineering estimation and BRD with high precision, could you clarify: **{aspect}**?"
         )
-        return QuestionItem(
+        q_clar = QuestionItem(
             id=f"{base_q.id}_clarification",
             title=f"Clarification: {base_q.title}",
             prompt=clarification_prompt,
@@ -908,10 +1161,11 @@ def get_current_question(session: ProjectSession) -> Optional[QuestionItem]:
             priority="Blocker",
             help_text=f"Please provide specific details for {base_q.title} or select an exact enterprise option below."
         )
+        return contextualize_question_for_session(q_clar, session)
         
-    # 2. Pick next highest-priority missing domain
+    # 2. Pick next highest-priority missing domain and contextualize dynamically
     if comp["missing_domains"]:
-        return comp["missing_domains"][0]
+        return contextualize_question_for_session(comp["missing_domains"][0], session)
         
     return None
 
@@ -961,8 +1215,10 @@ VAGUE_PHRASES = [
     "just a", "automate stuff", "help me decide", "i think", "sort of",
     "no idea", "not clear", "haven't decided", "havent decided", "anything",
     "random", "whatever", "any bot", "just chatbot", "some chatbot", "a chatbot",
-    "standard", "default", "standard cloud", "some data", "whatever works"
+    "standard", "default", "standard cloud", "some data", "whatever works",
+    "some ai", "some tool", "a tool", "for our company", "for our business", "we want some"
 ]
+
 
 ARCHITECT_ADVICE_MAP: Dict[str, Dict[str, Any]] = {
     "q_cloud": {
@@ -1254,6 +1510,97 @@ def extract_and_fill_domains_from_text(session: ProjectSession, text: str) -> Li
         )
         filled_keys.append("q_client")
         
+    # 13. Reference Document Clarification Questions (Q001-Q052)
+    # Q002: Cloud Account / Subscription
+    if "existing account" in raw or "non production" in raw or "non-prod" in raw:
+        session.answers["q_Q002"] = AnswerItem(question_id="q_Q002", question_title="[Q002] Cloud Account / Subscription", answer="Existing Account is present. It's PoC so we are going to use only non-production subscription.")
+        session.answers["Q002"] = session.answers["q_Q002"]
+        filled_keys.append("q_Q002")
+        
+    # Q007: Data Residency Sign-off
+    if "india" in raw and ("residency" in raw or "region" in raw):
+        session.answers["q_Q007"] = AnswerItem(question_id="q_Q007", question_title="[Q007] Data Residency Sign-Off", answer="India-based regions only, signed off by Legal.")
+        session.answers["Q007"] = session.answers["q_Q007"]
+        filled_keys.append("q_Q007")
+        
+    # Q008: Search Product
+    if "azure ai search" in raw or "managed search" in raw or "vector store" in raw:
+        session.answers["q_Q008"] = AnswerItem(question_id="q_Q008", question_title="[Q008] Search Product", answer="The selection is open, and a managed search and vector store native to Microsoft Azure (Azure AI Search) is used.")
+        session.answers["Q008"] = session.answers["q_Q008"]
+        filled_keys.append("q_Q008")
+        
+    # Q009: Secret & Key Management
+    if "key vault" in raw or "platform-managed" in raw or "cmk" in raw:
+        session.answers["q_Q009"] = AnswerItem(question_id="q_Q009", question_title="[Q009] Secret & Key Management", answer="Platform-managed encryption with Azure Key Vault; customer-managed keys deferred to production.")
+        session.answers["Q009"] = session.answers["q_Q009"]
+        filled_keys.append("q_Q009")
+
+    # Q011: Staging Environments
+    if "dev, test" in raw or "uat" in raw:
+        session.answers["q_Q011"] = AnswerItem(question_id="q_Q011", question_title="[Q011] Environments Scope", answer="Dev, Test and UAT environments are needed in non-production subscription.")
+        session.answers["Q011"] = session.answers["q_Q011"]
+        filled_keys.append("q_Q011")
+
+    # Q012: Procurement Wait
+    if "3 days" in raw or "waiting time" in raw:
+        session.answers["q_Q012"] = AnswerItem(question_id="q_Q012", question_title="[Q012] Procurement Wait", answer="Waiting time is 3 Days. Completed before planned start date.")
+        session.answers["Q012"] = session.answers["q_Q012"]
+        filled_keys.append("q_Q012")
+
+    # Q014: Sample Contracts Volume
+    if "100 for each category" in raw or "100 samples" in raw or "600 total" in raw or "100 per category" in raw:
+        session.answers["q_Q014"] = AnswerItem(question_id="q_Q014", question_title="[Q014] Sample Contracts Volume", answer="100 for each category (approx 600 total), covering standard, negotiated, and known problem contracts.")
+        session.answers["Q014"] = session.answers["q_Q014"]
+        filled_keys.append("q_Q014")
+
+    # Q018: 3-Tier Status Arbiter
+    if "agree" in raw and ("management approval" in raw or "not agree" in raw or "arbiter" in raw):
+        session.answers["q_Q018"] = AnswerItem(question_id="q_Q018", question_title="[Q018] Status Arbiter Authority", answer="A nominated legal lead at PVR INOX is the final arbiter for assessment classification (Agree, Agree with Mgmt Approval, Not Agree).")
+        session.answers["Q018"] = session.answers["q_Q018"]
+        filled_keys.append("q_Q018")
+
+    # Q019: Acceptance Definition
+    if "95%" in raw or "traceability" in raw:
+        session.answers["q_Q019"] = AnswerItem(question_id="q_Q019", question_title="[Q019] Acceptance Criteria", answer="Technical success metrics: ≥95% classification/extraction accuracy and 100% clause traceability.")
+        session.answers["Q019"] = session.answers["q_Q019"]
+        filled_keys.append("q_Q019")
+
+    # Q021: Human Review Assistant Mode
+    if "human checking" in raw or "human review" in raw or "assistant" in raw:
+        session.answers["q_Q021"] = AnswerItem(question_id="q_Q021", question_title="[Q021] Human Review Policy", answer="All findings in this phase are reviewed by a person; the solution is treated as an assistant, not an autonomous decision maker.")
+        session.answers["Q021"] = session.answers["q_Q021"]
+        filled_keys.append("q_Q021")
+
+    # Q027: Machine-Readable Digital vs Scanned OCR
+    if "searchable digital" in raw or "digital files" in raw or "digital and machine-readable" in raw:
+        session.answers["q_Q027"] = AnswerItem(question_id="q_Q027", question_title="[Q027] Document Digitization Format", answer="Contracts are digital and machine-readable; scanned or handwritten originals are out of scope for this phase.")
+        session.answers["Q027"] = session.answers["q_Q027"]
+        filled_keys.append("q_Q027")
+
+    # Q036: Corporate SSO
+    if "single sign-on" in raw or "sso" in raw or "entra id" in raw:
+        session.answers["q_Q036"] = AnswerItem(question_id="q_Q036", question_title="[Q036] Single Sign-On Identity", answer="Corporate single sign-on (Microsoft Entra ID) is used for the demonstration interface.")
+        session.answers["Q036"] = session.answers["q_Q036"]
+        filled_keys.append("q_Q036")
+
+    # Q044: Executive Sponsor SPOC
+    if "nithin" in raw or "arora" in raw or "executive sponsor" in raw:
+        session.answers["q_Q044"] = AnswerItem(question_id="q_Q044", question_title="[Q044] Executive Sponsor", answer="Nithin Arora is the executive sponsor and single signatory for decision gate acceptance.")
+        session.answers["Q044"] = session.answers["q_Q044"]
+        filled_keys.append("q_Q044")
+
+    # Q045: Workshop SME SPOC
+    if "jitender" in raw or "verma" in raw or "sme spoc" in raw:
+        session.answers["q_Q045"] = AnswerItem(question_id="q_Q045", question_title="[Q045] Workshop SME SPOC", answer="For all queries Jitender Verma will act as the SPOC, coordinating legal and procurement SME availability.")
+        session.answers["Q045"] = session.answers["q_Q045"]
+        filled_keys.append("q_Q045")
+
+    # Q052: Governance SPOC
+    if "gaurav" in raw or "governance spoc" in raw or "approvals spoc" in raw:
+        session.answers["q_Q052"] = AnswerItem(question_id="q_Q052", question_title="[Q052] Governance Approvals SPOC", answer="Gaurav is the SPOC for IT governance, security, and data access approvals.")
+        session.answers["Q052"] = session.answers["q_Q052"]
+        filled_keys.append("q_Q052")
+        
     return filled_keys
 
 def calculate_discovery_confidence(session: ProjectSession) -> DiscoveryConfidence:
@@ -1302,6 +1649,8 @@ def calculate_discovery_confidence(session: ProjectSession) -> DiscoveryConfiden
     
     next_q = get_current_question(session)
     
+    tpl_conf = JSONQuestionnaireEngine.calculate_template_confidence(session.answers)
+    
     conf = DiscoveryConfidence(
         score=total_score,
         is_ready_for_brd=is_ready,
@@ -1316,7 +1665,10 @@ def calculate_discovery_confidence(session: ProjectSession) -> DiscoveryConfiden
             "total_domains": comp["total_domains"],
             "completion_rate": total_score,
             "clarification_needed_count": comp["generic_count"],
-            "is_gate_passed": is_ready
+            "is_gate_passed": is_ready,
+            "template_confidence_score": tpl_conf.get("score", total_score),
+            "template_confidence_band": tpl_conf.get("band", "Ready for review"),
+            "total_applicable_template_questions": tpl_conf.get("total_applicable_questions", 0)
         }
     )
     session.confidence = conf
@@ -1331,46 +1683,25 @@ def check_requires_follow_up(user_input: str, q: QuestionItem) -> Tuple[bool, st
     has_vague_marker = any(p in text for p in VAGUE_PHRASES)
     
     if q.id == "q_client":
-        if has_vague_marker or text in ["unknown", "na", "none", "tbd", "idk"]:
-            return True, "🏢 **Could you share the company / client name or working project title?** *(e.g., 'PVR INOX — Contract Intelligence' or 'Acme Corp — Customer AI')*", [
+        is_vague_client = has_vague_marker or any(w in text for w in [
+            "some ai", "some tool", "a tool", "for our company", "for our business", 
+            "we want some", "ai tool", "an ai", "help us", "build something", "make an ai"
+        ]) or text in ["unknown", "na", "none", "tbd", "idk"] or len(text) < 3
+        
+        if is_vague_client:
+            return True, "🏢 **Could you share the company / client name or working project title?** *(e.g., 'Apex Logistics — Cargo Tracking AI' or 'PVR INOX — Contract Intelligence')*", [
                 {"label": "Use Standard Working Title", "value": "Enterprise Client — AI Automation Platform"}
             ]
         return False, "", []
         
     if q.id == "q_problem":
         words = text.split()
-        is_too_brief = len(words) < 5 and not any(k in text for k in ["contract", "intelligence", "compliance", "procurement", "extraction", "customer support", "invoice", "triage", "search", "legal", "analysis"])
-        
-        if has_vague_marker or is_too_brief:
-            if any(w in text for w in ["bot", "chat", "assistant", "conversational", "llm", "ai"]):
-                options = [
-                    {"label": "Option A: Internal Knowledge & HR/IT Support Assistant", "value": "Build an Internal Enterprise Knowledge & Policy Q&A Assistant that indexes SharePoint/Blob PDF documents to answer employee questions and reduce HR/IT helpdesk ticket volume."},
-                    {"label": "Option B: Omnichannel Customer Support & Service Desk Automation", "value": "Build an Omnichannel Customer Support conversational agent to resolve tier-1 customer inquiries 24/7 with automated CRM and human escalation handoff."},
-                    {"label": "Option C: Intelligent Document Processing & Risk Analysis Agent", "value": "Build an automated Document Intelligence pipeline to extract clauses, score risks, and validate regulatory compliance across enterprise documents."}
-                ]
-                clarification_prompt = (
-                    "🔍 **I can help you define the exact scope for your AI Assistant / Chatbot!**\n\n"
-                    "To generate a realistic BRD, architecture, and resource plan, could you clarify:\n\n"
-                    "1️⃣ **Who will primarily interact with it?** *(e.g., internal employees, customer support agents, or external clients)*\n"
-                    "2️⃣ **What documents or systems will it connect to?** *(e.g., SharePoint PDFs, CRM, ERP, SQL Database)*\n"
-                    "3️⃣ **What is the primary business outcome?** *(e.g., deflecting tier-1 support tickets, accelerating document review, 24/7 self-service)*\n\n"
-                    "💡 *You can type your specific details or pick from one of the solution blueprints below:*"
-                )
-                return True, clarification_prompt, options
-            else:
-                options = [
-                    {"label": "Option A: Document Intelligence & Contract Extraction", "value": "Automate contract clause extraction, risk scoring, and compliance validation across enterprise document repositories."},
-                    {"label": "Option B: Enterprise Conversational Search & Knowledge Assistant", "value": "Provide 24/7 intelligent search and grounded conversational answers over enterprise documentation."},
-                    {"label": "Option C: Intelligent Workflow & Data Validation Automation", "value": "Automate repetitive business workflows and data validation pipelines across disparate enterprise core systems."}
-                ]
-                clarification_prompt = (
-                    f"🔍 **Let's flesh out the details for {q.title}!**\n\n"
-                    f"To plan the engineering effort accurately, what specific pain points, users, and business goals are you targeting?\n\n"
-                    f"*(Feel free to describe in detail, or select one of these common enterprise blueprints:)*"
-                )
-                return True, clarification_prompt, options
+        if len(words) < 3 or text in ["unknown", "na", "none", "tbd", "idk"]:
+            return True, "🎯 **Could you describe the main business problem, manual bottlenecks, and objectives for this project?** *(e.g., 'Employees manually apply for leave in spreadsheets causing slow HR approvals and lack of visibility')*", []
+        return False, "", []
 
     return False, "", []
+
 
 def check_answer_ambiguity(answer_text: str, q: QuestionItem) -> Tuple[bool, str, List[str]]:
     text = answer_text.strip().lower()
@@ -1408,9 +1739,11 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
     
     # 1. Check if user is asking the Solutions Architect or delegating
     is_architect_delegation = any(k in raw_lower for k in [
-        "ask architect", "ask the architect", "architect decide", "architect recommendation",
-        "let architect answer", "technical architect", "delegate", "not sure ask tech", "architect should answer"
-    ])
+        "escalat", "ask architect", "ask the architect", "architect decide", "architect recommendation",
+        "let architect answer", "technical architect", "solutions architect", "delegate", "not sure ask tech",
+        "architect should answer", "forward to architect", "send to architect", "let tech decide",
+        "let architect decide", "architect review", "architect advice"
+    ]) or raw_lower.strip() in ["architect", "solutions architect", "technical architect"]
     
     if is_architect_delegation and q:
         clean_id = q.id.replace("_clarification", "")
@@ -1579,6 +1912,79 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
 
     clean_target_id = q.id.replace("_clarification", "")
 
+    # Check if user specifically wants to review/ask all questions from the reference document (Sheet 10 Q001-Q052)
+    is_ref_doc_query = any(k in raw_lower for k in [
+        "all the possible questions", "all possible questions", "questions mentioned in reference",
+        "reference document", "sheet 10", "q001", "clarification questions", "ask all questions",
+        "ask me all questions", "all 52 questions", "52 questions", "more details about project"
+    ])
+
+    if is_ref_doc_query:
+        unanswered_ref_q = None
+        for ref_q in REFERENCE_DOC_QUESTIONS_52:
+            clean_ref_id = ref_q.id.replace("q_", "")
+            if ref_q.id not in session.answers and clean_ref_id not in session.answers:
+                unanswered_ref_q = ref_q
+                break
+        if not unanswered_ref_q:
+            unanswered_ref_q = REFERENCE_DOC_QUESTIONS_52[0]
+            
+        content = (
+            "📋 **Reference Document Clarification Questionnaire (Q001–Q052 Activated):**\n\n"
+            "I have loaded all **52 granular clarifying and scoping questions** from the reference document (*Sheet `10 QUESTIONS`*) and the **36-section questionnaire template** to elicit deep, rigorous project specifications for your BRD and deterministic effort calculation:\n\n"
+            "🔹 **1. Key Decision Gates & Cloud Boundaries (Blockers & High Priority: Q001–Q012, Q038, Q039, Q044–Q046):**\n"
+            "• `Q001`: Approved & mandated cloud platform(s)\n"
+            "• `Q002`: Existing cloud account/subscription container vs new dedicated non-prod\n"
+            "• `Q003` & `Q007`: Country data residency boundaries & legal sign-off authority\n"
+            "• `Q004` & `Q005`: Multi-cloud role division, private network links & egress transfer cost\n"
+            "• `Q006`: Approved AI model vendor list & third-party restrictions\n"
+            "• `Q008`: Mandated search index product (Azure AI Search, OpenSearch, etc.)\n"
+            "• `Q010`: Post-handover operational support team & platform familiarity\n"
+            "• `Q011`: Staging environment count & isolation (Dev, Test, UAT, Prod, DR)\n"
+            "• `Q012`: Procurement, licensing & commercial waiting period lead time\n"
+            "• `Q044`: Single named executive sponsor for decision gate sign-off *(e.g. Nithin Arora)*\n"
+            "• `Q045`: Named legal/business SMEs & weekly workshop commitment *(e.g. Jitender Verma)*\n"
+            "• `Q046`: Accuracy vs human review effort & timeline trade-off authority\n\n"
+            "🔹 **2. Functional Scope & Document Intelligence (Q013–Q030):**\n"
+            "• `Q013` & `Q014`: In-scope contract categories & sample count per category *(100/category)*\n"
+            "• `Q015`: Validation sample volume vs eventual live production corpus *(50,000 documents)*\n"
+            "• `Q016` & `Q017`: Contract clauses to extract & contracting principles documentation status\n"
+            "• `Q018`: Single named arbiter for 3-tier classification (*Agree, Agree with Mgmt Approval, Not Agree*)\n"
+            "• `Q019` & `Q020`: Acceptance accuracy benchmark (≥95%) & golden test dataset confirmation\n"
+            "• `Q021` & `Q022`: 100% human review policy & unreadable document exception handling\n"
+            "• `Q023` & `Q024`: Risk register format & Day-1 risk dashboard reporting questions\n"
+            "• `Q025` & `Q026`: 4 user persona roles & language support scope\n"
+            "• `Q027` & `Q028`: Machine-readable digital PDFs vs scanned OCR & parent-child amendment linking\n"
+            "• `Q029` & `Q030`: Authoritative repository location & sample dataset release authorization\n\n"
+            "🔹 **3. Non-Functional Requirements, Security & Compliance (Q009, Q031–Q037, Q040–Q043):**\n"
+            "• `Q009`: Secret management & Platform-managed vs Customer-Managed Keys (CMEK)\n"
+            "• `Q031` & `Q032`: PII masking policy & data confidentiality classification\n"
+            "• `Q033` & `Q034`: External regulatory obligations & source clause traceability retention\n"
+            "• `Q035` & `Q036`: 12-month data retention schedule & Corporate SSO login (Entra ID)\n"
+            "• `Q037` & `Q038`: Multi-tenant business function data segregation & blob ingestion connectivity\n"
+            "• `Q040`, `Q041`, `Q042`: Dashboard concurrency, batch processing SLA & single-instance failover\n"
+            "• `Q043`: Security review / VAPT prerequisites before data ingestion\n\n"
+            "🔹 **4. Operations, FinOps BoM & Phase 2 Roadmap (Q047–Q052):**\n"
+            "• `Q047`: Existing spreadsheet / disconnected document process baseline\n"
+            "• `Q048` & `Q049`: Business calendar blackout dates & remote delivery constraints\n"
+            "• `Q050`: Live solution cloud operating cost estimate FinOps BoM ($645/mo)\n"
+            "• `Q051`: Phase 2 vision (workflow automation, approval routing, production integrations)\n"
+            "• `Q052`: Prerequisite data access, security & governance approvals SPOC *(e.g. Gaurav)*\n\n"
+            "---\n\n"
+            f"### 🎯 Let's begin with **{unanswered_ref_q.title}**:\n\n"
+            f"**{unanswered_ref_q.prompt}**\n\n"
+            f"*(Suggested Default: `{unanswered_ref_q.default_value}`)*"
+        )
+        msg = ChatMessage(
+            sender="agent",
+            persona="AI_AGENT",
+            content=content,
+            timestamp=datetime.now().strftime("%I:%M %p"),
+            question_context=unanswered_ref_q,
+            hitl_options=[{"label": opt.label, "value": opt.value} for opt in unanswered_ref_q.options]
+        )
+        return msg, False
+
     # Check greetings
     if is_greeting_or_chit_chat(user_input):
         comp = evaluate_domain_completeness(session)
@@ -1604,8 +2010,142 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
         )
         return msg, False
 
-    # Handle active clarification state
+    # Handle active clarification or requirement accumulation state
     if session.clarification_state and session.clarification_state.get("question_id") in [q.id, clean_target_id]:
+        clarification_mode = session.clarification_state.get("mode")
+        
+        # 1. Human-Centric Multi-Turn Requirement Accumulation
+        if clarification_mode == "ACCUMULATING_REQUIREMENTS":
+            accumulated_items: List[str] = session.clarification_state.get("items", [])
+            clean_input = user_input.strip()
+            lower_input = clean_input.lower()
+            
+            is_end_signal = any(p in lower_input for p in [
+                "that covers all requirements", "that covers everything", "that covers it", 
+                "that's all", "thats all", "that is all", "that's it", "thats it", "that is it",
+                "no more", "no other", "end of requirements", "it is end", "done", "continue",
+                "next", "proceed", "no", "nope", "nothing else", "all set", "ready", "finish",
+                "covers all", "covers everything", "end"
+            ]) and not any(add_kw in lower_input for add_kw in ["also", "plus", "additionally", "another", "and we need", "as well"])
+            
+            is_add_prompt_click = any(w in lower_input for w in ["add another requirement", "add another", "add more", "plus requirement", "enter another"])
+            
+            if is_add_prompt_click and not len(clean_input.split()) > 4:
+                # User clicked "Add another requirement" button - prompt them gently
+                content = (
+                    f"👉 **Please enter your next functional requirement, workflow, or feature for {q.title}:**\n\n"
+                    f"*(e.g., 'Real-time inventory lookup via ERP REST API' or 'Store opening hours and directions FAQ')*"
+                )
+                msg = ChatMessage(
+                    sender="agent",
+                    persona="AI_AGENT",
+                    content=content,
+                    timestamp=datetime.now().strftime("%I:%M %p"),
+                    question_context=q
+                )
+                return msg, False
+            
+            if is_end_signal:
+                # Finalize all accumulated requirements
+                if len(accumulated_items) > 1:
+                    final_synthesized_requirement = "; ".join(accumulated_items)
+                    bullets_summary = "\n".join([f"• *{item}*" for item in accumulated_items])
+                elif accumulated_items:
+                    final_synthesized_requirement = accumulated_items[0]
+                    bullets_summary = f"• *{accumulated_items[0]}*"
+                else:
+                    final_synthesized_requirement = q.default_value
+                    bullets_summary = f"• *{q.default_value}*"
+                
+                session.clarification_state = None
+                session.answers[clean_target_id] = AnswerItem(
+                    question_id=clean_target_id,
+                    question_title=q.title.replace("Clarification: ", ""),
+                    answer=final_synthesized_requirement,
+                    is_default=False,
+                    ambiguity_count=0,
+                    hitl_confirmed=True,
+                    notes=f"Synthesized from {len(accumulated_items)} accumulated user requirements."
+                )
+                
+                comp = evaluate_domain_completeness(session)
+                conf = calculate_discovery_confidence(session)
+                next_q = get_current_question(session)
+                
+                if comp["is_gate_passed"] or not next_q:
+                    msg = ChatMessage(
+                        sender="agent",
+                        persona="AI_AGENT",
+                        content=f"🎯 **Discovery Complete with {conf.score}% Confidence!** All 32 architectural & business domains confirmed across Client and Architect. Synthesizing full BRD for Dual-Review...",
+                        timestamp=datetime.now().strftime("%I:%M %p")
+                    )
+                    return msg, True
+                else:
+                    domain_idx = comp["confirmed_count"] + comp["escalated_count"] + 1
+                    if next_q.id.endswith("_clarification"):
+                        header = f"### 🔍 Targeted Clarification: **{next_q.title}** *(Domain Coverage: {comp['confirmed_count'] + comp['escalated_count']}/32 • {comp['completion_rate']}% | Gate: 95%)*"
+                    else:
+                        header = f"### 📋 Domain {domain_idx} of 32: **{next_q.title}** *(Domain Coverage: {comp['confirmed_count'] + comp['escalated_count']}/32 • {comp['completion_rate']}% | Gate: 95%)*"
+                        
+                    content = (
+                        f"✅ **Recorded complete scope for {q.title} ({len(accumulated_items)} requirements):**\n"
+                        f"{bullets_summary}\n\n"
+                        f"---\n\n"
+                        f"{header}\n\n"
+                        f"**{next_q.prompt}**\n\n"
+                        f"*(Example: {next_q.help_text})*"
+                    )
+                    msg = ChatMessage(
+                        sender="agent",
+                        persona="AI_AGENT",
+                        content=content,
+                        timestamp=datetime.now().strftime("%I:%M %p"),
+                        question_context=next_q
+                    )
+                    return msg, False
+            else:
+                # Add this new requirement to accumulation list
+                cleaned_item = clean_input
+                # Strip leading prefixes like "also", "and", "plus" if present
+                cleaned_item = re.sub(r'^(also|plus|and|additionally|we also need|we need|requirement:)\s+', '', cleaned_item, flags=re.IGNORECASE).strip()
+                if cleaned_item and cleaned_item not in accumulated_items:
+                    accumulated_items.append(cleaned_item)
+                session.clarification_state["items"] = accumulated_items
+                
+                formatted_list = "\n".join([f"📌 **{i+1}.** *\"{item}\"*" for i, item in enumerate(accumulated_items)])
+                content = (
+                    f"👍 **Added to requirements!** Here is what we have captured so far for **{q.title}**:\n\n"
+                    f"{formatted_list}\n\n"
+                    f"❓ **Do you have more functional requirements, features, or workflows to add, or does this cover the scope for now?**"
+                )
+                hitl_opts = [
+                    {"label": "✅ That covers all requirements / Continue", "value": "That covers all requirements / Continue"},
+                    {"label": "➕ Add another requirement", "value": "➕ Add another requirement"}
+                ]
+                msg = ChatMessage(
+                    sender="agent",
+                    persona="AI_AGENT",
+                    content=content,
+                    timestamp=datetime.now().strftime("%I:%M %p"),
+                    question_context=QuestionItem(
+                        id=f"{clean_target_id}_clarification",
+                        title=f"Requirements Scope: {q.title}",
+                        prompt=content,
+                        type="dropdown",
+                        options=[
+                            QuestionOption(value="That covers all requirements / Continue", label="✅ That covers all requirements / Continue", description="Proceed to next domain"),
+                            QuestionOption(value="➕ Add another requirement", label="➕ Add another requirement", description="Enter additional functional requirement or feature")
+                        ],
+                        default_value="That covers all requirements / Continue",
+                        category=q.category,
+                        priority=q.priority,
+                        help_text="Confirm if this is the full scope or add more requirements."
+                    ),
+                    hitl_options=hitl_opts
+                )
+                return msg, False
+        
+        # 2. General Ambiguity Clarification
         initial_input = session.clarification_state.get("initial_input", "")
         clarification_answer = user_input.strip()
         
@@ -1646,11 +2186,11 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
                     
                     prompt_audience = clarification_answer
                     clarification_content = (
-                        f"Got it — target users are **{prompt_audience}**.\n\n"
-                        f"To define the exact requirement without making assumptions or hallucinating details:\n\n"
-                        f"1️⃣ **What primary task, pain point, or service should the AI handle for {prompt_audience}?** *(e.g., answering support questions, checking order status, account self-service)*\n"
-                        f"2️⃣ **What channels or systems will they use?** *(e.g., Web chat widget, Mobile App, WhatsApp, CRM)*\n\n"
-                        f"*(Please describe your exact use case or select one of the tailored options below:)*"
+                        f"✅ **Recorded Target Users:** *{prompt_audience}*\n\n"
+                        f"---\n\n"
+                        f"🎯 **Primary Capability:**\n\n"
+                        f"**What primary task or service should the AI handle for {prompt_audience}?**\n\n"
+                        f"*(Please select a capability below or describe your custom requirement:)*"
                     )
                     
                     tailored_options = [
@@ -1868,6 +2408,45 @@ def process_user_answer(session: ProjectSession, user_input: str, persona: str =
                 ambiguity_strike=current_strikes
             )
             return msg, False
+
+    # If this is a requirement/scope question and user gave a custom statement, ask if they have more requirements before moving on
+    if clean_target_id in ["q_problem", "q_legal_categories"] and not is_option_match and len(user_input.split()) < 35:
+        session.clarification_state = {
+            "mode": "ACCUMULATING_REQUIREMENTS",
+            "question_id": clean_target_id,
+            "items": [normalized_input]
+        }
+        content = (
+            f"Got it! I've noted that requirement for **{q.title}**:\n\n"
+            f"📌 **1.** *\"{normalized_input}\"*\n\n"
+            f"❓ **Do you have more functional requirements, features, or workflows to add, or does this cover the scope for now?**"
+        )
+        hitl_opts = [
+            {"label": "✅ That covers all requirements / Continue", "value": "That covers all requirements / Continue"},
+            {"label": "➕ Add another requirement", "value": "➕ Add another requirement"}
+        ]
+        msg = ChatMessage(
+            sender="agent",
+            persona="AI_AGENT",
+            content=content,
+            timestamp=datetime.now().strftime("%I:%M %p"),
+            question_context=QuestionItem(
+                id=f"{clean_target_id}_clarification",
+                title=f"Requirements Scope: {q.title}",
+                prompt=content,
+                type="dropdown",
+                options=[
+                    QuestionOption(value="That covers all requirements / Continue", label="✅ That covers all requirements / Continue", description="Proceed to next domain"),
+                    QuestionOption(value="➕ Add another requirement", label="➕ Add another requirement", description="Enter additional functional requirement or feature")
+                ],
+                default_value="That covers all requirements / Continue",
+                category=q.category,
+                priority=q.priority,
+                help_text="Confirm if this is the full scope or add more requirements."
+            ),
+            hitl_options=hitl_opts
+        )
+        return msg, False
 
     # Valid answer received
     session.answers[clean_target_id] = AnswerItem(

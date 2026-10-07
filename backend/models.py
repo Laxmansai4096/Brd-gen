@@ -360,6 +360,7 @@ class BRDDocument(BaseModel):
     buffer_capacity_pct: float = 15.0
     backup_resources: List[Dict[str, Any]] = []
     delivery_model: str = "Global Delivery Model (Onshore Oversight + Offshore Execution)"
+    version: str = "1.0.0"
     
     # Narratives
     executive_summary: str

@@ -1,20 +1,20 @@
 :root {
   /* Minimalist Design Tokens */
   --bg-main: #f8fafc;
-  --bg-workspace: #f8fafc;
+  --bg-workspace: #eef2f6;
   --bg-sidebar: #0f172a;
   --bg-sidebar-card: #1e293b;
   --bg-sidebar-hover: #334155;
   --bg-sidebar-border: #1e293b;
   
   --bg-panel-left: #ffffff;
-  --bg-panel-right: #f8fafc;
+  --bg-panel-right: #eef2f6;
   --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
+  --bg-card-hover: #f8fafc;
   --bg-card-dark: #0f172a;
   
-  --border-color: #e2e8f0;
-  --border-subtle: #f1f5f9;
+  --border-color: #cbd5e1;
+  --border-subtle: #e2e8f0;
   --border-focus: #2563eb;
   
   --primary: #2563eb;
@@ -736,7 +736,7 @@ body {
   flex: 1 1 47%;
   min-width: 400px;
   max-width: none;
-  border-right: 1px solid var(--border-color);
+  border-right: 2px solid #cbd5e1;
   background: #ffffff;
   display: flex;
   flex-direction: column;
@@ -746,6 +746,8 @@ body {
   overflow: hidden;
   position: relative;
   transition: flex 0.3s ease;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+  z-index: 2;
 }
 
 .chat-panel.expanded {
@@ -1309,11 +1311,11 @@ body {
   background: var(--primary-hover);
 }
 
-/* 3. RIGHT HALF: Project Cockpit & BRD Workbench (Minimalist) */
+/* 3. RIGHT HALF: Project Cockpit & BRD Workbench (Grey Canvas Background) */
 .workbench-panel {
   flex: 1 1 53%;
   min-width: 460px;
-  background: var(--bg-workspace);
+  background: #eef2f6;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -1327,8 +1329,8 @@ body {
   height: 48px;
   min-height: 48px;
   flex-shrink: 0;
-  background: #ffffff;
-  border-bottom: 1px solid var(--border-color);
+  background: #e2e8f0;
+  border-bottom: 1px solid #cbd5e1;
   display: flex;
   padding: 6px 14px;
   gap: 6px;
@@ -1370,9 +1372,10 @@ body {
 
 .tab-btn.active {
   color: var(--primary);
-  background: var(--primary-soft-bg);
-  border-color: #dbeafe;
+  background: #ffffff;
+  border-color: #cbd5e1;
   font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .tab-content-area {
@@ -1382,6 +1385,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 20px 24px;
+  background: #eef2f6;
 }
 
 .tab-pane {
@@ -3218,6 +3222,292 @@ body.persona-admin-mode .persona-hero-tag {
   padding: 12px 16px;
   margin-bottom: 12px;
 }
+
+/* ==========================================================================
+   ENTERPRISE MULTI-PERSONA ROLE LOGIN & PORT GATEWAY STYLES
+   ========================================================================== */
+
+#loginModal .modal-box {
+  width: 780px;
+  max-width: 95vw;
+  max-height: 92vh;
+  padding: 32px 36px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 30px 70px -15px rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+#loginModal .modal-box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #10b981 100%);
+}
+
+.login-modal-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.login-modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.login-modal-header p {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.role-selector-label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.role-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.role-card-option {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.role-card-option:hover {
+  border-color: #93c5fd;
+  background: #f0f7ff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -4px rgba(59, 130, 246, 0.12);
+}
+
+.role-card-option.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18), 0 8px 20px -4px rgba(59, 130, 246, 0.2);
+}
+
+.role-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.role-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-port-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: monospace;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.role-card-option.selected .role-port-badge {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.role-card-desc {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.role-card-feature {
+  font-size: 0.73rem;
+  color: #0284c7;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.quick-login-strip {
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-login-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quick-login-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-quick-login {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-quick-login:hover {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.login-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.login-port-preview-alert {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: #15803d;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.btn-enter-workspace {
+  width: 100%;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.96rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-enter-workspace:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  transform: translateY(-1px);
+}
+
+/* User Profile & Account Controls in Header */
+.header-user-account-widget {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 3px 10px 3px 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.header-user-account-widget:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.header-user-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.header-user-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-port-pill {
+  font-size: 0.68rem;
+  font-family: monospace;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
 
 
 

@@ -1,36 +1,65 @@
 let currentSessionId = localStorage.getItem("brd_session_id") || "";
 let currentSessionData = null;
-let activePersona = "CLIENT"; // "CLIENT" | "SOLUTIONS_ARCHITECT" | "PROJECT_MANAGER"
+let activePersona = "CLIENT"; // "CLIENT" | "SOLUTIONS_ARCHITECT" | "PROJECT_MANAGER" | "ADMIN"
 
-const PERSONA_CONFIG = {
+let currentUser = {
+  username: "Client Business Lead",
+  role: "CLIENT",
+  role_title: "Client Business Lead",
+  avatar: "CL",
+  token: null
+};
+
+let selectedLoginRole = "CLIENT";
+
+const ROLE_PORT_CONFIG = {
   CLIENT: {
+    port: 8081,
     name: "Client Business Lead",
     role: "Client Business Lead",
     avatar: "CL",
     class: "client",
     tag: "🧑‍💼 Client",
     pillId: "pillClient",
+    desc: "Client Ideation, Discovery & Dual Review Portal",
     tip: "Typing as: <strong>Client Business Lead</strong>"
   },
   SOLUTIONS_ARCHITECT: {
+    port: 8082,
     name: "Principal Solutions Architect",
     role: "Principal Solutions Architect",
     avatar: "SA",
     class: "architect",
     tag: "🏗️ Architect",
     pillId: "pillArchitect",
+    desc: "Technical Architecture, Sizing BoM & Dual Review Portal",
     tip: "Typing as: <strong>Principal Solutions Architect</strong>"
   },
   PROJECT_MANAGER: {
+    port: 8083,
     name: "Senior Delivery PM",
     role: "Senior Delivery PM",
     avatar: "PM",
     class: "pm",
     tag: "👔 PM",
     pillId: "pillPM",
+    desc: "Project Governance, Tripartite Discussion & Final Approval Portal",
     tip: "Typing as: <strong>Senior Delivery PM</strong>"
+  },
+  ADMIN: {
+    port: 8084,
+    name: "System Administrator",
+    role: "Enterprise Governance Admin",
+    avatar: "AD",
+    class: "admin",
+    tag: "🛡️ Admin",
+    pillId: "pillAdmin",
+    desc: "Enterprise Admin & Governance Console (Calendars, Rates, Master Settings)",
+    tip: "Operating as: <strong>System Administrator</strong>"
   }
 };
+
+const PERSONA_CONFIG = ROLE_PORT_CONFIG;
 
 let isSidebarCollapsed = localStorage.getItem("brd_sidebar_collapsed") === "true";
 
@@ -80,6 +109,163 @@ function toggleChatExpand() {
   }
 }
 
+// ==========================================================================
+// USER AUTHENTICATION, ROLE SELECTION & MULTI-PORT GATEWAY
+// ==========================================================================
+
+function openLoginModal(preselectRole) {
+  const modal = document.getElementById("loginModal");
+  if (!modal) return;
+  
+  const targetRole = preselectRole || activePersona || "CLIENT";
+  selectLoginRole(targetRole);
+
+  const usernameInput = document.getElementById("loginUsername");
+  if (usernameInput) {
+    usernameInput.value = currentUser.username || ROLE_PORT_CONFIG[targetRole].name;
+  }
+  
+  modal.style.display = "flex";
+}
+
+function closeLoginModal() {
+  const modal = document.getElementById("loginModal");
+  if (modal) modal.style.display = "none";
+}
+
+function selectLoginRole(role) {
+  selectedLoginRole = role;
+  
+  // Highlight role cards
+  document.querySelectorAll(".role-card-option").forEach(c => c.classList.remove("selected"));
+  const card = document.getElementById(`roleCard_${role}`);
+  if (card) card.classList.add("selected");
+  
+  // Update port destination preview
+  const cfg = ROLE_PORT_CONFIG[role] || ROLE_PORT_CONFIG["CLIENT"];
+  const portDisplay = document.getElementById("loginTargetPortDisplay");
+  const descDisplay = document.getElementById("loginTargetDescDisplay");
+  
+  if (portDisplay) portDisplay.textContent = `http://127.0.0.1:${cfg.port}`;
+  if (descDisplay) descDisplay.textContent = cfg.desc;
+}
+
+function quickLoginAs(role) {
+  selectLoginRole(role);
+  const cfg = ROLE_PORT_CONFIG[role];
+  const nameInput = document.getElementById("loginUsername");
+  if (nameInput) nameInput.value = cfg.name;
+  submitUserLogin();
+}
+
+async function submitUserLogin() {
+  const usernameInput = document.getElementById("loginUsername");
+  const passwordInput = document.getElementById("loginPassword");
+  
+  const rawName = (usernameInput && usernameInput.value.trim()) ? usernameInput.value.trim() : ROLE_PORT_CONFIG[selectedLoginRole].name;
+  const password = passwordInput ? passwordInput.value : "";
+  const role = selectedLoginRole || "CLIENT";
+  const targetPort = ROLE_PORT_CONFIG[role].port;
+  const currentPort = parseInt(window.location.port || "8081", 10);
+  
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: rawName,
+        password: password,
+        role: role,
+        session_id: currentSessionId
+      })
+    });
+    
+    let authData = null;
+    if (res.ok) {
+      authData = await res.json();
+    }
+    
+    const userObj = (authData && authData.user) ? authData.user : {
+      username: rawName,
+      role: role,
+      role_title: ROLE_PORT_CONFIG[role].role,
+      avatar: ROLE_PORT_CONFIG[role].avatar,
+      target_port: targetPort
+    };
+    
+    // Persist in localStorage across all ports
+    localStorage.setItem("brd_user_auth", JSON.stringify(userObj));
+    currentUser = userObj;
+    
+    // Check if we need to redirect to another port
+    if (currentPort !== targetPort) {
+      showToast(`Redirecting to Port ${targetPort} for ${userObj.role_title}...`, "info");
+      setTimeout(() => {
+        window.location.href = `http://${window.location.hostname}:${targetPort}/?user=${encodeURIComponent(userObj.username)}&role=${role}&auth=1`;
+      }, 350);
+      return;
+    }
+    
+    // If already on the matching port, apply immediately
+    applyCurrentUserProfile();
+    await switchActivePersona(role);
+    closeLoginModal();
+    showToast(`✓ Welcome, ${userObj.username}! Connected as ${userObj.role_title} on Port :${targetPort}.`, "success");
+    
+  } catch (err) {
+    console.error("Login error:", err);
+    // Fallback direct execution
+    const userObj = {
+      username: rawName,
+      role: role,
+      role_title: ROLE_PORT_CONFIG[role].role,
+      avatar: ROLE_PORT_CONFIG[role].avatar,
+      target_port: targetPort
+    };
+    localStorage.setItem("brd_user_auth", JSON.stringify(userObj));
+    currentUser = userObj;
+    
+    if (currentPort !== targetPort) {
+      window.location.href = `http://${window.location.hostname}:${targetPort}/?user=${encodeURIComponent(userObj.username)}&role=${role}&auth=1`;
+    } else {
+      applyCurrentUserProfile();
+      switchActivePersona(role);
+      closeLoginModal();
+      showToast(`✓ Connected as ${userObj.role_title}`, "success");
+    }
+  }
+}
+
+function applyCurrentUserProfile() {
+  const stored = localStorage.getItem("brd_user_auth");
+  if (stored) {
+    try {
+      currentUser = JSON.parse(stored);
+    } catch (e) {}
+  }
+  
+  // Update Header User Widget
+  const headerAvatar = document.getElementById("headerUserAvatar");
+  const headerName = document.getElementById("headerUserName");
+  const headerPort = document.getElementById("headerUserPort");
+  const curPort = window.location.port || "8081";
+  
+  if (headerAvatar) headerAvatar.textContent = currentUser.avatar || "CL";
+  if (headerName) headerName.textContent = currentUser.username || "Client Lead";
+  if (headerPort) headerPort.textContent = `:${curPort}`;
+  
+  // Update Sidebar User Profile Card
+  const sidebarAvatar = document.getElementById("sidebarAvatar");
+  const sidebarName = document.getElementById("sidebarProfileName");
+  const sidebarRole = document.getElementById("sidebarProfileRole");
+  
+  if (sidebarAvatar) {
+    sidebarAvatar.innerHTML = `${currentUser.avatar || "CL"}<span class="status-online-dot" title="Active Port ${curPort}"></span>`;
+  }
+  if (sidebarName) sidebarName.textContent = currentUser.username || "Client Lead";
+  if (sidebarRole) sidebarRole.textContent = `${currentUser.role_title || "Client Lead"} (Port :${curPort})`;
+}
+
 // Persona Switcher
 async function switchActivePersona(persona) {
   if (!PERSONA_CONFIG[persona]) return;
@@ -92,12 +278,7 @@ async function switchActivePersona(persona) {
   if (activePill) activePill.classList.add("active");
   
   // Update Left Sidebar Profile
-  const avatarEl = document.getElementById("sidebarAvatar");
-  if (avatarEl) avatarEl.innerHTML = `${cfg.avatar}<span class="status-online-dot" title="Active Session"></span>`;
-  const nameEl = document.getElementById("sidebarProfileName");
-  if (nameEl) nameEl.textContent = cfg.name;
-  const roleEl = document.getElementById("sidebarProfileRole");
-  if (roleEl) roleEl.textContent = cfg.role;
+  applyCurrentUserProfile();
   
   // Update Chat Header Persona Tag
   const chatBadge = document.getElementById("chatActivePersonaBadge");
@@ -108,7 +289,7 @@ async function switchActivePersona(persona) {
   
   // Update Chat Input Tip
   const tipEl = document.getElementById("chatPersonaTip");
-  if (tipEl) tipEl.innerHTML = cfg.tip;
+  if (tipEl) tipEl.innerHTML = `Typing as: <strong>${currentUser.username || cfg.name}</strong> (${cfg.role})`;
 
   // Render Persona Hero
   renderPersonaHero();
@@ -154,31 +335,76 @@ function renderPersonaHero() {
     if (iconEl) iconEl.innerHTML = "👔";
     if (tagEl) tagEl.textContent = "Senior Delivery PM";
     if (descEl) descEl.textContent = "12 disciplines, holiday calendars, and consensus sign-off";
+  } else if (activePersona === "ADMIN") {
+    document.body.classList.add("persona-admin-mode");
+    if (iconEl) iconEl.innerHTML = "🛡️";
+    if (tagEl) tagEl.textContent = "Enterprise System Administrator";
+    if (descEl) descEl.textContent = "Statutory calendars, rate cards, and enterprise master settings";
   }
 }
 
 // Multi-Port Persona Auto-Configuration (Ports: 8081 Client, 8082 Architect, 8083 PM, 8084 Admin)
 function configurePortPersona() {
   const port = window.location.port || "8081";
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramUser = urlParams.get("user");
+  const paramRole = urlParams.get("role");
+
+  // If redirected with URL params, adopt credentials
+  if (paramUser || paramRole) {
+    const roleKey = (paramRole || (port === "8082" ? "SOLUTIONS_ARCHITECT" : port === "8083" ? "PROJECT_MANAGER" : port === "8084" ? "ADMIN" : "CLIENT")).toUpperCase();
+    const cfg = ROLE_PORT_CONFIG[roleKey] || ROLE_PORT_CONFIG["CLIENT"];
+    currentUser = {
+      username: paramUser || cfg.name,
+      role: roleKey,
+      role_title: cfg.role,
+      avatar: cfg.avatar,
+      target_port: cfg.port
+    };
+    localStorage.setItem("brd_user_auth", JSON.stringify(currentUser));
+  } else {
+    // Check localStorage
+    const stored = localStorage.getItem("brd_user_auth");
+    if (stored) {
+      try {
+        currentUser = JSON.parse(stored);
+      } catch (e) {}
+    } else {
+      // Default to port role
+      const defaultRole = (port === "8082" ? "SOLUTIONS_ARCHITECT" : port === "8083" ? "PROJECT_MANAGER" : port === "8084" ? "ADMIN" : "CLIENT");
+      const cfg = ROLE_PORT_CONFIG[defaultRole];
+      currentUser = {
+        username: cfg.name,
+        role: defaultRole,
+        role_title: cfg.role,
+        avatar: cfg.avatar,
+        target_port: cfg.port
+      };
+      localStorage.setItem("brd_user_auth", JSON.stringify(currentUser));
+    }
+  }
+
+  applyCurrentUserProfile();
 
   if (port === "8082") {
     activePersona = "SOLUTIONS_ARCHITECT";
-    document.title = "🏗️ Solutions Architect Portal";
+    document.title = "🏗️ Solutions Architect Portal (Port 8082)";
     switchActivePersona("SOLUTIONS_ARCHITECT");
     switchTab("tab-dual-review");
   } else if (port === "8083") {
     activePersona = "PROJECT_MANAGER";
-    document.title = "👔 Project Manager Portal";
+    document.title = "👔 Project Manager Portal (Port 8083)";
     switchActivePersona("PROJECT_MANAGER");
     switchTab("tab-pm-review");
   } else if (port === "8084") {
     activePersona = "ADMIN";
-    document.title = "🛡️ Admin Console";
+    document.title = "🛡️ Admin Console (Port 8084)";
+    switchActivePersona("ADMIN");
     setTimeout(() => { openAdminModal(); }, 450);
   } else {
     // Default to Client Lead on 8081 or standard ports
     activePersona = "CLIENT";
-    document.title = "AI BRD Studio | Client Portal";
+    document.title = "AI BRD Studio | Client Portal (Port 8081)";
     switchActivePersona("CLIENT");
   }
 }
@@ -191,6 +417,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadProjectHistory();
   configurePortPersona();
 });
+
 
 // Load Settings from Server
 async function loadSettings() {
@@ -374,6 +601,19 @@ function renderQuickSuggestions() {
     return;
   }
   
+  if (curQ.id === "q_client" || !curQ.options || curQ.options.length === 0) {
+    if (quickTray) {
+      quickTray.innerHTML = "";
+      quickTray.style.display = "none";
+    }
+    if (customInput) {
+      customInput.placeholder = "Enter Organization / Client Name & New Project Title (e.g. Acme Corp — AI Billing Automation)...";
+      customInput.value = "";
+      customInput.focus();
+    }
+    return;
+  }
+
   if (customInput) {
     customInput.placeholder = `Type custom answer for ${curQ.title} (or click an option above)...`;
     customInput.value = "";
@@ -390,6 +630,7 @@ function renderQuickSuggestions() {
   if (curQ.options && curQ.options.length > 0) {
     optionsList = [...curQ.options];
   }
+
   
   // Check if latest message from agent has HITL follow-up options
   const msgs = currentSessionData.messages || [];
@@ -3323,6 +3564,7 @@ async function commitIdeationAndStartDiscovery() {
 
 // Stage 2: Delegate Question to Architect
 async function delegateCurrentQuestionToArchitect() {
+  if (!currentSessionId) return;
   try {
     const res = await fetch("/api/workflow/delegate-architect", {
       method: "POST",
@@ -3333,8 +3575,11 @@ async function delegateCurrentQuestionToArchitect() {
     if (res.ok) {
       currentSessionData = await res.json();
       renderChatMessages();
+      renderQuickSuggestions();
       updateProgressCounter();
       updateWorkflowUI(currentSessionData);
+      loadArchitectBriefing();
+      showToast("✓ Delegated to Solutions Architect with full project context", "info");
     }
   } catch (err) {
     console.error("Delegation to architect failed:", err);

@@ -26,19 +26,6 @@
       <span class="client-tag" id="headerClientTag">Universal AI Platform</span>
     </div>
 
-    <!-- Sleek 3-Persona Segmented Switcher (Client, Architect, PM) -->
-    <div class="header-persona-switcher" id="personaSwitcher">
-      <button class="persona-tab-btn active client" id="pillClient" onclick="switchActivePersona('CLIENT')" title="Client Business Lead">
-        <span>🧑‍💼</span> Client
-      </button>
-      <button class="persona-tab-btn architect" id="pillArchitect" onclick="switchActivePersona('SOLUTIONS_ARCHITECT')" title="Principal Solutions Architect">
-        <span>🏗️</span> Architect
-      </button>
-      <button class="persona-tab-btn pm" id="pillPM" onclick="switchActivePersona('PROJECT_MANAGER')" title="Senior Delivery PM">
-        <span>👔</span> PM
-      </button>
-    </div>
-
     <div class="header-actions">
       <!-- Currency Switcher -->
       <select id="globalCurrencySelect" class="form-control"
@@ -53,8 +40,15 @@
         <option value="AUD">AUD (A$)</option>
       </select>
 
-      <button class="btn-header" onclick="openAdminModal()" title="Enterprise Admin & Governance">
-        <span>🛡️</span> Admin
+      <!-- User Account & Role Badge -->
+      <div class="header-user-account-widget" id="headerUserWidget" onclick="openLoginModal()" title="Current Active User & Role — Click to Switch Account or Role">
+        <div class="header-user-avatar" id="headerUserAvatar">CL</div>
+        <div class="header-user-name" id="headerUserName">Client Lead</div>
+        <span class="header-port-pill" id="headerUserPort">:8081</span>
+      </div>
+
+      <button class="btn-header" onclick="window.location.href='/login'" style="color: #64748b;" title="Go to Login Page / Switch User">
+        <span>🚪</span> Logout
       </button>
 
       <button class="btn-header" onclick="openSettingsModal()" title="Cloud AI & API Settings">
@@ -158,19 +152,13 @@
             <span class="tab-btn-title"><span>🏗️</span> Tech Components (6)</span>
           </button>
           <button class="sidebar-tab-btn" onclick="switchTab('tab-sizing')">
-            <span class="tab-btn-title"><span>☁️</span> Sizing & 3-Yr TCO</span>
-          </button>
-          <button class="sidebar-tab-btn" onclick="switchTab('tab-governance')">
-            <span class="tab-btn-title"><span>🛡️</span> EU AI Act & ISO 42001</span>
+            <span class="tab-btn-title"><span>☁️</span> Sizing & Cloud BoM</span>
           </button>
           <button class="sidebar-tab-btn" onclick="switchTab('tab-assumptions')">
             <span class="tab-btn-title"><span>⚙️</span> Assumptions Gate</span>
           </button>
           <button class="sidebar-tab-btn" onclick="switchTab('tab-canonical')">
             <span class="tab-btn-title"><span>📋</span> Requirements & Gates</span>
-          </button>
-          <button class="sidebar-tab-btn" onclick="switchTab('tab-impact')">
-            <span class="tab-btn-title"><span>⚡</span> Impact & Ledger</span>
           </button>
           <button class="sidebar-tab-btn" onclick="switchTab('tab-export')">
             <span class="tab-btn-title"><span>📥</span> 5. Final Export Suite</span>
@@ -957,33 +945,8 @@
           </div>
         </div>
 
-        <!-- TAB 5: Sizing & Cloud BoM & 3-Year TCO -->
+        <!-- TAB 5: Sizing & Cloud BoM -->
         <div id="tab-sizing" class="tab-pane" style="display: none;">
-          <!-- 3-Year TCO FinOps Strip -->
-          <div class="metrics-strip" style="margin-bottom: 16px;">
-            <div class="metric-card">
-              <span class="metric-label">Year 1 Total TCO (Build + Run)</span>
-              <span class="metric-val" id="tcoYear1" style="color: var(--primary);">$32,628</span>
-              <span class="metric-sub" id="tcoYear1Sub">Build Labour + Cloud Run</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">Year 2 Total TCO</span>
-              <span class="metric-val" id="tcoYear2">$12,713</span>
-              <span class="metric-sub">Run + 15% L2 Support</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">Year 3 Total TCO</span>
-              <span class="metric-val" id="tcoYear3">$13,678</span>
-              <span class="metric-sub">Run + 15% L2 Support</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">3-Year Cumulative TCO</span>
-              <span class="metric-val" id="tcoCumulative"
-                style="color: var(--success); font-weight: 700;">$59,019</span>
-              <span class="metric-sub" id="tcoBreakEven">Break-Even @ Month 14</span>
-            </div>
-          </div>
-
           <!-- Architect Live Cloud Sizing & BoM Simulator -->
           <div class="section-block" style="border-left: 3px solid var(--primary);">
             <div class="section-title">
@@ -1017,40 +980,6 @@
             </div>
           </div>
 
-          <!-- FinOps Cost Comparison (Pay-As-You-Go vs PTU) -->
-          <div class="section-block">
-            <div class="section-title">
-              <span>💳 FinOps Architecture: Pay-As-You-Go vs Provisioned Throughput (PTU)</span>
-              <span id="tcoStrategyBadge" class="badge-ai" style="font-size: 0.75rem;">Pay-As-You-Go Optimal</span>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-              <div
-                style="background: #eff6ff; padding: 16px; border-radius: 8px; border: 1px solid #bfdbfe; border-left: 4px solid var(--primary);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                  <h4 style="color: #1e40af; font-size: 0.9rem; font-weight: 700;">📈 Pay-As-You-Go (Consumption)</h4>
-                  <span id="tcoPaygMonthly" style="color: #1e3a8a; font-weight: 800; font-size: 1.05rem;">$645/mo</span>
-                </div>
-                <p style="font-size: 0.8rem; color: #475569; margin: 0; line-height: 1.5;">
-                  Billed per 1k input/output tokens & per-second compute. Best for dynamic loads, PoC, and MVP workloads
-                  under 2.5M tokens/day.
-                </p>
-              </div>
-              <div
-                style="background: #fffbeb; padding: 16px; border-radius: 8px; border: 1px solid #fde68a; border-left: 4px solid var(--warning);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                  <h4 style="color: #b45309; font-size: 0.9rem; font-weight: 700;">🏢 Provisioned Throughput (PTU /
-                    Committed)</h4>
-                  <span id="tcoPtuMonthly"
-                    style="color: #92400e; font-weight: 800; font-size: 1.05rem;">$4,800/mo</span>
-                </div>
-                <p style="font-size: 0.8rem; color: #475569; margin: 0; line-height: 1.5;">
-                  Dedicated reserved GPU/TPU capacity with guaranteed sub-second latency SLA. Recommended for high-scale
-                  enterprise (>5M tokens/day).
-                </p>
-              </div>
-            </div>
-          </div>
-
           <div class="section-block">
             <div class="section-title">
               <span>Cloud Infrastructure Bill of Materials (BoM)</span>
@@ -1069,76 +998,6 @@
                 </tr>
               </thead>
               <tbody id="bomTableBody">
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- TAB: EU AI Act & ISO 42001 Governance Matrix -->
-        <div id="tab-governance" class="tab-pane" style="display: none;">
-          <div class="section-block">
-            <div class="section-title">
-              <span>🛡️ EU AI Act Classification & Regulatory Compliance</span>
-              <span id="aiActRiskBadge" class="badge-ai"
-                style="font-size: 0.82rem; background: rgba(56, 189, 248, 0.15); border: 1px solid var(--primary); color: var(--primary);">Specific
-                Transparency Risk (Article 50)</span>
-            </div>
-            <div
-              style="background: #f8fafc; padding: 18px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 16px;">
-              <h4 style="color: #0f172a; font-size: 0.95rem; margin-bottom: 6px; font-weight: 700;"
-                id="aiActClassificationTitle">EU AI Act Assessment</h4>
-              <p style="font-size: 0.84rem; color: #475569; line-height: 1.6; margin-bottom: 14px;"
-                id="aiActJustification">
-                Evaluating regulatory risk tier based on system capabilities, autonomy level, user personas, and data
-                classification.
-              </p>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-                <div
-                  style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-                  <span
-                    style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 3px;">Mandatory
-                    Requirement</span>
-                  <strong style="color: #0f172a; font-size: 0.85rem;" id="aiActReq1">AI Content Watermarking &
-                    Notice</strong>
-                </div>
-                <div
-                  style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-                  <span
-                    style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 3px;">Human
-                    Oversight SLA</span>
-                  <strong style="color: #0f172a; font-size: 0.85rem;" id="aiActReq2">Human-in-the-Loop Review
-                    Controls</strong>
-                </div>
-                <div
-                  style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-                  <span
-                    style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 3px;">Auditability
-                    & Telemetry</span>
-                  <strong style="color: #0f172a; font-size: 0.85rem;" id="aiActReq3">Clause Coordinate Audit
-                    Trails</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="section-block">
-            <div class="section-title">
-              <span>ISO/IEC 42001:2023 Responsible AI Management System (AIMS) Controls</span>
-            </div>
-            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 12px;">
-              Enterprise governance controls applied across the AI lifecycle including risk management, data quality,
-              bias mitigation, and human oversight.
-            </p>
-            <table class="custom-table" id="isoTable">
-              <thead>
-                <tr>
-                  <th style="width: 100px;">Control ID</th>
-                  <th style="width: 220px;">Control Domain</th>
-                  <th>Implemented Technical Control & Safeguard</th>
-                  <th style="width: 120px;">Status</th>
-                </tr>
-              </thead>
-              <tbody id="isoTableBody">
               </tbody>
             </table>
           </div>
@@ -1341,187 +1200,6 @@
           </div>
         </div>
 
-        <!-- TAB 6.6: Impact Analysis & Calculation Ledger (Section 50 & 54) -->
-        <div id="tab-impact" class="tab-pane" style="display: none;">
-          <div class="section-block">
-            <h3 class="section-title">⚡ Interactive Parameter Change & Impact Analysis (Section 50)</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-              Test changes in scale drivers, delivery tier, or duration. The deterministic engine calculates exact
-              affected vs unaffected dimensions without LLM hallucination.
-            </p>
-
-            <div
-              style="display: flex; gap: 14px; flex-wrap: wrap; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
-              <div style="flex: 1; min-width: 180px;">
-                <label class="form-label">Parameter to Change</label>
-                <select class="form-control" id="impactParamSelect" onchange="onImpactParamChange()">
-                  <option value="users">Named Users (200 → 500)</option>
-                  <option value="tier">Delivery Tier (PoC → MVP)</option>
-                  <option value="duration">Reference Duration (6.0 → 8.0 wks)</option>
-                  <option value="rate">Blended Rate ($30/hr → $40/hr)</option>
-                </select>
-              </div>
-              <div style="flex: 1; min-width: 140px;">
-                <label class="form-label">Current Value</label>
-                <input type="text" class="form-control" id="impactOldVal" value="200" readonly>
-              </div>
-              <div style="flex: 1; min-width: 140px;">
-                <label class="form-label">New Value</label>
-                <input type="text" class="form-control" id="impactNewVal" value="500">
-              </div>
-              <div style="display: flex; align-items: flex-end;">
-                <button class="btn-select-confirm" onclick="runInteractiveImpactAnalysis()">
-                  <span>⚡</span> Calculate Impact Delta
-                </button>
-              </div>
-            </div>
-
-            <!-- Side-by-Side Scenario Diff Container -->
-            <div id="impactResultsContainer" style="display: none; margin-bottom: 28px;">
-              <div class="scenario-diff-wrapper">
-                <!-- Header with Single Action Button to Commit -->
-                <div class="scenario-diff-header">
-                  <div>
-                    <h4><span>⚡</span> Side-by-Side Scenario Diff & Variance Analysis</h4>
-                    <div class="scenario-subtitle" id="diffSubtitle">Comparing Active Baseline against Simulated Target
-                    </div>
-                  </div>
-                  <div>
-                    <button id="btnCommitSimulation" class="btn-commit-baseline" onclick="commitSimulationToBaseline()">
-                      <span>⚡</span> Commit Simulation to Baseline
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Side-by-Side Comparative Cards -->
-                <div class="scenario-cards-container">
-                  <!-- Baseline Card -->
-                  <div class="scenario-card baseline">
-                    <span class="scenario-card-badge badge-baseline-tag">🏛️ Current Baseline (Active)</span>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Parameter Value</span>
-                      <span class="scenario-metric-value" id="cardBaseParam">200</span>
-                    </div>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Target Duration</span>
-                      <span class="scenario-metric-value" id="cardBaseDuration">6.0 wks</span>
-                    </div>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Engineering Effort</span>
-                      <span class="scenario-metric-value" id="cardBaseDays">142.5 d</span>
-                    </div>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Total Labour Cost</span>
-                      <span class="scenario-metric-value" id="cardBaseCost">$34,200</span>
-                    </div>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Team Loading Density</span>
-                      <span class="scenario-metric-value" id="cardBaseFTE">4.75 FTE</span>
-                    </div>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Monthly Cloud Infrastructure</span>
-                      <span class="scenario-metric-value" id="cardBaseCloud">$645.00/mo</span>
-                    </div>
-                  </div>
-
-                  <!-- Simulation Card -->
-                  <div class="scenario-card simulation">
-                    <span class="scenario-card-badge badge-sim-tag">🚀 Simulated Scenario Target</span>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Parameter Value</span>
-                      <span class="scenario-metric-value" id="cardSimParam" style="color: var(--primary);">500</span>
-                    </div>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Target Duration</span>
-                      <span class="scenario-metric-value" id="cardSimDuration">6.0 wks</span>
-                    </div>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Engineering Effort</span>
-                      <span class="scenario-metric-value" id="cardSimDays" style="color: #ef4444;">151.8 d</span>
-                    </div>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Total Labour Cost</span>
-                      <span class="scenario-metric-value" id="cardSimCost" style="color: #ef4444;">$36,293</span>
-                    </div>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Team Loading Density</span>
-                      <span class="scenario-metric-value" id="cardSimFTE" style="color: #0284c7;">5.06 FTE</span>
-                    </div>
-                    <div class="scenario-metric-row">
-                      <span class="scenario-metric-label">Monthly Cloud Infrastructure</span>
-                      <span class="scenario-metric-value" id="cardSimCloud"
-                        style="color: var(--primary);">$1,080.38/mo</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Comparative Diff / Variance Table -->
-                <div class="scenario-diff-table-container">
-                  <table class="scenario-diff-table">
-                    <thead>
-                      <tr>
-                        <th style="width: 220px;">Metric Dimension</th>
-                        <th style="width: 160px;">Baseline Model</th>
-                        <th style="width: 160px;">Simulation Target</th>
-                        <th style="width: 170px;">Variance / Delta</th>
-                        <th>Deterministic Impact Rationale</th>
-                      </tr>
-                    </thead>
-                    <tbody id="scenarioDiffTableBody">
-                    </tbody>
-                  </table>
-
-                  <!-- Narrative & Scope Breakdown -->
-                  <div
-                    style="margin-top: 16px; padding: 14px; background: #ffffff; border-radius: 8px; border: 1px solid var(--border-color);">
-                    <div
-                      style="font-weight: 700; font-size: 0.86rem; color: #1e293b; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                      <span>📝</span> Architectural & Scope Assessment
-                    </div>
-                    <p id="impactNarrative"
-                      style="font-size: 0.84rem; color: #475569; margin-bottom: 10px; line-height: 1.5;"></p>
-                    <div id="impactAffectedDetails" style="font-size: 0.82rem; color: #334155;"></div>
-                  </div>
-
-                  <!-- Bottom Commit Action Bar -->
-                  <div
-                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 12px 16px; background: #ffffff; border-radius: 8px; border: 1px dashed var(--primary); flex-wrap: wrap; gap: 10px;">
-                    <div style="font-size: 0.82rem; color: var(--text-muted);">
-                      Commit permanently applies this scenario to all 18 WBS phases, adjusts baseline financials, and
-                      audits a <code>SCENARIO_COMMIT</code> entry in the calculation ledger.
-                    </div>
-                    <button class="btn-commit-baseline" onclick="commitSimulationToBaseline()">
-                      <span>⚡</span> Commit Simulation to Baseline
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <h3 class="section-title">📑 Calculation Ledger Audit Trail (Section 54)</h3>
-            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 12px;">
-              Every mathematical operation logged with engine version, inputs, formula, and timestamps for 100%
-              auditability.
-            </p>
-            <div style="overflow-x: auto;">
-              <table class="custom-table" id="calcLedgerTable">
-                <thead>
-                  <tr>
-                    <th>Calc ID</th>
-                    <th>Type</th>
-                    <th>Formula Applied</th>
-                    <th>Result Summary</th>
-                    <th>Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody id="calcLedgerTableBody">
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 7: Enterprise Export Suite -->
         <!-- TAB 7: Enterprise Export Suite & Stage 5 Final Distribution -->
         <div id="tab-export" class="tab-pane" style="display: none;">
           <!-- Stage 5 Tripartite Sign-Off Certificate -->
@@ -2321,6 +1999,115 @@
           <span>💾</span> Save Admin Settings
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Enterprise Multi-Persona Role Login & Port Gateway Modal -->
+  <div class="modal-overlay" id="loginModal" style="z-index: 10001;">
+    <div class="modal-box">
+      <div class="login-modal-header">
+        <h2><span>⚡</span> Enterprise Multi-Persona Gateway</h2>
+        <p>Sign in with any credentials and select your role to access your dedicated port workspace.</p>
+      </div>
+
+      <!-- Quick 1-Click Role Presets -->
+      <div class="quick-login-strip">
+        <span class="quick-login-label"><span>⚡</span> Quick 1-Click Role Login:</span>
+        <div class="quick-login-buttons">
+          <button class="btn-quick-login" onclick="quickLoginAs('CLIENT')">
+            <span>🧑‍💼</span> Client Lead (:8081)
+          </button>
+          <button class="btn-quick-login" onclick="quickLoginAs('SOLUTIONS_ARCHITECT')">
+            <span>🏗️</span> Architect (:8082)
+          </button>
+          <button class="btn-quick-login" onclick="quickLoginAs('PROJECT_MANAGER')">
+            <span>👔</span> Delivery PM (:8083)
+          </button>
+          <button class="btn-quick-login" onclick="quickLoginAs('ADMIN')">
+            <span>🛡️</span> Admin (:8084)
+          </button>
+        </div>
+      </div>
+
+      <!-- Role Selection Cards -->
+      <div class="role-selector-label">
+        <span>Select Persona / Access Role</span>
+        <span style="font-size: 0.72rem; color: #64748b; text-transform: none; font-weight: 500;">Directs to role-specific localhost port</span>
+      </div>
+
+      <div class="role-selection-grid">
+        <!-- 1. Client Lead -->
+        <div class="role-card-option selected" id="roleCard_CLIENT" onclick="selectLoginRole('CLIENT')">
+          <div class="role-card-header">
+            <span class="role-card-title"><span>🧑‍💼</span> Client Business Lead</span>
+            <span class="role-port-badge">PORT 8081</span>
+          </div>
+          <div class="role-card-desc">Business vision, requirements ideation, 0-Click RFP ingestion, and dual sign-off.</div>
+          <div class="role-card-feature">✨ Ideation & Discovery Chat</div>
+        </div>
+
+        <!-- 2. Solutions Architect -->
+        <div class="role-card-option" id="roleCard_SOLUTIONS_ARCHITECT" onclick="selectLoginRole('SOLUTIONS_ARCHITECT')">
+          <div class="role-card-header">
+            <span class="role-card-title"><span>🏗️</span> Principal Architect</span>
+            <span class="role-port-badge">PORT 8082</span>
+          </div>
+          <div class="role-card-desc">Technical architecture, microservices BoM, component sizing & dual technical sign-off.</div>
+          <div class="role-card-feature">✨ Architecture Workspace & Cloud BoM</div>
+        </div>
+
+        <!-- 3. Senior Delivery PM -->
+        <div class="role-card-option" id="roleCard_PROJECT_MANAGER" onclick="selectLoginRole('PROJECT_MANAGER')">
+          <div class="role-card-header">
+            <span class="role-card-title"><span>👔</span> Senior Delivery PM</span>
+            <span class="role-port-badge">PORT 8083</span>
+          </div>
+          <div class="role-card-desc">12-discipline resource loading, tripartite governance, calendar compliance & final sign-off.</div>
+          <div class="role-card-feature">✨ Tripartite Governance & Milestones</div>
+        </div>
+
+        <!-- 4. System Administrator -->
+        <div class="role-card-option" id="roleCard_ADMIN" onclick="selectLoginRole('ADMIN')">
+          <div class="role-card-header">
+            <span class="role-card-title"><span>🛡️</span> System Administrator</span>
+            <span class="role-port-badge">PORT 8084</span>
+          </div>
+          <div class="role-card-desc">Statutory holiday calendars, regional blended rates, currency exchange & system master config.</div>
+          <div class="role-card-feature">✨ Enterprise Admin Console</div>
+        </div>
+      </div>
+
+      <!-- User Credentials Form -->
+      <form onsubmit="event.preventDefault(); submitUserLogin();">
+        <div class="login-form-grid">
+          <div class="form-group">
+            <label class="form-label">Username / Full Name</label>
+            <input type="text" class="form-control" id="loginUsername" placeholder="e.g. Alex Morgan, Sarah Chen, or any name" value="Client Business Lead" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password / Passcode</label>
+            <input type="password" class="form-control" id="loginPassword" placeholder="Any password accepted (mock auth)" value="password123">
+          </div>
+        </div>
+
+        <!-- Dynamic Destination Alert -->
+        <div class="login-port-preview-alert" id="loginPortPreviewAlert">
+          <span>🚀</span>
+          <div>
+            <strong>Destination Port:</strong> <span id="loginTargetPortDisplay">http://127.0.0.1:8081</span> 
+            — <span id="loginTargetDescDisplay">Client Ideation, Discovery & Dual Review Portal</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button type="button" class="btn-header" onclick="closeLoginModal()" style="padding: 12px 20px; font-size: 0.9rem;">
+            Cancel
+          </button>
+          <button type="submit" class="btn-enter-workspace" id="btnSubmitLogin">
+            <span>🚀</span> Sign In & Open Role Port ➔
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

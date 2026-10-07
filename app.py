@@ -49,65 +49,166 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 sessions: Dict[str, ProjectSession] = {}
 
 def get_or_create_session(session_id: Optional[str] = None) -> ProjectSession:
-    if not session_id or session_id not in sessions:
-        sid = session_id or str(uuid.uuid4())
-        q1 = STATIC_QUESTIONS[0]
-        session = ProjectSession(
-            session_id=sid,
-            current_question_index=0,
-            answers={},
-            ambiguity_tracker={},
-            uploaded_files=[],
-            workflow=WorkflowState(
-                stage="IDEATION",
-                active_persona="CLIENT",
-                confidence_score=0.0,
-                client_review=PersonaReview(persona="CLIENT", signature_name="Client Business Lead"),
-                architect_review=PersonaReview(persona="SOLUTIONS_ARCHITECT", signature_name="Principal Solutions Architect"),
-                pm_review=PersonaReview(persona="PROJECT_MANAGER", signature_name="Senior Delivery PM")
-            ),
-            messages=[
-                ChatMessage(
-                    sender="agent",
-                    persona="AI_AGENT",
-                    persona_badge="🤖 AI Discovery Agent",
-                    content=(
-                        "👋 **Hello! Welcome to the 3-Persona AI Project Discovery & Estimation Accelerator.**\n\n"
-                        "Our collaborative team consists of:\n"
-                        "• 🧑‍💼 **Client Business Lead**: Defines business problem, user pain points, and delivery objectives.\n"
-                        "• 🏗️ **Principal Solutions Architect**: Advises on cloud hyperscaler, security posture, and RAG pipelines.\n"
-                        "• 👔 **Senior Delivery PM**: Reviews resourcing, timeline feasibility, and provides final governance sign-off.\n\n"
-                        "💡 *Let's start with **Stage 1: Ideation & Scoping** to align with the client and architect on project goals.*"
-                    ),
-                    timestamp="Just now",
-                    question_context=q1
-                )
-            ]
-        )
-        conf = calculate_discovery_confidence(session)
-        session.confidence = conf
-        sessions[sid] = session
-        return session
+    if session_id and session_id in sessions:
+        return sessions[session_id]
+    if not session_id and sessions:
+        latest_sid = list(sessions.keys())[-1]
+        return sessions[latest_sid]
+        
+    sid = session_id or str(uuid.uuid4())
+    q1 = STATIC_QUESTIONS[0]
+    session = ProjectSession(
+        session_id=sid,
+        current_question_index=0,
+        answers={},
+        ambiguity_tracker={},
+        uploaded_files=[],
+        workflow=WorkflowState(
+            stage="IDEATION",
+            active_persona="CLIENT",
+            confidence_score=0.0,
+            client_review=PersonaReview(persona="CLIENT", signature_name="Client Business Lead"),
+            architect_review=PersonaReview(persona="SOLUTIONS_ARCHITECT", signature_name="Principal Solutions Architect"),
+            pm_review=PersonaReview(persona="PROJECT_MANAGER", signature_name="Senior Delivery PM")
+        ),
+        messages=[
+            ChatMessage(
+                sender="agent",
+                persona="AI_AGENT",
+                persona_badge="🤖 AI Discovery Agent",
+                content=(
+                    "👋 **Hello! Welcome to the AI Project Discovery & Estimation Accelerator.**\n\n"
+                    "To engineer an accurate Business Requirements Document (BRD) and delivery plan, let's start with your core project vision:\n\n"
+                    "👉 **What is your organization / project name, and what core business problem or objectives are you looking to solve with AI?**\n"
+                    "*(e.g., 'CareHealth — Clinical Trial Patient Matching & Protocol Intelligence' or 'Apex Logistics — Cargo Tracking & ERP Dispatch AI')*"
+                ),
+                timestamp="Just now",
+                question_context=q1
+            )
+        ]
+
+    )
+    conf = calculate_discovery_confidence(session)
+    session.confidence = conf
+    sessions[sid] = session
+    return session
     return sessions[session_id]
 
 @app.get("/")
 def read_root():
     return FileResponse("static/index.html")
 
+@app.get("/login")
+def read_login():
+    return FileResponse("static/login.html")
+
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "service": "AI-BRD-Generator", "timestamp": datetime.now().isoformat()}
+
+ROLE_PORT_MAP = {
+    "CLIENT": {
+        "port": 8081,
+        "name": "Client Business Lead",
+        "role": "Client Business Lead",
+        "badge": "🧑‍💼 Client",
+        "avatar": "CL",
+        "default_tab": "tab-ideation",
+        "description": "Client Ideation, Discovery & Dual Review Portal"
+    },
+    "SOLUTIONS_ARCHITECT": {
+        "port": 8082,
+        "name": "Principal Solutions Architect",
+        "role": "Principal Solutions Architect",
+        "badge": "🏗️ Solutions Architect",
+        "avatar": "SA",
+        "default_tab": "tab-dual-review",
+        "description": "Technical Architecture, Sizing BoM & Dual Review Portal"
+    },
+    "PROJECT_MANAGER": {
+        "port": 8083,
+        "name": "Senior Delivery PM",
+        "role": "Senior Delivery PM",
+        "badge": "👔 Project Manager",
+        "avatar": "PM",
+        "default_tab": "tab-pm-review",
+        "description": "Project Governance, Tripartite Discussion & Final Approval Portal"
+    },
+    "ADMIN": {
+        "port": 8084,
+        "name": "System Administrator",
+        "role": "Enterprise Governance Admin",
+        "badge": "🛡️ Admin & Governance",
+        "avatar": "AD",
+        "default_tab": "admin_modal",
+        "description": "Enterprise Admin & Governance Console (Calendars, Rates, Master Settings)"
+    }
+}
+
+class LoginPayload(BaseModel):
+    username: str
+    password: Optional[str] = ""
+    role: str = "CLIENT"
+    session_id: Optional[str] = None
 
 @app.get("/api/ports")
 def get_persona_ports():
     return {
         "ports": {
-            "8081": {"persona": "CLIENT", "name": "Client Business Lead", "role": "Client Business Lead", "title": "Client Portal", "badge": "🧑‍💼 Client", "default_tab": "tab-ideation"},
-            "8082": {"persona": "SOLUTIONS_ARCHITECT", "name": "Principal Solutions Architect", "role": "Principal Solutions Architect", "title": "Solutions Architect Portal", "badge": "🏗️ Solutions Architect", "default_tab": "tab-dual-review"},
-            "8083": {"persona": "PROJECT_MANAGER", "name": "Senior Delivery PM", "role": "Senior Delivery PM", "title": "Project Manager Portal", "badge": "👔 Project Manager", "default_tab": "tab-pm-review"},
-            "8084": {"persona": "ADMIN", "name": "System Administrator", "role": "Enterprise Governance Admin", "title": "Admin & Governance Console", "badge": "🛡️ Admin & Governance", "default_tab": "admin_modal"}
+            "8081": ROLE_PORT_MAP["CLIENT"],
+            "8082": ROLE_PORT_MAP["SOLUTIONS_ARCHITECT"],
+            "8083": ROLE_PORT_MAP["PROJECT_MANAGER"],
+            "8084": ROLE_PORT_MAP["ADMIN"]
         }
     }
+
+@app.post("/api/auth/login")
+def auth_login_endpoint(payload: LoginPayload):
+    role_key = (payload.role or "CLIENT").upper()
+    if role_key not in ROLE_PORT_MAP:
+        role_key = "CLIENT"
+    
+    role_info = ROLE_PORT_MAP[role_key]
+    raw_name = payload.username.strip() if payload.username and payload.username.strip() else role_info["name"]
+    
+    # Generate initials
+    words = raw_name.split()
+    if len(words) >= 2:
+        avatar = (words[0][0] + words[-1][0]).upper()
+    elif len(words) == 1 and len(words[0]) >= 2:
+        avatar = words[0][:2].upper()
+    else:
+        avatar = role_info["avatar"]
+
+    if payload.session_id and payload.session_id in sessions:
+        sess = sessions[payload.session_id]
+        if hasattr(sess, "workflow") and sess.workflow:
+            sess.workflow.active_persona = role_key
+
+    return {
+        "status": "success",
+        "message": f"Authenticated successfully as {raw_name} ({role_info['role']})",
+        "user": {
+            "username": raw_name,
+            "role": role_key,
+            "role_title": role_info["role"],
+            "badge": role_info["badge"],
+            "avatar": avatar,
+            "target_port": role_info["port"],
+            "target_url": f"http://127.0.0.1:{role_info['port']}",
+            "default_tab": role_info["default_tab"],
+            "token": f"auth-token-{uuid.uuid4().hex[:12]}"
+        },
+        "role_info": role_info
+    }
+
+@app.get("/api/auth/roles")
+def auth_roles_endpoint():
+    return {
+        "status": "success",
+        "roles": ROLE_PORT_MAP
+    }
+
 
 @app.get("/api/session")
 def get_session_endpoint(session_id: Optional[str] = None):
@@ -180,12 +281,21 @@ async def chat_endpoint(payload: ChatInput):
     session.messages.append(reply_msg)
     conf = calculate_discovery_confidence(session)
     
-    if is_complete or conf.score >= 98.0:
+    if is_complete or conf.score >= 95.0:
         compile_and_save_handoff_dossier(session)
         was_first_completion = (session.brd is None)
         
         brd = generate_brd(session)
         session.brd = brd
+        
+        # Generate and save the structured JSON BRD file conforming to ai_brd_questionnaire_template.json
+        from backend.export_generator import generate_structured_brd_json
+        json_file_path, structured_data = generate_structured_brd_json(brd, session)
+        if not session.handoff_dossier:
+            session.handoff_dossier = {}
+        session.handoff_dossier["structured_json_file"] = json_file_path
+        session.handoff_dossier["structured_json_filename"] = os.path.basename(json_file_path)
+        session.handoff_dossier["project_version"] = brd.version or "v1.0.0"
         
         if hasattr(session, "workflow") and session.workflow:
             if session.workflow.stage in ["IDEATION", "DISCOVERY"] or session.workflow.current_stage in ["IDEATION", "DISCOVERY"]:
@@ -199,17 +309,20 @@ async def chat_endpoint(payload: ChatInput):
                 persona="AI_AGENT",
                 persona_badge="🤖 AI Synthesis Agent",
                 content=(
-                    "🚀 **Agent 2 has successfully synthesized the Draft Project Plan and BRD (Confidence >= 98%)!**\n\n"
+                    f"🚀 **Discovery Confidence Reached {conf.score:.1f}% (>= 95% Gate Passed)!**\n\n"
+                    f"Structured Enterprise BRD JSON generated: `{os.path.basename(json_file_path)}`\n\n"
                     f"• **Project Title:** {brd.project_title}\n"
+                    f"• **Version:** {brd.version or 'v1.0.0'}\n"
                     f"• **Client / Account:** {brd.client_name}\n"
                     f"• **Delivery Tier:** {brd.delivery_tier} ({brd.total_duration_weeks:.1f} Weeks)\n"
                     f"• **Total Effort:** {brd.total_person_days:.1f} Person-Days ({brd.total_person_hours:.0f} Hours)\n"
                     f"• **Total Labour Cost:** ${brd.total_labour_cost_usd:,.2f} (@ ${brd.blended_hourly_rate:.2f}/hr blended rate)\n"
-                    f"• **Cloud Infra BoM:** ${brd.sizing_metrics.total_monthly_cloud_cost_usd:,.2f} / month ({session.answers.get('q_cloud', AnswerItem(question_id='q_cloud', question_title='Cloud', answer='Azure')).answer})\n\n"
-                    "👉 **Next Step (Stage 3: Dual Review):** Both **Client Business Lead** and **Principal Solutions Architect** must review the draft BRD and either submit change requests or provide dual sign-off before it moves to Senior Delivery PM."
+                    f"• **Cloud Infra BoM:** ${getattr(brd.sizing_metrics, 'total_monthly_cloud_cost_usd', 0.0):,.2f} / month ({brd.cloud_platform})\n\n"
+                    "👉 **Next Step (Stage 3: Dual Review):** Both **Client Business Lead** and **Principal Solutions Architect** can now review the plan and submit feedback or dual sign-off."
                 ),
                 timestamp="Just now"
             ))
+
 
     return {
         "session_id": session.session_id,
@@ -1093,6 +1206,15 @@ def export_docx_endpoint(session_id: str):
         filename=filename
     )
 
+@app.get("/api/export/json")
+def export_json_endpoint(session_id: str):
+    session = get_or_create_session(session_id)
+    if not session.brd:
+        session.brd = generate_brd(session)
+    from backend.export_generator import generate_structured_brd_json
+    json_path, structured_data = generate_structured_brd_json(session.brd, session)
+    return JSONResponse(content=structured_data)
+
 @app.get("/api/handoff")
 def get_handoff_endpoint(session_id: str):
     session = get_or_create_session(session_id)
@@ -1887,7 +2009,7 @@ def delegate_architect_endpoint(payload: DelegateArchitectPayload):
     session.messages.append(reply_msg)
     conf = calculate_discovery_confidence(session)
     
-    if is_complete or conf.score >= 98.0:
+    if is_complete or conf.score >= 95.0:
         compile_and_save_handoff_dossier(session)
         session.brd = generate_brd(session)
         if hasattr(session, "workflow") and session.workflow:
@@ -1904,6 +2026,104 @@ def delegate_architect_endpoint(payload: DelegateArchitectPayload):
         "answers": {k: v.model_dump() for k, v in session.answers.items()},
         "messages": [m.model_dump() for m in session.messages],
         "workflow": session.workflow.model_dump() if hasattr(session, "workflow") and session.workflow else {},
+        "confidence": conf.model_dump(),
+        "brd": session.brd.model_dump() if session.brd else None
+    }
+
+@app.get("/api/workflow/architect/briefing")
+def get_architect_briefing_endpoint(session_id: str = Query(...)):
+    session = get_or_create_session(session_id)
+    answers = session.answers
+    
+    # Extract client overview
+    client_name = answers.get("q_client", AnswerItem(question_id="q_client", question_title="Client", answer="Untitled Project")).answer
+    tier_name = answers.get("q_tier", AnswerItem(question_id="q_tier", question_title="Tier", answer="PoC")).answer
+    duration = answers.get("q_duration", AnswerItem(question_id="q_duration", question_title="Duration", answer="6.0 wks")).answer
+    cloud_pref = answers.get("q_cloud", AnswerItem(question_id="q_cloud", question_title="Cloud", answer="Microsoft Azure")).answer
+    legal_cat = answers.get("q_legal_categories", AnswerItem(question_id="q_legal_categories", question_title="Categories", answer="AI Automation, Customer Support & Document Intelligence")).answer
+    
+    conf = calculate_discovery_confidence(session)
+    wf = getattr(session, "workflow", None) or WorkflowState()
+    
+    escalated_list = [e.model_dump() for e in wf.escalated_topics]
+    pending_count = sum(1 for e in wf.escalated_topics if e.status == "PENDING_ARCHITECT")
+    
+    return {
+        "status": "success",
+        "client_overview": {
+            "project_title": client_name,
+            "target_tier": tier_name,
+            "duration": f"{duration} wks" if "wk" not in duration else duration,
+            "cloud_preference": cloud_pref,
+            "legal_categories": legal_cat,
+            "current_confidence": conf.score,
+            "problem_statement": answers.get("q_client", AnswerItem(question_id="q_client", question_title="Client", answer="")).notes or f"Scoping enterprise solution on {cloud_pref} ({tier_name} Tier)"
+        },
+        "pending_count": pending_count,
+        "escalated_topics": escalated_list
+    }
+
+class ResolveEscalationPayload(BaseModel):
+    session_id: str
+    question_id: str
+    answer: str
+    notes: Optional[str] = "Confirmed by Principal Solutions Architect"
+
+@app.post("/api/workflow/architect/resolve-escalation")
+def resolve_architect_escalation_endpoint(payload: ResolveEscalationPayload):
+    session = get_or_create_session(payload.session_id)
+    wf = getattr(session, "workflow", None)
+    if not wf:
+        session.workflow = WorkflowState()
+        wf = session.workflow
+        
+    clean_id = payload.question_id.replace("_clarification", "")
+    
+    matched_title = clean_id
+    for esc in wf.escalated_topics:
+        if esc.question_id == clean_id or esc.id == payload.question_id:
+            esc.status = "RESOLVED"
+            esc.architect_answer = payload.answer
+            esc.architect_notes = payload.notes
+            esc.resolved_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            matched_title = esc.topic_title
+            
+    session.answers[clean_id] = AnswerItem(
+        question_id=clean_id,
+        question_title=matched_title,
+        answer=payload.answer,
+        is_default=False,
+        ambiguity_count=0,
+        hitl_confirmed=True,
+        notes=f"Resolved by Solutions Architect: {payload.notes}"
+    )
+    
+    session.messages.append(ChatMessage(
+        sender="architect",
+        persona="SOLUTIONS_ARCHITECT",
+        persona_badge="🏗️ Principal Solutions Architect",
+        is_architect_input=True,
+        content=f"✅ **Principal Solutions Architect Decision for `{matched_title}`:**\n\nAdopted Architecture: **`{payload.answer}`**\n\n> *\"{payload.notes}\"*",
+        timestamp=datetime.now().strftime("%I:%M %p")
+    ))
+    
+    conf = calculate_discovery_confidence(session)
+    if conf.score >= 95.0:
+        compile_and_save_handoff_dossier(session)
+        session.brd = generate_brd(session)
+        if wf.stage in ["IDEATION", "DISCOVERY"] or wf.current_stage in ["IDEATION", "DISCOVERY"]:
+            wf.stage = "DUAL_REVIEW"
+            wf.current_stage = "DUAL_REVIEW"
+        wf.is_confidence_reached = True
+
+    return {
+        "session_id": session.session_id,
+        "current_question_index": session.current_question_index,
+        "total_questions": len(STATIC_QUESTIONS),
+        "current_question": get_current_question(session).model_dump() if get_current_question(session) else None,
+        "answers": {k: v.model_dump() for k, v in session.answers.items()},
+        "messages": [m.model_dump() for m in session.messages],
+        "workflow": wf.model_dump(),
         "confidence": conf.model_dump(),
         "brd": session.brd.model_dump() if session.brd else None
     }

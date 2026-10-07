@@ -33,6 +33,24 @@ def test_all_ports():
         res = client.get("http://127.0.0.1:8081/api/ports")
         assert res.status_code == 200
         print("[OK] Central /api/ports accessible")
+
+        # 1b. Test /api/auth/roles
+        res_roles = client.get("http://127.0.0.1:8081/api/auth/roles")
+        assert res_roles.status_code == 200
+        assert res_roles.json()["roles"]["SOLUTIONS_ARCHITECT"]["port"] == 8082
+        print("[OK] /api/auth/roles returns correct port mappings")
+
+        # 1c. Test /api/auth/login for dynamic user & role
+        res_login = client.post("http://127.0.0.1:8081/api/auth/login", json={
+            "username": "Sarah Chen",
+            "password": "anypassword",
+            "role": "PROJECT_MANAGER"
+        })
+        assert res_login.status_code == 200
+        login_data = res_login.json()
+        assert login_data["user"]["target_port"] == 8083
+        assert login_data["user"]["username"] == "Sarah Chen"
+        print("[OK] /api/auth/login correctly resolves custom username & target port :8083")
         
         # 2. Test Port 8081 (Client)
         res8081 = client.get("http://127.0.0.1:8081/")

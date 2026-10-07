@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise Multi-Persona Portal | AI BRD Studio</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body.login-page-body {
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      color: #0f172a;
+    }
+
+    .login-container {
+      width: 820px;
+      max-width: 96vw;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 35px 80px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      animation: modalSlideUp 0.3s ease-out;
+    }
+
+    .login-hero-header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      padding: 32px 36px;
+      color: #ffffff;
+      text-align: center;
+      position: relative;
+    }
+
+    .login-hero-header::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #10b981 100%);
+    }
+
+    .login-brand-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .login-brand-subtitle {
+      font-size: 0.92rem;
+      color: #94a3b8;
+      margin: 0;
+    }
+
+    .login-body-content {
+      padding: 32px 36px;
+    }
+
+    .login-roles-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .login-role-card {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .login-role-card:hover {
+      border-color: #93c5fd;
+      background: #f0f7ff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.15);
+    }
+
+    .login-role-card.active {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 8px 24px -4px rgba(59, 130, 246, 0.25);
+    }
+
+    .login-role-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .login-role-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .login-port-pill {
+      font-family: monospace;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .login-role-card.active .login-port-pill {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .login-role-desc {
+      font-size: 0.8rem;
+      color: #64748b;
+      line-height: 1.4;
+    }
+
+    .login-role-feature {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #0284c7;
+      margin-top: 4px;
+    }
+
+    .login-quick-bar {
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .login-fields-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .login-destination-banner {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.86rem;
+      color: #15803d;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .btn-login-submit {
+      width: 100%;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-login-submit:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+
+<body class="login-page-body">
+  <div class="login-container">
+    <!-- Header -->
+    <div class="login-hero-header">
+      <h1 class="login-brand-title"><span>⚡</span> AI BRD Studio</h1>
+      <p class="login-brand-subtitle">Enterprise Role-Based Access & Multi-Port Workspace Gateway</p>
+    </div>
+
+    <div class="login-body-content">
+      <!-- Quick 1-Click Role Login Bar -->
+      <div class="login-quick-bar">
+        <span style="font-size: 0.82rem; font-weight: 700; color: #475569;">⚡ Quick 1-Click Role Login:</span>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn-quick-login" onclick="quickSelectAndLogin('CLIENT')">
+            <span>🧑‍💼</span> Client Lead (:8081)
+          </button>
+          <button class="btn-quick-login" onclick="quickSelectAndLogin('SOLUTIONS_ARCHITECT')">
+            <span>🏗️</span> Architect (:8082)
+          </button>
+          <button class="btn-quick-login" onclick="quickSelectAndLogin('PROJECT_MANAGER')">
+            <span>👔</span> Delivery PM (:8083)
+          </button>
+          <button class="btn-quick-login" onclick="quickSelectAndLogin('ADMIN')">
+            <span>🛡️</span> Admin (:8084)
+          </button>
+        </div>
+      </div>
+
+      <!-- Role Selection Cards -->
+      <div style="font-size: 0.84rem; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; justify-content: space-between;">
+        <span>Select Your Workspace Role</span>
+        <span style="font-size: 0.75rem; color: #64748b; text-transform: none; font-weight: 500;">Directs to role-specific localhost port</span>
+      </div>
+
+      <div class="login-roles-grid">
+        <!-- 1. Client Lead (8081) -->
+        <div class="login-role-card active" id="roleCard_CLIENT" onclick="selectRole('CLIENT')">
+          <div class="login-role-card-header">
+            <span class="login-role-title"><span>🧑‍💼</span> Client Business Lead</span>
+            <span class="login-port-pill">PORT 8081</span>
+          </div>
+          <div class="login-role-desc">Business vision, new project naming, problem statement, requirements ideation, and dual sign-off.</div>
+          <div class="login-role-feature">✨ Client Ideation & Discovery Cockpit</div>
+        </div>
+
+        <!-- 2. Solutions Architect (8082) -->
+        <div class="login-role-card" id="roleCard_SOLUTIONS_ARCHITECT" onclick="selectRole('SOLUTIONS_ARCHITECT')">
+          <div class="login-role-card-header">
+            <span class="login-role-title"><span>🏗️</span> Principal Architect</span>
+            <span class="login-port-pill">PORT 8082</span>
+          </div>
+          <div class="login-role-desc">Azure/AWS/GCP architecture, microservices decomposition, sizing BoM & dual technical review.</div>
+          <div class="login-role-feature">✨ Cloud BoM & Architecture Workspace</div>
+        </div>
+
+        <!-- 3. Senior Delivery PM (8083) -->
+        <div class="login-role-card" id="roleCard_PROJECT_MANAGER" onclick="selectRole('PROJECT_MANAGER')">
+          <div class="login-role-card-header">
+            <span class="login-role-title"><span>👔</span> Senior Delivery PM</span>
+            <span class="login-port-pill">PORT 8083</span>
+          </div>
+          <div class="login-role-desc">12-discipline resource loading, statutory holiday calendars, tripartite queries & final release.</div>
+          <div class="login-role-feature">✨ Tripartite Governance & Milestones</div>
+        </div>
+
+        <!-- 4. System Administrator (8084) -->
+        <div class="login-role-card" id="roleCard_ADMIN" onclick="selectRole('ADMIN')">
+          <div class="login-role-card-header">
+            <span class="login-role-title"><span>🛡️</span> System Administrator</span>
+            <span class="login-port-pill">PORT 8084</span>
+          </div>
+          <div class="login-role-desc">Rate cards, working hours, statutory holiday calendars, currency exchange & master governance.</div>
+          <div class="login-role-feature">✨ Enterprise Admin Console</div>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <form onsubmit="event.preventDefault(); handleLoginSubmit();">
+        <div class="login-fields-row">
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">Username / Full Name</label>
+            <input type="text" class="form-control" id="pageLoginUsername" placeholder="e.g. Alex Morgan, Sarah Chen, or any custom name" value="Client Business Lead" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">Password / Passcode</label>
+            <input type="password" class="form-control" id="pageLoginPassword" placeholder="Any password accepted (mock auth)" value="password123">
+          </div>
+        </div>
+
+        <!-- Dynamic Destination Alert -->
+        <div class="login-destination-banner" id="pageDestinationBanner">
+          <span style="font-size: 1.2rem;">🚀</span>
+          <div>
+            <strong>Connecting to Port:</strong> <span id="pageTargetPort">http://127.0.0.1:8081</span>
+            — <span id="pageTargetDesc">Client Ideation, Discovery & Dual Review Portal</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login-submit">
+          <span>🚀</span> Sign In & Open Role Workspace Port ➔
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const ROLE_PORT_MAP = {
+      CLIENT: {
+        port: 8081,
+        name: "Client Business Lead",
+        role: "Client Business Lead",
+        avatar: "CL",
+        desc: "Client Ideation, Discovery & Dual Review Portal"
+      },
+      SOLUTIONS_ARCHITECT: {
+        port: 8082,
+        name: "Principal Solutions Architect",
+        role: "Principal Solutions Architect",
+        avatar: "SA",
+        desc: "Technical Architecture, Sizing BoM & Dual Review Portal"
+      },
+      PROJECT_MANAGER: {
+        port: 8083,
+        name: "Senior Delivery PM",
+        role: "Senior Delivery PM",
+        avatar: "PM",
+        desc: "Project Governance, Tripartite Discussion & Final Approval Portal"
+      },
+      ADMIN: {
+        port: 8084,
+        name: "System Administrator",
+        role: "Enterprise Governance Admin",
+        avatar: "AD",
+        desc: "Enterprise Admin & Governance Console (Calendars, Rates, Master Settings)"
+      }
+    };
+
+    let selectedRole = "CLIENT";
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.querySelectorAll(".login-role-card").forEach(c => c.classList.remove("active"));
+      const card = document.getElementById("roleCard_" + role);
+      if (card) card.classList.add("active");
+
+      const cfg = ROLE_PORT_MAP[role] || ROLE_PORT_MAP["CLIENT"];
+      document.getElementById("pageTargetPort").textContent = "http://127.0.0.1:" + cfg.port;
+      document.getElementById("pageTargetDesc").textContent = cfg.desc;
+
+      const userField = document.getElementById("pageLoginUsername");
+      if (userField && (!userField.value || Object.values(ROLE_PORT_MAP).some(r => r.name === userField.value))) {
+        userField.value = cfg.name;
+      }
+    }
+
+    function quickSelectAndLogin(role) {
+      selectRole(role);
+      const cfg = ROLE_PORT_MAP[role];
+      document.getElementById("pageLoginUsername").value = cfg.name;
+      handleLoginSubmit();
+    }
+
+    function handleLoginSubmit() {
+      const username = document.getElementById("pageLoginUsername").value.trim() || ROLE_PORT_MAP[selectedRole].name;
+      const cfg = ROLE_PORT_MAP[selectedRole] || ROLE_PORT_MAP["CLIENT"];
+
+      // Words initials
+      const words = username.split(" ");
+      let avatar = cfg.avatar;
+      if (words.length >= 2) {
+        avatar = (words[0][0] + words[words.length - 1][0]).toUpperCase();
+      } else if (words.length === 1 && words[0].length >= 2) {
+        avatar = words[0].substring(0, 2).toUpperCase();
+      }
+
+      const userObj = {
+        username: username,
+        role: selectedRole,
+        role_title: cfg.role,
+        avatar: avatar,
+        target_port: cfg.port
+      };
+
+      localStorage.setItem("brd_user_auth", JSON.stringify(userObj));
+      const targetUrl = "http://" + window.location.hostname + ":" + cfg.port + "/?user=" + encodeURIComponent(username) + "&role=" + selectedRole + "&auth=1";
+      window.location.href = targetUrl;
+    }
+  </script>
+</body>
+
+</html>
